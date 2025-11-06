@@ -78,14 +78,22 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete the saved location
-    await db
+    const deleted = await db
       .delete(savedLocations)
       .where(
         and(
           eq(savedLocations.userId, session.user.id),
           eq(savedLocations.foodBankId, foodBankId)
         )
+      )
+      .returning({ id: savedLocations.id });
+
+    if (deleted.length === 0) {
+      return NextResponse.json(
+        { error: "Saved location not found" },
+        { status: 404 }
       );
+    }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
