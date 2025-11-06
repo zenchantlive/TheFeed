@@ -82,13 +82,16 @@ export function useSavedLocation(foodBankId: string) {
       return { success: false, error: "Failed to unsave location" };
     } finally {
       setIsLoading(false);
-    }
-  }, [foodBankId, session?.user]);
-
-  const toggleSave = useCallback(async () => {
-    if (isSaved) {
-      return await unsaveLocation();
-    } else {
+    const toggleSave = useCallback(async () => {
+      if (isLoading) {
+        return { success: false, error: "In progress" };
+      }
+      if (isSaved) {
+        return await unsaveLocation();
+      } else {
+        return await saveLocation();
+      }
+    }, [isSaved, saveLocation, unsaveLocation, isLoading]);
       return await saveLocation();
     }
   }, [isSaved, saveLocation, unsaveLocation]);
