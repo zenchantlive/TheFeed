@@ -1,225 +1,280 @@
-# Agentic Coding Boilerplate - AI Assistant Guidelines
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-This is a Next.js 15 boilerplate for building AI-powered applications with authentication, database, and modern UI components.
+**FoodShare** is a mobile-first Next.js application connecting people with food assistance resources. Built on the Agentic Coding Starter Kit, it adds:
+
+- **Interactive Map**: Mapbox GL-powered discovery of food banks with real-time filters
+- **AI-Powered Chat**: Context-aware assistant with tool-calling for food bank search, directions, and hours
+- **Community Features**: Social stories and programs showcase (Phase 1 static, Phase 2+ interactive)
+- **User Profiles**: Save locations, track visits with Better Auth + Supabase
 
 ### Tech Stack
 
-- **Framework**: Next.js 15 with App Router, React 19, TypeScript
-- **AI Integration**: Vercel AI SDK 5 + OpenRouter (access to 100+ AI models)
-- **Authentication**: BetterAuth with Google OAuth
-- **Database**: PostgreSQL with Drizzle ORM
-- **UI**: shadcn/ui components with Tailwind CSS 4
-- **Styling**: Tailwind CSS with dark mode support (next-themes)
+- **Framework**: Next.js 15 (App Router), React 19, TypeScript
+- **Database**: PostgreSQL (Supabase) with Drizzle ORM
+- **AI**: Vercel AI SDK 5 + OpenRouter (default: `openai/gpt-4.1-mini`)
+- **Authentication**: Better Auth with Google OAuth
+- **Maps**: Mapbox GL JS via `react-map-gl`
+- **UI**: shadcn/ui + Tailwind CSS 4 with dark mode
 
-## AI Integration with OpenRouter
+## Essential Commands
 
-### Key Points
+```bash
+# Development
+pnpm dev                              # Start dev server (Turbopack) - DON'T run yourself
+pnpm build                            # Production build (runs db:migrate first)
+pnpm start                            # Start production server
 
-- This project uses **OpenRouter** as the AI provider, NOT direct OpenAI
-- OpenRouter provides access to 100+ AI models through a single unified API
-- Default model: `openai/gpt-5-mini` (configurable via `OPENROUTER_MODEL` env var)
-- Users browse models at: https://openrouter.ai/models
-- Users get API keys from: https://openrouter.ai/settings/keys
+# Quality checks (ALWAYS run after changes)
+pnpm lint && pnpm typecheck           # Run both linters
 
-### AI Implementation Files
+# Database operations
+pnpm run db:generate                  # Generate migrations from schema changes
+pnpm run db:migrate                   # Apply migrations to database
+pnpm run db:push                      # Push schema directly (dev only)
+pnpm run db:studio                    # Open Drizzle Studio GUI
+pnpm run db:reset                     # Drop all tables and repush
 
-- `src/app/api/chat/route.ts` - Chat API endpoint using OpenRouter
-- Package: `@openrouter/ai-sdk-provider` (not `@ai-sdk/openai`)
-- Import: `import { openrouter } from "@openrouter/ai-sdk-provider"`
-
-## Project Structure
-
+# Seeding
+pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sacramento dataset)
 ```
-src/
-├── app/                          # Next.js App Router
-│   ├── api/
-│   │   ├── auth/[...all]/       # Better Auth catch-all route
-│   │   ├── chat/route.ts        # AI chat endpoint (OpenRouter)
-│   │   └── diagnostics/         # System diagnostics
-│   ├── chat/page.tsx            # AI chat interface (protected)
-│   ├── dashboard/page.tsx       # User dashboard (protected)
-│   ├── profile/page.tsx         # User profile (protected)
-│   ├── page.tsx                 # Home/landing page
-│   └── layout.tsx               # Root layout
-├── components/
-│   ├── auth/                    # Authentication components
-│   │   ├── sign-in-button.tsx
-│   │   ├── sign-out-button.tsx
-│   │   └── user-profile.tsx
-│   ├── ui/                      # shadcn/ui components
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── dialog.tsx
-│   │   ├── dropdown-menu.tsx
-│   │   ├── avatar.tsx
-│   │   ├── badge.tsx
-│   │   ├── separator.tsx
-│   │   ├── mode-toggle.tsx      # Dark/light mode toggle
-│   │   └── github-stars.tsx
-│   ├── site-header.tsx          # Main navigation header
-│   ├── site-footer.tsx          # Footer component
-│   ├── theme-provider.tsx       # Dark mode provider
-│   ├── setup-checklist.tsx      # Setup guide component
-│   └── starter-prompt-modal.tsx # Starter prompts modal
-└── lib/
-    ├── auth.ts                  # Better Auth server config
-    ├── auth-client.ts           # Better Auth client hooks
-    ├── db.ts                    # Database connection
-    ├── schema.ts                # Drizzle schema (users, sessions, etc.)
-    └── utils.ts                 # Utility functions (cn, etc.)
-```
+
+## Architecture & Key Files
+
+### Core FoodShare Features
+
+**Map System** (`src/app/map/`, `src/components/map/`)
+- Server Component: `src/app/map/page.tsx` - Fetches all food banks, extracts unique services
+- Client Component: `src/app/map/pageClient.tsx` - Manages filters, search, geolocation state
+- Map Rendering: `src/components/map/MapView.tsx` - Mapbox GL with markers, clustering, popups
+- Search: `src/components/map/MapSearchBar.tsx` - Debounced search input
+- Popup: `src/components/map/LocationPopup.tsx` - Food bank details with directions
+
+**AI Chat System** (`src/app/chat/`, `src/app/api/chat/`)
+- Backend: `src/app/api/chat/route.ts` - OpenRouter streaming with 3 tools:
+  - `search_food_banks`: Proximity search with filters (distance, open now, services)
+  - `get_directions`: Generate Google Maps URL
+  - `check_hours`: Verify current open status
+- Frontend: `src/app/chat/page.tsx` - Intent-based UI (hungry/full), quick actions, markdown rendering
+- System Prompt: Empathetic, concise (2-3 sentences), prioritizes open locations
+
+**Database Schema** (`src/lib/schema.ts`)
+- `foodBanks`: Core locations with lat/lng, hours (JSON), services (array), description
+- `savedLocations`: User bookmarks (userId → foodBankId)
+- `chatMessages`: Conversation history (optional sessionId grouping)
+- Better Auth tables: `user`, `session`, `account`, `verification`
+
+**Geolocation Utilities** (`src/lib/geolocation.ts`)
+- `getUserLocation()`: Browser geolocation API wrapper
+- `calculateDistance()`: Haversine formula (returns miles)
+- `isCurrentlyOpen()`: Parses hours JSON, handles overnight schedules
+- `formatHoursForDisplay()`: User-friendly hour strings
+
+**Food Bank Queries** (`src/lib/food-bank-queries.ts`)
+- `searchFoodBanks()`: In-memory filtering by distance/open status/services
+- `getAllFoodBanks()`: Fetch all from database
+- `getFoodBankById()`: Single record lookup
+
+### FoodShare-Specific Components
+
+- `src/components/foodshare/big-action-button.tsx` - Intent buttons (hungry/full variants)
+- `src/components/foodshare/status-badge.tsx` - Open/closed status pills
+- `src/components/foodshare/location-card.tsx` - Food bank card with distance, hours, services
+- `src/components/navigation/BottomNav.tsx` - Mobile bottom navigation
+
+### Navigation Structure
+
+- `/` - Home/landing page
+- `/map` - Interactive food bank map
+- `/chat` - AI assistant (protected)
+- `/community` - Stories/programs showcase
+- `/dashboard` - User dashboard (protected)
+- `/profile` - Saved locations (protected)
 
 ## Environment Variables
 
-Required environment variables (see `env.example`):
+Required beyond standard boilerplate:
 
 ```env
-# Database
-POSTGRES_URL=postgresql://user:password@localhost:5432/db_name
+# Mapbox (required for map features)
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.your-mapbox-token
 
-# Better Auth
-BETTER_AUTH_SECRET=32-char-random-string
+# Database (Supabase)
+POSTGRES_URL=postgresql://postgres:password@db.xxx.supabase.co:5432/postgres?sslmode=require
 
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# AI via OpenRouter
-OPENROUTER_API_KEY=sk-or-v1-your-key
-OPENROUTER_MODEL=openai/gpt-5-mini  # or any model from openrouter.ai/models
-
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# AI (OpenRouter)
+OPENROUTER_MODEL=openai/gpt-4.1-mini  # Optional, defaults to this value
 ```
 
-## Available Scripts
+See `env.example` for complete list including Better Auth and Google OAuth.
 
-```bash
-npm run dev          # Start dev server (DON'T run this yourself - ask user)
-npm run build        # Build for production (runs db:migrate first)
-npm run start        # Start production server
-npm run lint         # Run ESLint (ALWAYS run after changes)
-npm run typecheck    # TypeScript type checking (ALWAYS run after changes)
-npm run db:generate  # Generate database migrations
-npm run db:migrate   # Run database migrations
-npm run db:push      # Push schema changes to database
-npm run db:studio    # Open Drizzle Studio (database GUI)
-npm run db:dev       # Push schema for development
-npm run db:reset     # Reset database (drop all tables)
+## Development Workflow
+
+### Adding Food Bank Data
+
+1. Update `scripts/seed-food-banks.ts` with new locations
+2. Ensure hours follow format: `{ Monday: { open: "9:00 AM", close: "5:00 PM" }, ... }`
+3. Services must match existing categories for filters to work
+4. Run: `pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts`
+5. Verify in Drizzle Studio: `pnpm run db:studio`
+
+### Modifying Database Schema
+
+1. Edit `src/lib/schema.ts` (use Drizzle syntax)
+2. Generate migration: `pnpm run db:generate`
+3. Review migration in `drizzle/` folder
+4. Apply: `pnpm run db:migrate`
+5. Update related TypeScript types (inferred from schema)
+
+### Working with AI Chat Tools
+
+1. Tool definitions in `src/app/api/chat/route.ts` (`tools` object)
+2. Add Zod schema for input validation (`z.object()`)
+3. Implement `execute` function (can be async, call DB/external APIs)
+4. Return serializable JSON (no functions, undefined → null)
+5. Update system prompt if tool requires special instructions
+6. Test with user messages that trigger tool calls
+
+### Map Component Changes
+
+- **Markers**: Edit `MapView.tsx` marker rendering logic
+- **Filters**: Update `pageClient.tsx` filter state and logic
+- **Search**: Modify `MapSearchBar.tsx` and server-side data fetching
+- **Popups**: Customize `LocationPopup.tsx` for different data displays
+
+## Important Patterns
+
+### Protected Routes
+
+```typescript
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+export default async function ProtectedPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    redirect("/");
+  }
+  // ... authenticated content
+}
 ```
 
-## Documentation Files
+### Client-Side Auth Hooks
 
-The project includes technical documentation in `docs/`:
+```typescript
+import { useSession } from "@/lib/auth-client";
 
-- `docs/technical/ai/streaming.md` - AI streaming implementation guide
-- `docs/technical/ai/structured-data.md` - Structured data extraction
-- `docs/technical/react-markdown.md` - Markdown rendering guide
-- `docs/technical/betterauth/polar.md` - Polar payment integration
-- `docs/business/starter-prompt.md` - Business context for AI prompts
+export default function Component() {
+  const { data: session, isPending } = useSession();
+  // ... use session data
+}
+```
 
-## Guidelines for AI Assistants
+### Database Queries (Drizzle)
 
-### CRITICAL RULES
+```typescript
+import { db } from "@/lib/db";
+import { foodBanks } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
-1. **ALWAYS run lint and typecheck** after completing changes:
+// Find all
+const all = await db.select().from(foodBanks);
 
-   ```bash
-   npm run lint && npm run typecheck
-   ```
+// With filter
+const filtered = await db.select().from(foodBanks).where(eq(foodBanks.state, "CA"));
 
-2. **NEVER start the dev server yourself**
+// Relational queries (use db.query)
+const withRelations = await db.query.foodBanks.findMany({
+  where: (fb, { eq }) => eq(fb.id, id),
+});
+```
 
-   - If you need dev server output, ask the user to provide it
-   - Don't run `npm run dev` or `pnpm dev`
+### OpenRouter AI Integration
 
-3. **Use OpenRouter, NOT OpenAI directly**
+```typescript
+import { openrouter } from "@openrouter/ai-sdk-provider";
+import { streamText } from "ai";
 
-   - Import from `@openrouter/ai-sdk-provider`
-   - Use `openrouter()` function, not `openai()`
-   - Model names follow OpenRouter format: `provider/model-name`
+const result = streamText({
+  model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini"),
+  system: "System prompt here",
+  messages: convertToModelMessages(messages),
+  tools: { /* tool definitions */ },
+});
+```
 
-4. **Styling Guidelines**
+**CRITICAL**: Always use `openrouter()` from `@openrouter/ai-sdk-provider`, NOT `openai()` from `@ai-sdk/openai`.
 
-   - Stick to standard Tailwind CSS utility classes
-   - Use shadcn/ui color tokens (e.g., `bg-background`, `text-foreground`)
-   - Avoid custom colors unless explicitly requested
-   - Support dark mode with appropriate Tailwind classes
+## Known Issues & Active Work
 
-5. **Authentication**
+### Current Bugs (see GitHub issues)
 
-   - Server-side: Import from `@/lib/auth` (Better Auth instance)
-   - Client-side: Import hooks from `@/lib/auth-client`
-   - Protected routes should check session in Server Components
-   - Use existing auth components from `src/components/auth/`
+1. **Map markers not rendering** after Supabase seed - likely data loading/hydration issue
+2. **Chat blank responses** after ZIP code input - tool execution/serialization problem
+3. **Community page static** - needs design/content for Phase 1 completion
 
-6. **Database Operations**
+### Context Files
 
-   - Use Drizzle ORM (imported from `@/lib/db`)
-   - Schema is defined in `@/lib/schema`
-   - Always run migrations after schema changes
-   - PostgreSQL is the database (not SQLite, MySQL, etc.)
+The `context/` directory maintains project memory between sessions:
 
-7. **Component Creation**
+- `context/decisions.md` - Architecture decisions with rationale
+- `context/state.md` - Active tasks, blockers, next steps
+- `context/info.md` - Vision, roadmap, key files reference
+- `context/insights.md` - Lessons learned, patterns
+- `context/git.md` - Git workflow notes
 
-   - Use existing shadcn/ui components when possible
-   - Follow the established patterns in `src/components/ui/`
-   - Support both light and dark modes
-   - Use TypeScript with proper types
+**Update these files** when making significant changes or discoveries.
 
-8. **API Routes**
-   - Follow Next.js 15 App Router conventions
-   - Use Route Handlers (route.ts files)
-   - Return Response objects
-   - Handle errors appropriately
+## Testing & Validation
 
-### Best Practices
+Before considering work complete:
 
-- Read existing code patterns before creating new features
-- Maintain consistency with established file structure
-- Use the documentation files when implementing related features
-- Test changes with lint and typecheck before considering complete
-- When modifying AI functionality, refer to `docs/technical/ai/` guides
+1. **Always run**: `pnpm lint && pnpm typecheck`
+2. **Manual testing**:
+   - Map: Verify markers appear, filters work, popup opens
+   - Chat: Test intent buttons, tool calls, quick actions
+   - Auth: Sign in/out flow, protected route redirects
+3. **Database**: Check Drizzle Studio for expected data
+4. **Mobile**: Test responsive layout (375px width minimum)
 
-### Common Tasks
+## Styling Guidelines
 
-**Adding a new page:**
-
-1. Create in `src/app/[route]/page.tsx`
-2. Use Server Components by default
-3. Add to navigation if needed
-
-**Adding a new API route:**
-
-1. Create in `src/app/api/[route]/route.ts`
-2. Export HTTP method handlers (GET, POST, etc.)
-3. Use proper TypeScript types
-
-**Adding authentication to a page:**
-
-1. Import auth instance: `import { auth } from "@/lib/auth"`
-2. Get session: `const session = await auth.api.getSession({ headers: await headers() })`
-3. Check session and redirect if needed
-
-**Working with the database:**
-
-1. Update schema in `src/lib/schema.ts`
-2. Generate migration: `npm run db:generate`
-3. Apply migration: `npm run db:migrate`
-4. Import `db` from `@/lib/db` to query
-
-**Modifying AI chat:**
-
-1. Backend: `src/app/api/chat/route.ts`
-2. Frontend: `src/app/chat/page.tsx`
-3. Reference streaming docs: `docs/technical/ai/streaming.md`
-4. Remember to use OpenRouter, not direct OpenAI
+- Use Tailwind utility classes (Tailwind CSS 4)
+- Follow shadcn/ui color tokens: `bg-background`, `text-foreground`, `text-muted-foreground`
+- Support dark mode with Tailwind's `dark:` prefix (next-themes provider in layout)
+- FoodShare brand colors:
+  - Primary gradient: `from-primary-start to-primary-end`
+  - Accent: `text-primary`, `bg-primary`
+- Mobile-first: Design for 375px, enhance for larger screens
+- Use `cn()` utility from `@/lib/utils` for conditional classes
 
 ## Package Manager
 
-This project uses **pnpm** (see `pnpm-lock.yaml`). When running commands:
+This project uses **pnpm**. Always use `pnpm` commands, not `npm` or `yarn`.
 
-- Use `pnpm` instead of `npm` when possible
-- Scripts defined in package.json work with `pnpm run [script]`
+## Documentation
+
+Technical guides in `docs/`:
+- `docs/technical/ai/streaming.md` - AI streaming patterns
+- `docs/technical/ai/structured-data.md` - Structured output extraction
+- `docs/technical/react-markdown.md` - Markdown rendering in chat
+- `docs/business/starter-prompt.md` - Business context for prompts
+
+## Contributing
+
+When working on FoodShare:
+
+1. Check `context/state.md` for current priorities
+2. Reference GitHub project board: https://github.com/users/zenchantlive/projects/2
+3. Create feature branches from `master`: `git checkout -b feat/description`
+4. Run lint/typecheck before committing
+5. Update context files if making architectural changes
+6. Link commits to GitHub issues when applicable
+
+## Support
+
+- GitHub Issues: https://github.com/zenchantlive/TheFeed/issues
+- Project Board: https://github.com/users/zenchantlive/projects/2
