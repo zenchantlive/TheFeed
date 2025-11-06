@@ -21,9 +21,12 @@ export function useSavedLocation(foodBankId: string) {
       if (response.ok) {
         const data = await response.json();
         setIsSaved(data.isSaved);
+      } else {
+        setIsSaved(false);
       }
     } catch (error) {
       console.error("Error checking saved status:", error);
+      setIsSaved(false);
     }
   }, [foodBankId, session?.user]);
 
