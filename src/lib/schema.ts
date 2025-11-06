@@ -1,4 +1,21 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  json,
+  real,
+} from "drizzle-orm/pg-core";
+import { randomUUID } from "crypto";
+
+export type HoursType = Record<
+  string,
+  {
+    open: string;
+    close: string;
+    closed?: boolean;
+  }
+>;
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -49,3 +66,52 @@ export const verification = pgTable("verification", {
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
+
+export const foodBanks = pgTable("food_banks", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  zipCode: text("zip_code").notNull(),
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  phone: text("phone"),
+  website: text("website"),
+  description: text("description"),
+  services: text("services").array(),
+  hours: json("hours").$type<HoursType>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const savedLocations = pgTable("saved_locations", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  foodBankId: text("food_bank_id")
+    .notNull()
+    .references(() => foodBanks.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  sessionId: text("session_id"),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: json("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type FoodBank = typeof foodBanks.$inferSelect;
+export type SavedLocation = typeof savedLocations.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;

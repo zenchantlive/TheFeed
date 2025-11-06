@@ -1,268 +1,100 @@
-# Agentic Coding Boilerplate
+# FoodShare
 
-A complete agentic coding boilerplate with authentication, PostgreSQL database, AI chat functionality, and modern UI components - perfect for building AI-powered applications and autonomous agents.
+FoodShare is a mobile‑first Next.js application that helps people discover nearby food assistance, chat with an AI guide, and stay connected to community programs. It extends the Agentic Coding Starter Kit with map discovery, FoodShare branding, and a Supabase‑backed data layer.
 
-## 🚀 Features
+## Highlights
 
-- **🔐 Authentication**: Better Auth with Google OAuth integration
-- **🗃️ Database**: Drizzle ORM with PostgreSQL
-- **🤖 AI Integration**: Vercel AI SDK with OpenRouter (access to 100+ AI models)
-- **🎨 UI Components**: shadcn/ui with Tailwind CSS
-- **⚡ Modern Stack**: Next.js 15, React 19, TypeScript
-- **📱 Responsive**: Mobile-first design approach
+- **Guided assistance** – AI chat tuned for food insecurity scenarios, complete with quick actions and intents.
+- **Interactive map** – Mapbox GL map that lists seeded Bay Area food banks with hours, services, and directions.
+- **Community stories** – Curated stories and programs to showcase future social features.
+- **Account experience** – Better Auth + Google OAuth with saved locations and onboarding tips.
+- **Modern stack** – Next.js 15, React 19, TypeScript, Tailwind, Drizzle ORM, Vercel AI SDK.
 
-## 🎥 Video Tutorial
+## Getting Started
 
-Watch the complete walkthrough of this agentic coding template:
-
-[![Agentic Coding Boilerplate Tutorial](https://img.youtube.com/vi/T0zFZsr_d0Q/maxresdefault.jpg)](https://youtu.be/T0zFZsr_d0Q)
-
-<a href="https://youtu.be/T0zFZsr_d0Q" target="_blank" rel="noopener noreferrer">🔗 Watch on YouTube</a>
-
-## ☕ Support This Project
-
-If this boilerplate helped you build something awesome, consider buying me a coffee!
-
-[![Buy me a coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/leonvanzyl)
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed on your machine:
-
-- **Node.js**: Version 18.0 or higher (<a href="https://nodejs.org/" target="_blank">Download here</a>)
-- **Git**: For cloning the repository (<a href="https://git-scm.com/" target="_blank">Download here</a>)
-- **PostgreSQL**: Either locally installed or access to a hosted service like Vercel Postgres
-
-## 🛠️ Quick Setup
-
-### Automated Setup (Recommended)
-
-Get started with a single command:
+### 1. Clone & Install
 
 ```bash
-npx create-agentic-app@latest my-app
-cd my-app
+git clone https://github.com/zenchantlive/TheFeed.git
+cd TheFeed/foodshare
+pnpm install
 ```
 
-Or create in the current directory:
+> **Prereqs**: Node 18+, pnpm 9+, Git.
 
-```bash
-npx create-agentic-app@latest .
-```
+### 2. Environment Variables
 
-The CLI will:
-- Copy all boilerplate files
-- Install dependencies with your preferred package manager (pnpm/npm/yarn)
-- Set up your environment file
-
-**Next steps after running the command:**
-
-1. Update `.env` with your API keys and database credentials
-2. Start the database: `docker compose up -d`
-3. Run migrations: `npm run db:migrate`
-4. Start dev server: `npm run dev`
-
-### Manual Setup (Alternative)
-
-If you prefer to set up manually:
-
-**1. Clone or Download the Repository**
-
-**Option A: Clone with Git**
-
-```bash
-git clone https://github.com/leonvanzyl/agentic-coding-starter-kit.git
-cd agentic-coding-starter-kit
-```
-
-**Option B: Download ZIP**
-Download the repository as a ZIP file and extract it to your desired location.
-
-**2. Install Dependencies**
-
-```bash
-npm install
-```
-
-**3. Environment Setup**
-
-Copy the example environment file:
+Copy the template and fill in secrets:
 
 ```bash
 cp env.example .env
 ```
 
-Fill in your environment variables in the `.env` file:
+Required values:
 
-```env
-# Database
-POSTGRES_URL="postgresql://username:password@localhost:5432/your_database_name"
+| Key | Description |
+| --- | --- |
+| `POSTGRES_URL` | Supabase (or Postgres) connection string. Keep `sslmode=require` if using Supabase. |
+| `BETTER_AUTH_SECRET` | 32+ char random string (`openssl rand -hex 32`). |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth credentials for Google sign‑in. |
+| `NEXT_PUBLIC_APP_URL` | Usually `http://localhost:3000` in development. |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Public Mapbox access token for the map UI. |
+| `OPENROUTER_API_KEY` | API key for chat (or swap to another provider in `src/app/api/chat/route.ts`). |
+| `OPENROUTER_MODEL` | Optional override (defaults to `openai/gpt-4.1-mini`). |
+| `POLAR_WEBHOOK_SECRET` | Only needed if enabling Polar billing webhooks. |
 
-# Authentication - Better Auth
-BETTER_AUTH_SECRET="your-random-32-character-secret-key-here"
+### 3. Database
 
-# Google OAuth (Get from Google Cloud Console)
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# AI Integration via OpenRouter (Optional - for chat functionality)
-# Get your API key from: https://openrouter.ai/settings/keys
-# View available models at: https://openrouter.ai/models
-OPENROUTER_API_KEY="sk-or-v1-your-openrouter-api-key-here"
-OPENROUTER_MODEL="openai/gpt-5-mini"
-
-# App URL (for production deployments)
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
-
-**4. Database Setup**
-
-Generate and run database migrations:
+We use Drizzle ORM. Once `POSTGRES_URL` is set:
 
 ```bash
-npm run db:generate
-npm run db:migrate
+pnpm run db:generate   # when schema changes
+pnpm run db:migrate    # applies migrations
+pnpm exec tsx scripts/seed-food-banks.ts   # optional, loads sample Bay Area food banks
 ```
 
-**5. Start the Development Server**
+### 4. Run the App
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
-Your application will be available at [http://localhost:3000](http://localhost:3000)
+Visit `http://localhost:3000`, sign in with Google, and explore:
 
-## ⚙️ Service Configuration
+- `/chat` – try the intents or type “I’m hungry and in San Jose”.
+- `/map` – inspect seeded food banks, toggle filters, open the popup.
+- `/community` – view Phase 1 story/program cards.
+- `/profile` – review saved locations (seed script adds demo data).
 
-### PostgreSQL Database on Vercel
+## Scripts
 
-1. Go to <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a>
-2. Navigate to the **Storage** tab
-3. Click **Create** → **Postgres**
-4. Choose your database name and region
-5. Copy the `POSTGRES_URL` from the `.env.local` tab
-6. Add it to your `.env` file
+| Script | Description |
+| --- | --- |
+| `pnpm dev` | Start the development server (Turbopack). |
+| `pnpm build` | Production build; runs migrations first. |
+| `pnpm start` | Launch the production server. |
+| `pnpm lint` | Run ESLint. |
+| `pnpm typecheck` | Run TypeScript checks. |
+| `pnpm run db:*` | Drizzle helper scripts (generate / migrate / studio / reset). |
 
-### Google OAuth Credentials
+## Git Workflow
 
-1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a>
-2. Create a new project or select an existing one
-3. Navigate to **Credentials** → **Create Credentials** → **OAuth 2.0 Client ID**
-4. Set application type to **Web application**
-5. Add authorized redirect URIs:
-   - `http://localhost:3000/api/auth/callback/google` (development)
-   - `https://yourdomain.com/api/auth/callback/google` (production)
-6. Copy the **Client ID** and **Client Secret** to your `.env` file
+1. Create a branch for each fix or feature (`git checkout -b feat/map-fixes`).
+2. Run `pnpm typecheck` and `pnpm lint` before committing.
+3. Submit PRs against `main`, referencing the relevant GitHub issue.
 
-### OpenRouter API Key
+## Current Focus & Known Issues
 
-1. Go to <a href="https://openrouter.ai/" target="_blank">OpenRouter</a>
-2. Sign up or log in to your account
-3. Navigate to **Settings** → **Keys** or visit <a href="https://openrouter.ai/settings/keys" target="_blank">Keys Settings</a>
-4. Click **Create Key** and give it a name
-5. Copy the API key and add it to your `.env` file as `OPENROUTER_API_KEY`
-6. Browse available models at <a href="https://openrouter.ai/models" target="_blank">OpenRouter Models</a>
+- Map markers and search need refinement with live Supabase data.
+- AI chat occasionally returns an empty response after zip-code prompts.
+- Community feed is still static; real social features are scoped for later phases.
 
-## 🗂️ Project Structure
+Track progress in GitHub issues and update this section as we close items.
 
-```
-src/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   │   ├── auth/          # Authentication endpoints
-│   │   └── chat/          # AI chat endpoint
-│   ├── chat/              # AI chat page
-│   ├── dashboard/         # User dashboard
-│   └── page.tsx           # Home page
-├── components/            # React components
-│   ├── auth/             # Authentication components
-│   └── ui/               # shadcn/ui components
-└── lib/                  # Utilities and configurations
-    ├── auth.ts           # Better Auth configuration
-    ├── auth-client.ts    # Client-side auth utilities
-    ├── db.ts             # Database connection
-    ├── schema.ts         # Database schema
-    └── utils.ts          # General utilities
-```
+## Contributing
 
-## 🔧 Available Scripts
+See [CONTRIBUTING.md](CONTRIBUTING.md) for our branching, linting, and PR guidelines. Please respect the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-```bash
-npm run dev          # Start development server with Turbopack
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run db:generate  # Generate database migrations
-npm run db:migrate   # Run database migrations
-npm run db:push      # Push schema changes to database
-npm run db:studio    # Open Drizzle Studio (database GUI)
-npm run db:dev       # Push schema for development
-npm run db:reset     # Reset database (drop all tables)
-```
+## License
 
-## 📖 Pages Overview
-
-- **Home (`/`)**: Landing page with setup instructions and features overview
-- **Dashboard (`/dashboard`)**: Protected user dashboard with profile information
-- **Chat (`/chat`)**: AI-powered chat interface using OpenRouter (requires authentication)
-
-## 🚀 Deployment
-
-### Deploy to Vercel (Recommended)
-
-1. Install the Vercel CLI globally:
-
-   ```bash
-   npm install -g vercel
-   ```
-
-2. Deploy your application:
-
-   ```bash
-   vercel --prod
-   ```
-
-3. Follow the prompts to configure your deployment
-4. Add your environment variables when prompted or via the Vercel dashboard
-
-### Production Environment Variables
-
-Ensure these are set in your production environment:
-
-- `POSTGRES_URL` - Production PostgreSQL connection string
-- `BETTER_AUTH_SECRET` - Secure random 32+ character string
-- `GOOGLE_CLIENT_ID` - Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth Client Secret
-- `OPENROUTER_API_KEY` - OpenRouter API key (optional, for AI chat functionality)
-- `OPENROUTER_MODEL` - Model name from OpenRouter (optional, defaults to openai/gpt-5-mini)
-- `NEXT_PUBLIC_APP_URL` - Your production domain
-
-## 🎥 Tutorial Video
-
-Watch my comprehensive tutorial on how to use this agentic coding boilerplate to build AI-powered applications:
-
-<a href="https://youtu.be/T0zFZsr_d0Q" target="_blank" rel="noopener noreferrer">📺 YouTube Tutorial - Building with Agentic Coding Boilerplate</a>
-
-## 🤝 Contributing
-
-1. Fork this repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Need Help?
-
-If you encounter any issues:
-
-1. Check the [Issues](https://github.com/leonvanzyl/agentic-coding-starter-kit/issues) section
-2. Review the documentation above
-3. Create a new issue with detailed information about your problem
-
----
-
-**Happy coding! 🚀**
+FoodShare builds on the Agentic Coding Starter Kit (MIT licensed). Unless stated otherwise, contributions are released under MIT. See [LICENSE](LICENSE) for details.
