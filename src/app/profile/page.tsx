@@ -16,8 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LocationCard } from "@/components/foodshare/location-card";
 import { SignInButton } from "@/components/auth/sign-in-button";
+import { SavedLocationsList } from "@/components/profile/SavedLocationsList";
 import Link from "next/link";
 import {
   BookmarkPlus,
@@ -28,7 +28,6 @@ import {
   Info,
   LifeBuoy,
 } from "lucide-react";
-import { isCurrentlyOpen } from "@/lib/geolocation";
 
 type SavedLocationRecord = {
   id: string;
@@ -243,28 +242,7 @@ export default async function ProfilePage() {
 
         {user ? (
           saved.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {saved
-                .filter((entry) => entry.foodBank)
-                .map((entry) => {
-                  const bank = entry.foodBank!;
-                  const isOpen = bank.hours ? isCurrentlyOpen(bank.hours) : false;
-                  return (
-                    <LocationCard
-                      key={entry.id}
-                      location={bank}
-                      isOpen={isOpen}
-                      actionSlot={
-                        <Button asChild variant="outline" className="w-full">
-                          <Link href={`/map?highlight=${bank.id}`}>
-                            View on map
-                          </Link>
-                        </Button>
-                      }
-                    />
-                  );
-                })}
-            </div>
+            <SavedLocationsList savedLocations={saved} />
           ) : (
             <Card className="rounded-3xl border border-dashed border-border/60 bg-muted/40">
               <CardContent className="flex flex-col gap-3 p-6 text-sm text-muted-foreground">

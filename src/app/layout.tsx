@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Coding Boilerplate",
+  title: "FoodShare - Find Food Assistance Near You",
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling - perfect for building AI-powered applications and autonomous agents by Leon van Zyl",
+    "FoodShare helps you discover nearby food banks, chat with an AI guide for personalized assistance, and stay connected to community programs. Find food resources in Sacramento and beyond.",
 };
 
 export default function RootLayout({

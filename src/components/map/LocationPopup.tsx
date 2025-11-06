@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { LocationCard } from "@/components/foodshare/location-card";
 import type { HoursType } from "@/lib/schema";
-import { X } from "lucide-react";
+import { X, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSavedLocation } from "@/hooks/use-saved-locations";
 
 export type LocationPopupProps = {
   isOpen: boolean;
@@ -38,6 +39,27 @@ export function LocationPopup({
   onDirections,
   className,
 }: LocationPopupProps) {
+  const {
+    isSaved,
+    isLoading,
+    toggleSave,
+    checkSaved,
+    isSignedIn,
+  } = useSavedLocation(foodBank.id);
+
+  useEffect(() => {
+    if (isOpen && isSignedIn) {
+      checkSaved();
+    }
+  }, [isOpen, checkSaved, isSignedIn]);
+
+  const handleToggleSave = async () => {
+    const result = await toggleSave();
+    if (!result.success && result.error) {
+      alert(result.error);
+    }
+  };
+
   const directionsAction = useMemo(() => {
     if (!onDirections) {
       const destination = encodeURIComponent(
@@ -75,13 +97,35 @@ export function LocationPopup({
             isOpen={Boolean(currentlyOpen)}
             onDirections={onDirections}
             actionSlot={
-              directionsAction ? (
-                <Button asChild variant="outline" className="w-full">
-                  <a href={directionsAction} target="_blank" rel="noreferrer">
-                    Open in Maps
-                  </a>
-                </Button>
-              ) : undefined
+              <>
+                {isSignedIn && (
+                  <Button
+                    onClick={handleToggleSave}
+                    disabled={isLoading}
+                    variant={isSaved ? "default" : "outline"}
+                    className="w-full"
+                  >
+                    {isSaved ? (
+                      <>
+                        <BookmarkCheck className="mr-2 h-4 w-4" />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Save Location
+                      </>
+                    )}
+                  </Button>
+                )}
+                {directionsAction && (
+                  <Button asChild variant="outline" className="w-full">
+                    <a href={directionsAction} target="_blank" rel="noreferrer">
+                      Open in Maps
+                    </a>
+                  </Button>
+                )}
+              </>
             }
           />
         </div>
