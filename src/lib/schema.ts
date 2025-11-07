@@ -6,6 +6,7 @@ import {
   json,
   real,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export type HoursType = Record<
@@ -112,6 +113,130 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const communityPosts = pgTable("community_posts", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  authorName: text("author_name").notNull(), // Cached from user.name for display
+  mood: text("mood").notNull(), // "hungry" | "full" | "update"
+  kind: text("kind").notNull(), // "share" | "request" | "update" | "resource"
+  body: text("body").notNull(),
+  location: text("location"), // Optional location string like "13th & P St"
+  availableUntil: text("available_until"), // Optional time string like "8:30 pm"
+  tags: text("tags").array(), // ["Veggie friendly", "Warm meal"]
+  status: text("status").default("community"), // "verified" | "community" | "needs-love"
+  latitude: real("latitude"), // Optional coordinates for proximity
+  longitude: real("longitude"),
+  isDemo: boolean("is_demo").default(false), // Flag for demo/seed data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const postComments = pgTable("post_comments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  postId: text("post_id")
+    .notNull()
+    .references(() => communityPosts.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  authorName: text("author_name").notNull(), // Cached for display
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const postReactions = pgTable("post_reactions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  postId: text("post_id")
+    .notNull()
+    .references(() => communityPosts.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // "on-it" | "helpful"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const commentReactions = pgTable("comment_reactions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  commentId: text("comment_id")
+    .notNull()
+    .references(() => postComments.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // Currently just "helpful"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type FoodBank = typeof foodBanks.$inferSelect;
 export type SavedLocation = typeof savedLocations.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+export type CommunityPost = typeof communityPosts.$inferSelect;
+export type PostComment = typeof postComments.$inferSelect;
+export type PostReaction = typeof postReactions.$inferSelect;
+export type CommentReaction = typeof commentReactions.$inferSelect;
+
+// Relations
+export const savedLocationsRelations = relations(savedLocations, ({ one }) => ({
+  user: one(user, {
+    fields: [savedLocations.userId],
+    references: [user.id],
+  }),
+  foodBank: one(foodBanks, {
+    fields: [savedLocations.foodBankId],
+    references: [foodBanks.id],
+  }),
+}));
+
+export const communityPostsRelations = relations(communityPosts, ({ one, many }) => ({
+  user: one(user, {
+    fields: [communityPosts.userId],
+    references: [user.id],
+  }),
+  comments: many(postComments),
+  reactions: many(postReactions),
+}));
+
+export const postCommentsRelations = relations(postComments, ({ one, many }) => ({
+  post: one(communityPosts, {
+    fields: [postComments.postId],
+    references: [communityPosts.id],
+  }),
+  user: one(user, {
+    fields: [postComments.userId],
+    references: [user.id],
+  }),
+  reactions: many(commentReactions),
+}));
+
+export const postReactionsRelations = relations(postReactions, ({ one }) => ({
+  post: one(communityPosts, {
+    fields: [postReactions.postId],
+    references: [communityPosts.id],
+  }),
+  user: one(user, {
+    fields: [postReactions.userId],
+    references: [user.id],
+  }),
+}));
+
+export const commentReactionsRelations = relations(commentReactions, ({ one }) => ({
+  comment: one(postComments, {
+    fields: [commentReactions.commentId],
+    references: [postComments.id],
+  }),
+  user: one(user, {
+    fields: [commentReactions.userId],
+    references: [user.id],
+  }),
+}));

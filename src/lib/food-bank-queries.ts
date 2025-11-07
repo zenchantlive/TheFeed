@@ -81,7 +81,8 @@ export async function searchFoodBanks({
       return true;
     })
     .sort((a, b) => a.distance - b.distance)
-    .map(({ matchesServices: _matchesServices, ...rest }) => rest);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    .map(({ matchesServices, ...rest }) => rest);
 
   return typeof limit === "number" ? results.slice(0, limit) : results;
 }

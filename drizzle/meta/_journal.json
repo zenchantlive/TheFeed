@@ -8,6 +8,13 @@
       "when": 1762386669576,
       "tag": "0000_loving_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762551821528,
+      "tag": "0001_wooden_sunfire",
+      "breakpoints": true
     }
   ]
 }
