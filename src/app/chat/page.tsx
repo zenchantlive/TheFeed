@@ -162,8 +162,10 @@ export default function ChatPage() {
     }
   }, [messages.length]);
 
+  // Handle URL parameters with clear priority: intent first, then prefill
   useEffect(() => {
     if (!searchParams) return;
+
     const intentParam = searchParams.get("intent");
     if (
       !hasAppliedIntent &&
@@ -181,18 +183,16 @@ export default function ChatPage() {
           },
         ],
       });
+      return; // Prioritize intent over prefill
     }
-  }, [searchParams, hasAppliedIntent, sendMessage]);
 
-  useEffect(() => {
-    if (!searchParams) return;
     const prefillParam = searchParams.get("prefill");
     if (prefillParam && !hasPrefilledComposer) {
       setComposerValue(prefillParam);
       setHasPrefilledComposer(true);
       setIsWelcomeVisible(false);
     }
-  }, [searchParams, hasPrefilledComposer]);
+  }, [searchParams, hasAppliedIntent, hasPrefilledComposer, sendMessage]);
 
   const lastAssistantMessage = useMemo(
     () =>
