@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TheFeed Community Mock</title>
+  <style>
+    :root {
+      --transition-speed: 220ms;
+      --font-family: "Inter", "Segoe UI", sans-serif;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+      --border-weight: 1px;
+      --shadow-soft: 0 18px 36px -18px rgba(0, 0, 0, 0.25);
+    }
+
+    html[data-theme="light"] {
+      --bg: #faf9f6;
+      --bg-elevated: #ffffff;
+      --bg-muted: #f5f3ed;
+      --text: #2d2d34;
+      --text-secondary: #595963;
+      --text-tertiary: #8b8b92;
+      --border: #e6e1d8;
+      --primary: #52796f;
+      --primary-hover: #3f5e56;
+      --accent: #e07a5f;
+      --accent-soft: rgba(224, 122, 95, 0.12);
+      --success: #2f855a;
+      --warning: #d97706;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #2d2d34;
+      --bg-elevated: #3a3a44;
+      --bg-muted: #34343c;
+      --text: #fffbf0;
+      --text-secondary: #cbc7ba;
+      --text-tertiary: #9f998f;
+      --border: rgba(255, 251, 240, 0.14);
+      --primary: #8fa998;
+      --primary-hover: #75907f;
+      --accent: #f4a261;
+      --accent-soft: rgba(244, 162, 97, 0.16);
+      --success: #80d0a7;
+      --warning: #f6c177;
+      --shadow-soft: 0 18px 36px -18px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-family);
+      background: var(--bg);
+      color: var(--text);
+      transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      padding: 32px clamp(24px, 5vw, 64px) 64px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-toggle {
+      border: var(--border-weight) solid var(--border);
+      background: var(--bg-elevated);
+      border-radius: 999px;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background var(--transition-speed) ease, border var(--transition-speed) ease;
+    }
+
+    .theme-toggle span {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .profile-chip {
+      border-radius: 999px;
+      padding: 8px 18px;
+      background: var(--bg-elevated);
+      border: var(--border-weight) solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 760px) minmax(260px, 320px);
+      gap: 36px;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .community-panel {
+        order: -1;
+      }
+    }
+
+    .card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      border: var(--border-weight) solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow-soft);
+      transition: background var(--transition-speed) ease, border var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+    }
+
+    .meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-tertiary);
+    }
+
+    .meta-strip strong {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .composer {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .composer textarea {
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: var(--border-weight) solid var(--border);
+      background: var(--bg-muted);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      padding: 16px 18px;
+      resize: vertical;
+      min-height: 72px;
+      outline: none;
+      transition: border var(--transition-speed) ease, background var(--transition-speed) ease;
+    }
+
+    .composer textarea:focus {
+      border-color: var(--primary);
+      background: var(--bg-elevated);
+    }
+
+    .mood-toggle {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .pill-button {
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform var(--transition-speed) ease, background var(--transition-speed) ease;
+    }
+
+    .pill-button.primary {
+      background: var(--primary);
+      color: var(--bg);
+    }
+
+    .pill-button.secondary {
+      background: transparent;
+      border: var(--border-weight) solid var(--primary);
+      color: var(--primary);
+    }
+
+    .pill-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .quick-chip {
+      background: var(--bg-muted);
+      color: var(--text-secondary);
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: var(--border-weight) solid transparent;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border var(--transition-speed) ease, background var(--transition-speed) ease, color var(--transition-speed) ease;
+    }
+
+    .quick-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .post {
+      background: var(--bg-elevated);
+      border: var(--border-weight) solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+      transition: background var(--transition-speed) ease, border var(--transition-speed) ease;
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .author {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: var(--bg);
+    }
+
+    .avatar[data-tone="sage"] { background: #52796f; }
+    .avatar[data-tone="peach"] { background: #e07a5f; }
+    .avatar[data-tone="charcoal"] { background: #3a3a44; color: var(--bg); }
+    .avatar[data-tone="mint"] { background: #8fa998; color: #2d2d34; }
+
+    .author-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .author-details h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .author-meta {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .badge.guide {
+      background: rgba(82, 121, 111, 0.18);
+      color: var(--primary);
+    }
+
+    html[data-theme="dark"] .badge.guide {
+      background: rgba(143, 169, 152, 0.16);
+    }
+
+    .badge.unverified {
+      background: rgba(217, 119, 6, 0.18);
+      color: var(--warning);
+    }
+
+    .badge.verified {
+      background: rgba(47, 133, 90, 0.16);
+      color: var(--success);
+    }
+
+    .post-content {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .post-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .post-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .ghost-button {
+      border-radius: 999px;
+      border: var(--border-weight) solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 10px 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      transition: border var(--transition-speed) ease, color var(--transition-speed) ease, background var(--transition-speed) ease;
+    }
+
+    .ghost-button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(82, 121, 111, 0.08);
+    }
+
+    .replies {
+      background: var(--bg-muted);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    html[data-theme="dark"] .replies {
+      background: rgba(255, 251, 240, 0.05);
+    }
+
+    .reply {
+      display: flex;
+      gap: 12px;
+    }
+
+    .reply-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .reply-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .community-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel-card {
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      border: var(--border-weight) solid var(--border);
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel-card h4 {
+      margin: 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .mini-pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--bg-muted);
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .list-item {
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      background: var(--bg-muted);
+      border: var(--border-weight) solid transparent;
+      display: grid;
+      gap: 6px;
+      transition: border var(--transition-speed) ease;
+    }
+
+    .list-item:hover {
+      border-color: var(--primary);
+    }
+
+    .list-item strong {
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .list-item span {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: var(--border-weight) solid var(--border);
+      background: transparent;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: border var(--transition-speed) ease, color var(--transition-speed) ease, background var(--transition-speed) ease;
+    }
+
+    .filter-chip.active,
+    .filter-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(82, 121, 111, 0.08);
+    }
+
+    .inline-link {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .inline-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">🍲</div>
+        <div>
+          <h1 style="margin: 0; font-size: 24px;">TheFeed</h1>
+          <div style="font-size: 13px; color: var(--text-tertiary);">Where the neighborhood swaps bites &amp; banter</div>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <nav style="display:flex; gap:10px;">
+          <span class="filter-chip active">Find food</span>
+          <span class="filter-chip">Share food</span>
+          <span class="filter-chip">Guides</span>
+          <span class="filter-chip">AI sous-chef</span>
+        </nav>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span>Switch vibe</span>
+          <span id="themeIcon">🌞</span>
+        </button>
+        <div class="profile-chip">Hi, Jaz • 2.4 mi radius</div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="main-column" style="display:grid; gap:28px;">
+        <div class="card">
+          <div class="meta-strip">
+            <strong>Midtown • 2 miles</strong>
+            <span>7 neighbors swapping plates right now</span>
+          </div>
+          <div class="composer">
+            <div class="mood-toggle">
+              <button class="pill-button primary">🍽️ I'm hungry</button>
+              <button class="pill-button secondary">🍲 I'm full</button>
+            </div>
+            <textarea placeholder="What's cooking? Shout your cravings or leftovers..." aria-label="What's cooking?"></textarea>
+            <div class="quick-actions">
+              <span class="quick-chip">Suggest a pickup window</span>
+              <span class="quick-chip">Tag pantry or guide</span>
+              <span class="quick-chip">Ask for dietary vibes</span>
+              <span class="quick-chip">Add poll: potluck Friday?</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--text-tertiary);">
+              <span>Visible to neighbors within 2 mi • Keep it tasty, keep it kind</span>
+              <button class="pill-button primary" style="padding:12px 20px; font-size:14px;">Post to the block</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+          <div>
+            <div style="font-size:14px; color:var(--text-tertiary);">Tonight's menu</div>
+            <div style="font-size:18px; font-weight:600;">Latest bites around you</div>
+          </div>
+          <div class="filters">
+            <button class="filter-chip active">Fresh drops</button>
+            <button class="filter-chip">Open invites</button>
+            <button class="filter-chip">Unanswered cravings</button>
+            <button class="filter-chip">Community fridges</button>
+          </div>
+        </div>
+
+        <div class="feed">
+          <article class="post">
+            <div class="post-header">
+              <div class="author">
+                <div class="avatar" data-tone="sage">SA</div>
+                <div class="author-details">
+                  <h3>Sarah | Fermentation Fiend</h3>
+                  <div class="author-meta">
+                    <span>0.2 mi • posted 8 min ago</span>
+                    <span>Pickup near 15th &amp; J</span>
+                  </div>
+                </div>
+              </div>
+              <span class="badge verified">✓ 3 neighbors confirmed freshness</span>
+            </div>
+            <div class="post-content">
+              Sourdough Sunday strikes again! I've got two loaves still singing from the oven and a crate of honeycrisp apples. Porch pickup until 7pm — text me when you're en route so I can leave the light on.
+            </div>
+            <div class="post-tags">
+              <span>🍞 Vegetarian</span>
+              <span>⏰ Hot until 7pm</span>
+              <span>🤝 Porch pickup</span>
+            </div>
+            <div class="post-actions">
+              <button class="ghost-button">🤤 Call dibs</button>
+              <button class="ghost-button">💬 Ask a quick Q</button>
+              <button class="ghost-button">👍 Yum (14)</button>
+              <button class="ghost-button">🤝 On my way</button>
+            </div>
+          </article>
+
+          <article class="post">
+            <div class="post-header">
+              <div class="author">
+                <div class="avatar" data-tone="peach">MA</div>
+                <div class="author-details">
+                  <h3>Marcus | Halal Hero</h3>
+                  <div class="author-meta">
+                    <span>0.8 mi • posted 22 min ago</span>
+                    <span>Need help</span>
+                  </div>
+                </div>
+              </div>
+              <span class="badge" style="background: var(--accent-soft); color: var(--accent);">🙋 Craving backup</span>
+            </div>
+            <div class="post-content">
+              Anyone know where I can score halal-friendly groceries tonight? Happy to bike a little farther if it means dinner isn't just cereal again.
+            </div>
+            <div class="post-actions">
+              <button class="ghost-button">💡 Suggest a spot</button>
+              <button class="ghost-button">📥 Send a DM</button>
+              <button class="ghost-button">❤️ Boost visibility</button>
+            </div>
+            <div class="replies">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="font-size:14px;">2 spicy replies</strong>
+                <a class="inline-link" href="#">Follow thread</a>
+              </div>
+              <div class="reply">
+                <div class="avatar" data-tone="mint" style="width:36px; height:36px; font-size:14px;">GA</div>
+                <div class="reply-content">
+                  <strong>Guide Ahmed</strong>
+                  <span>Mercy Center restocked their halal meats this morning — they stay open till 8pm on Tuesdays.</span>
+                  <div class="reply-meta">
+                    <span>Guide • 6 min ago</span>
+                    <span>❤️ 5 folks found this tasty</span>
+                  </div>
+                </div>
+              </div>
+              <div class="reply">
+                <div class="avatar" data-tone="sage" style="width:36px; height:36px; font-size:14px;">ME</div>
+                <div class="reply-content">
+                  <strong>Mel | Pantry Pal</strong>
+                  <span>Also check Al-Noor Market on Stockton. Call ahead — they sometimes stash extra if you say you're biking!</span>
+                  <div class="reply-meta">
+                    <span>Neighbor • 3 min ago</span>
+                    <span>🤝 Offered pickup assist</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="post">
+            <div class="post-header">
+              <div class="author">
+                <div class="avatar" data-tone="charcoal">OP</div>
+                <div class="author-details">
+                  <h3>Oak Park Pantry Drop</h3>
+                  <div class="author-meta">
+                    <span>Community fridge • added 1 hr ago</span>
+                    <span>3725 MLK Jr Blvd</span>
+                  </div>
+                </div>
+              </div>
+              <span class="badge unverified">⚠️ Needs more neighbor tastings</span>
+            </div>
+            <div class="post-content">
+              New fridge alert! Jaz spotted a fresh restock at the Oak Park community pantry. Let's get eyes on it and confirm what's inside so we can keep the map spicy.
+            </div>
+            <div class="post-tags">
+              <span>🥫 Pantry</span>
+              <span>🕐 Open 24/7</span>
+              <span>📍 3725 MLK Jr Blvd</span>
+            </div>
+            <div class="post-actions">
+              <button class="ghost-button">👀 I checked it</button>
+              <button class="ghost-button">📸 Add fridge pics</button>
+              <button class="ghost-button">✅ Verify details</button>
+            </div>
+          </article>
+
+          <article class="post">
+            <div class="post-header">
+              <div class="author">
+                <div class="avatar" data-tone="mint">GM</div>
+                <div class="author-details">
+                  <h3>Guide Maria</h3>
+                  <div class="author-meta">
+                    <span>0.5 mi • posted 1 hr ago</span>
+                    <span>Guide drop</span>
+                  </div>
+                </div>
+              </div>
+              <span class="badge guide">⭐ Verified guide</span>
+            </div>
+            <div class="post-content">
+              Heads up fam: Sacred Heart is doing a produce flash sale — no paperwork, just bring a tote. Lots of greens, some dairy, and rumor has it: tamales.
+            </div>
+            <div class="post-tags">
+              <span>🍅 Fresh produce</span>
+              <span>⏰ Until 5pm</span>
+              <span>🚌 5 bus stops away</span>
+            </div>
+            <div class="post-actions">
+              <button class="ghost-button">🧭 Get me there</button>
+              <button class="ghost-button">🔔 Remind me later</button>
+              <button class="ghost-button">📦 Ask about leftovers</button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <aside class="community-panel">
+        <div class="panel-card">
+          <h4>🍽️ Tonight's hot dishes</h4>
+          <div class="stat-row">
+            <span>Simmering right now</span>
+            <span class="mini-pill">7 neighbors cooking</span>
+          </div>
+          <div class="list">
+            <div class="list-item">
+              <strong>Granny Rosa's pozole</strong>
+              <span>Ready until 9pm • 0.6 mi away</span>
+            </div>
+            <div class="list-item">
+              <strong>Derek's vegan chili cauldron</strong>
+              <span>Bring a container • 1.1 mi away</span>
+            </div>
+            <div class="list-item">
+              <strong>Community stew at 24th &amp; T</strong>
+              <span>Guide hosted • Serving now</span>
+            </div>
+          </div>
+          <div class="filters">
+            <button class="filter-chip">Spice-friendly</button>
+            <button class="filter-chip">Kiddo approved</button>
+            <button class="filter-chip">Halal</button>
+            <button class="filter-chip">Low waste</button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h4>📣 Neighborhood buzz</h4>
+          <div class="list">
+            <div class="list-item">
+              <strong>Potluck planning circle</strong>
+              <span>3 new posts • Friday @ Oak Park Garden</span>
+            </div>
+            <div class="list-item">
+              <strong>“Freezer clean-out” challenge</strong>
+              <span>12 folks pledged leftovers • Ends Sunday</span>
+            </div>
+            <div class="list-item">
+              <strong>Guide office hours</strong>
+              <span>Drop questions for Maria before 4pm</span>
+            </div>
+          </div>
+          <a class="inline-link" href="#">View all happenings →</a>
+        </div>
+
+        <div class="panel-card">
+          <h4>🛠️ Trust toolkit</h4>
+          <div class="list">
+            <div class="list-item">
+              <strong>Earn “Reliable Neighbor” badge</strong>
+              <span>Verify 3 fridges • Offer 2 pickups</span>
+            </div>
+            <div class="list-item">
+              <strong>Freshness check-ins</strong>
+              <span>2 drops need confirmation tonight</span>
+            </div>
+            <div class="list-item">
+              <strong>Safety tip</strong>
+              <span>Share meetup in chat before pickups</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="pill-button secondary" style="flex:1;">📍 Map my verified spots</button>
+            <button class="pill-button secondary" style="flex:1;">🤝 Invite a neighbor</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const toggle = document.getElementById("themeToggle");
+    const icon = document.getElementById("themeIcon");
+    const root = document.documentElement;
+
+    toggle.addEventListener("click", () => {
+      const isLight = root.getAttribute("data-theme") === "light";
+      root.setAttribute("data-theme", isLight ? "dark" : "light");
+      icon.textContent = isLight ? "🌙" : "🌞";
+    });
+  </script>
+</body>
+</html>
