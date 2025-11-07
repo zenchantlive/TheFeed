@@ -77,23 +77,30 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    // Check if the location is saved before deleting
+    const existing = await db.query.savedLocations.findFirst({
+      where: and(
+        eq(savedLocations.userId, session.user.id),
+        eq(savedLocations.foodBankId, foodBankId)
+      ),
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: "Saved location not found" },
+        { status: 404 }
+      );
+    }
+
     // Delete the saved location
-    const deleted = await db
+    await db
       .delete(savedLocations)
       .where(
         and(
           eq(savedLocations.userId, session.user.id),
           eq(savedLocations.foodBankId, foodBankId)
         )
-      )
-      .returning({ id: savedLocations.id });
-
-    if (deleted.length === 0) {
-      return NextResponse.json(
-        { error: "Saved location not found" },
-        { status: 404 }
       );
-    }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
