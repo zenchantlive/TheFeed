@@ -6,6 +6,7 @@ import {
   json,
   real,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export type HoursType = Record<
@@ -115,3 +116,15 @@ export const chatMessages = pgTable("chat_messages", {
 export type FoodBank = typeof foodBanks.$inferSelect;
 export type SavedLocation = typeof savedLocations.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// Relations
+export const savedLocationsRelations = relations(savedLocations, ({ one }) => ({
+  user: one(user, {
+    fields: [savedLocations.userId],
+    references: [user.id],
+  }),
+  foodBank: one(foodBanks, {
+    fields: [savedLocations.foodBankId],
+    references: [foodBanks.id],
+  }),
+}));

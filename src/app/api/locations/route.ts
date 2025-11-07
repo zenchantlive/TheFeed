@@ -105,7 +105,7 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// GET endpoint to check if a location is saved
+// GET endpoint to check if a location is saved or fetch all saved locations
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({
@@ -119,25 +119,31 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const foodBankId = searchParams.get("foodBankId");
 
-    if (!foodBankId) {
-      return NextResponse.json(
-        { error: "Missing foodBankId" },
-        { status: 400 }
-      );
+    // If a specific foodBankId is provided, check if it's saved
+    if (foodBankId) {
+      const saved = await db.query.savedLocations.findFirst({
+        where: and(
+          eq(savedLocations.userId, session.user.id),
+          eq(savedLocations.foodBankId, foodBankId)
+        ),
+      });
+      return NextResponse.json({ isSaved: Boolean(saved) }, { status: 200 });
     }
 
-    const saved = await db.query.savedLocations.findFirst({
-      where: and(
-        eq(savedLocations.userId, session.user.id),
-        eq(savedLocations.foodBankId, foodBankId)
-      ),
+    // If no foodBankId is provided, return all saved locations for the user
+    const allSaved = await db.query.savedLocations.findMany({
+      where: eq(savedLocations.userId, session.user.id),
+      with: {
+        foodBank: true,
+      },
+      orderBy: (savedLocations, { desc }) => [desc(savedLocations.createdAt)],
     });
 
-    return NextResponse.json({ isSaved: Boolean(saved) }, { status: 200 });
+    return NextResponse.json(allSaved, { status: 200 });
   } catch (error) {
-    console.error("Error checking location:", error);
+    console.error("Error getting saved locations:", error);
     return NextResponse.json(
-      { error: "Failed to check location" },
+      { error: "Failed to get saved locations" },
       { status: 500 }
     );
   }
