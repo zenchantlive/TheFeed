@@ -168,7 +168,7 @@ export default function ChatPage() {
     if (
       !hasAppliedIntent &&
       intentParam &&
-      (intentParam === "hungry" || intentParam === "full")
+      intentParam in INTENT_PRESETS
     ) {
       setHasAppliedIntent(true);
       setIsWelcomeVisible(false);
@@ -177,7 +177,7 @@ export default function ChatPage() {
         parts: [
           {
             type: "text",
-            text: INTENT_PRESETS[intentParam as keyof typeof INTENT_PRESETS],
+            text: INTENT_PRESETS[intentParam],
           },
         ],
       });
