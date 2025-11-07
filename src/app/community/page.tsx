@@ -1,135 +1,196 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, MapPin } from "lucide-react";
+import {
+  CommunityPageClient,
+  type FeedPost,
+  type GuideMoment,
+  type HotItem,
+  type VibeStat,
+} from "./page-client";
 
-const demoStories = [
+const FEED_POSTS: FeedPost[] = [
   {
-    id: "story-1",
-    author: "Maria G.",
-    role: "Parent, San Jose",
-    summary:
-      "“FoodShare helped me find a pantry just 5 minutes away that offers fresh produce every Tuesday. My family has healthy meals again.”",
+    id: "post-sarah",
+    author: "Sarah L.",
+    role: "neighbor",
+    mood: "full",
+    kind: "share",
+    distance: "0.2 mi",
+    timeAgo: "6 min ago",
+    body: "Big pot of coconut lentil soup and garlic flatbread up for grabs. Bring a container if you can!",
+    meta: {
+      location: "13th & P St stoop",
+      until: "Pickup before 8:30 pm",
+      status: "verified",
+    },
+    tags: ["Veggie friendly", "Warm meal"],
+    replies: [
+      {
+        id: "reply-marcus",
+        author: "Marcus",
+        role: "neighbor",
+        body: "On my way with bowls for two! Thanks for sharing.",
+        timeAgo: "2 min ago",
+        helpful: 3,
+      },
+    ],
   },
   {
-    id: "story-2",
-    author: "Jacob L.",
-    role: "Veteran, Sunnyvale",
-    summary:
-      "“I was hesitant to ask for help, but the FoodShare chat connected me with local programs that understood my situation.”",
+    id: "post-ana",
+    author: "Ana P.",
+    role: "neighbor",
+    mood: "hungry",
+    kind: "request",
+    distance: "0.4 mi",
+    timeAgo: "12 min ago",
+    body: "Looking for halal groceries or a hot meal for my family tonight. Any leads nearby?",
+    meta: {
+      status: "community",
+    },
+    tags: ["Family of four", "Halal"],
+    replies: [
+      {
+        id: "reply-guide-ahmed",
+        author: "Guide Ahmed",
+        role: "guide",
+        body: "City Harvest pantry on 21st just restocked halal meats. They&apos;re open until 7:30 pm—no appointment needed.",
+        timeAgo: "4 min ago",
+        helpful: 5,
+      },
+      {
+        id: "reply-lina",
+        author: "Lina",
+        role: "neighbor",
+        body: "I can drop off extra rice and veggies in 20 minutes if that helps!",
+        timeAgo: "1 min ago",
+      },
+    ],
   },
   {
-    id: "story-3",
-    author: "Danielle T.",
-    role: "Volunteer, Santa Clara",
-    summary:
-      "“Volunteering through FoodShare introduced me to neighbours I never knew. We’re building a real community.”",
+    id: "post-terrance",
+    author: "Terrance",
+    role: "community",
+    mood: "update",
+    kind: "resource",
+    distance: "1.1 mi",
+    timeAgo: "38 min ago",
+    body: "Just added Oak Park Community Pantry to the map. Friendly crew and fresh produce every Thursday evening.",
+    meta: {
+      location: "3725 MLK Jr Blvd",
+      status: "community",
+    },
+    tags: ["Community fridge", "Fresh produce"],
+  },
+  {
+    id: "post-guide-maria",
+    author: "Guide Maria",
+    role: "guide",
+    mood: "update",
+    kind: "update",
+    distance: "0.6 mi",
+    timeAgo: "1 hr ago",
+    body: "Heads up: Sacred Heart pantry got a surprise delivery of eggs and dairy. They&apos;ll close the line at 5:30 pm.",
+    meta: {
+      location: "Sacred Heart Pantry",
+      until: "Line closes 5:30 pm",
+      status: "verified",
+    },
+    replies: [
+      {
+        id: "reply-jasmine",
+        author: "Jasmine",
+        role: "neighbor",
+        body: "Thanks! I grabbed extra cartons—happy to share if anyone can&apos;t make it in time.",
+        timeAgo: "22 min ago",
+      },
+    ],
+  },
+  {
+    id: "post-ken",
+    author: "Ken",
+    role: "neighbor",
+    mood: "full",
+    kind: "share",
+    distance: "0.9 mi",
+    timeAgo: "2 hrs ago",
+    body: "Harvested more oranges than I can juice. Porch pickup all evening—bag what you need!",
+    meta: {
+      location: "24th & Broadway",
+      until: "Available until 10 pm",
+      status: "verified",
+    },
+    tags: ["Fresh produce"],
   },
 ];
 
-const localPrograms = [
+const PROMPTS = [
+  "Need halal-friendly groceries tonight",
+  "Sharing leftover taco fillings for two",
+  "Looking for a produce box for my neighbor",
+  "Anyone know where to get baby formula today?",
+];
+
+const HOT_ITEMS: HotItem[] = [
   {
-    id: "program-1",
-    name: "Family Grocery Night",
-    host: "Sacred Heart Community Service",
-    schedule: "Wednesdays • 5:00 – 7:30 PM",
-    location: "1381 S 1st St, San Jose, CA",
-    tags: ["Fresh Produce", "Kid Friendly"],
+    id: "hot-1",
+    title: "Coconut lentil soup & flatbread",
+    host: "Sarah L.",
+    until: "Ready until 8:30 pm",
+    distance: "0.2 mi away",
   },
   {
-    id: "program-2",
-    name: "Weekend Community Meals",
-    host: "Loaves & Fishes Family Kitchen",
-    schedule: "Saturdays • 11:30 AM – 1:30 PM",
-    location: "50 Washington St, San Jose, CA",
-    tags: ["Hot Meals", "Takeaway"],
+    id: "hot-2",
+    title: "Veggie curry leftovers",
+    host: "Imani",
+    until: "Pickup until 9:00 pm",
+    distance: "0.5 mi away",
+  },
+];
+
+const GUIDE_MOMENTS: GuideMoment[] = [
+  {
+    id: "guide-1",
+    guide: "Guide Maria",
+    tip: "City Harvest has a short line right now and they&apos;re stocked with pantry staples and diapers.",
+    linkLabel: "View on the map",
+    href: "/map",
   },
   {
-    id: "program-3",
-    name: "Nutrition & Wellness Workshops",
-    host: "Second Harvest of Silicon Valley",
-    schedule: "First Thursday • 6:00 – 7:00 PM",
-    location: "Virtual + In-person",
-    tags: ["Education", "Recipes"],
+    id: "guide-2",
+    guide: "Guide Ahmed",
+    tip: "Cooking for others? Check the volunteer shifts open at River City Kitchen this weekend.",
+    linkLabel: "See volunteer spots",
+    href: "/chat?prefill=Show%20me%20volunteer%20opportunities%20at%20River%20City%20Kitchen",
+  },
+];
+
+const VIBE_STATS: VibeStat[] = [
+  {
+    id: "stat-1",
+    value: "8",
+    label: "Neighbors sharing tonight",
+    description: "Soup, produce, and pantry runs are flowing right now.",
+  },
+  {
+    id: "stat-2",
+    value: "5",
+    label: "Open locations nearby",
+    description: "Map tab has them pinned if you want directions.",
+  },
+  {
+    id: "stat-3",
+    value: "12",
+    label: "Replies from guides today",
+    description: "The sous-chef can recap them anytime.",
   },
 ];
 
 export default function CommunityPage() {
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 pb-12 md:py-10">
-      <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Community
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Stories and programs that keep our community fed
-        </h1>
-        <p className="text-sm text-muted-foreground md:text-base">
-          Hear from neighbors using FoodShare today and explore local programs
-          you can join. These examples are curated to inspire what&apos;s possible.
-        </p>
-      </header>
-
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" />
-          <h2 className="text-xl font-semibold">Community Stories</h2>
-        </div>
-        <div className="grid gap-4">
-          {demoStories.map((story) => (
-            <Card key={story.id} className="rounded-3xl border border-border/60 bg-card/95 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">{story.author}</CardTitle>
-                <CardDescription>{story.role}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{story.summary}</p>
-                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Demo story for Phase 1
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-primary" />
-          <h2 className="text-xl font-semibold">Local Programs</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {localPrograms.map((program) => (
-            <Card key={program.id} className="rounded-3xl border border-border/60 bg-card/95 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold leading-tight">
-                  {program.name}
-                </CardTitle>
-                <CardDescription>{program.host}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span>{program.schedule}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span>{program.location}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {program.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="rounded-full border-primary/20 bg-primary/5 text-primary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  These listings showcase how FoodShare can highlight programs in future phases.
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-    </div>
+    <CommunityPageClient
+      posts={FEED_POSTS}
+      prompts={PROMPTS}
+      hotItems={HOT_ITEMS}
+      guideMoments={GUIDE_MOMENTS}
+      vibeStats={VIBE_STATS}
+    />
   );
 }
