@@ -1,28 +1,33 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
+
 import { UserProfile } from "@/components/auth/user-profile";
 import { ModeToggle } from "./ui/mode-toggle";
-import { UtensilsCrossed } from "lucide-react";
 
 export function SiteHeader() {
   return (
-    <header className="border-b">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-          >
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-              <UtensilsCrossed className="h-5 w-5" />
-            </div>
-            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              FoodShare
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-4">
+        <Link
+          href="/"
+          className="group flex items-center gap-3 text-foreground transition hover:text-primary"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent text-lg font-bold text-primary-foreground shadow-sm">
+            🍲
+          </span>
+          <span className="flex flex-col">
+            <span className="text-xl font-semibold leading-none tracking-tight">
+              TheFeed
             </span>
-          </Link>
-        </h1>
-        <div className="flex items-center gap-4">
-          <UserProfile />
+            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+              <Sparkles className="h-3 w-3 text-accent" />
+              Hungry neighbors, instant help.
+            </span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-3">
           <ModeToggle />
+          <UserProfile />
         </div>
       </div>
     </header>

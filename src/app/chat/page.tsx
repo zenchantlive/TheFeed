@@ -102,7 +102,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     type: "message",
     label: "Find nearby food banks",
-    message: "Find nearby food banks within 5 miles of my location.",
+    message: "I'm hungry. Find nearby food banks within 5 miles of my location.",
   },
   {
     type: "message",
@@ -114,13 +114,18 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: "Show on map",
     href: "/map",
   },
+  {
+    type: "navigate",
+    label: "See the community",
+    href: "/community",
+  },
 ];
 
 const INTENT_PRESETS = {
   hungry:
-    "I am hungry and need help finding nearby food banks that are open right now.",
+    "I'm hungry. Point me to nearby meals, community fridges, or pantries that are open within 2 miles tonight.",
   full:
-    "I have extra food to share. Please suggest the best way to contribute or volunteer locally.",
+    "I'm full. Help me share extra food or find a local program that needs volunteers this evening.",
 };
 
 function renderMessageContent(message: MaybePartsMessage): ReactNode {
@@ -209,14 +214,14 @@ export default function ChatPage() {
       <header className="rounded-3xl bg-gradient-to-r from-primary-start to-primary-end p-6 text-primary-foreground shadow-lg">
         <div className="flex flex-col gap-3">
           <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
-            FoodShare Assistant
+            TheFeed Sous-chef
           </p>
           <h1 className="text-3xl font-bold leading-tight">
-            How can we help with food assistance today?
+            What flavor of help do you need tonight?
           </h1>
           <p className="text-sm text-white/80">
-            Tap a quick option to get started fast or ask your own question
-            about food banks, hours, and services near you.
+            Tap a quick option or just tell me what’s cooking — I’ll loop in
+            the map and neighbors when it helps.
           </p>
         </div>
       </header>
@@ -226,15 +231,15 @@ export default function ChatPage() {
           <div className="grid gap-4">
             <BigActionButton
               variant="hungry"
-              title="I need food support"
-              description="Find nearby food banks, hours, and what to bring."
+              title="I'm hungry"
+              description="Find open kitchens, fridges, and generous neighbors."
               icon={<UtensilsCrossed className="h-6 w-6" />}
               onClick={() => handleIntent("hungry")}
             />
             <BigActionButton
               variant="full"
-              title="I want to help"
-              description="Share food, volunteer, or support local programs."
+              title="I'm full"
+              description="Share leftovers, volunteer, or spotlight a pantry."
               icon={<HeartHandshake className="h-6 w-6" />}
               onClick={() => handleIntent("full")}
             />
@@ -242,9 +247,8 @@ export default function ChatPage() {
 
           <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-5">
             <p className="text-sm text-muted-foreground">
-              FoodShare connects you with local food resources, recommends what
-              is open now, and can guide you to each location. Conversations
-              stay private and respectful.
+              TheFeed links your chat, community posts, and saved map spots. I’ll
+              offer gentle nudges, but the humans nearby make the real magic.
             </p>
           </div>
         </section>
@@ -267,7 +271,7 @@ export default function ChatPage() {
                   )}
                 >
                   <div className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-70">
-                    {message.role === "user" ? "You" : "FoodShare"}
+                    {message.role === "user" ? "You" : "TheFeed"}
                   </div>
                   <div>{renderMessageContent(message as MaybePartsMessage)}</div>
                 </article>
@@ -314,7 +318,7 @@ export default function ChatPage() {
             <textarea
               value={composerValue}
               onChange={(event) => setComposerValue(event.target.value)}
-              placeholder="Ask for food assistance, hours, or directions..."
+              placeholder="Serve up a request… “Where can I grab a hot meal after 8?”"
               rows={2}
               className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
             />
@@ -333,7 +337,7 @@ export default function ChatPage() {
                 type="submit"
                 disabled={!composerValue.trim() || status === "streaming"}
               >
-                Send
+                Serve it up
               </Button>
             </div>
           </form>

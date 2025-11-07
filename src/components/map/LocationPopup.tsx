@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useEffect } from "react";
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { LocationCard } from "@/components/foodshare/location-card";
 import type { HoursType } from "@/lib/schema";
-import { X, Bookmark, BookmarkCheck } from "lucide-react";
+import { X, Bookmark, BookmarkCheck, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSavedLocation } from "@/hooks/use-saved-locations";
 
@@ -125,6 +127,12 @@ export function LocationPopup({
                     </a>
                   </Button>
                 )}
+                <Button asChild variant="ghost" className="w-full">
+                  <Link href="/community" className="flex items-center justify-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Ask neighbors about this spot
+                  </Link>
+                </Button>
               </>
             }
           />

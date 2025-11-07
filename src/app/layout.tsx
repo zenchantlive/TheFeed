@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FoodShare - Find Food Assistance Near You",
+  title: "TheFeed – Hungry-neighbor hotline",
   description:
-    "FoodShare helps you discover nearby food banks, chat with an AI guide for personalized assistance, and stay connected to community programs. Find food resources in Sacramento and beyond.",
+    "TheFeed keeps hungry neighbors, generous cooks, and our AI sous-chef in sync. Swap leftovers, scout nearby food banks, and get playful guidance without losing the warm community vibe.",
 };
 
 export default function RootLayout({

@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
     icon: Users,
   },
   {
-    label: "Profile",
+    label: "Dashboard",
     href: "/profile",
     icon: UserRound,
   },

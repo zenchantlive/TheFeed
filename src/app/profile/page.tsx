@@ -88,22 +88,24 @@ export default async function ProfilePage() {
             </Avatar>
             <div className="space-y-1">
               <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
-                FoodShare Profile
+                TheFeed Dashboard
               </p>
               <h1 className="text-2xl font-bold md:text-3xl">
-                {user ? `Welcome back, ${user.name ?? "FoodShare member"}` : "Sign in to personalize FoodShare"}
+                {user
+                  ? `Hey ${user.name ?? "hungry hero"}, let's keep the block fed`
+                  : "Sign in to join TheFeed"}
               </h1>
               <p className="text-sm text-white/80">
                 {user
-                  ? "Manage saved locations, preferences, and learn more about FoodShare."
-                  : "Create an account to save nearby food banks and sync your preferences across devices."}
+                  ? "Review saved spots, rally volunteers, and keep your chat, map, and community feed in sync."
+                  : "Create an account to stash favorite food spots and carry your vibe across every tab."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {user ? (
               <Button asChild variant="secondary" className="bg-white/10 hover:bg-white/20">
-                <Link href="/chat">Talk to the assistant</Link>
+                <Link href="/chat">Ping the sous-chef</Link>
               </Button>
             ) : (
               <SignInButton />
@@ -117,7 +119,7 @@ export default async function ProfilePage() {
           <CardHeader>
             <CardTitle className="text-lg">Account</CardTitle>
             <CardDescription>
-              Access your FoodShare account controls
+              Tune your TheFeed essentials
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -128,7 +130,7 @@ export default async function ProfilePage() {
                   <p className="truncate">{user.email}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-primary/5 p-3 text-xs text-primary-foreground">
-                  Saving food banks helps FoodShare tailor quick suggestions for you.
+                  Saving food spots helps TheFeed tune quick suggestions for your next hunger flare.
                 </div>
                 <Button asChild className="w-full">
                   <Link href="/map">
@@ -165,7 +167,7 @@ export default async function ProfilePage() {
               <MapPinned className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-foreground">Location services</p>
-                <p>Allow FoodShare to find nearby resources faster.</p>
+                <p>Let TheFeed sniff out nearby resources faster.</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-border/60 px-3 py-2">
@@ -180,7 +182,7 @@ export default async function ProfilePage() {
 
         <Card className="rounded-3xl border border-border/60 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">About FoodShare</CardTitle>
+            <CardTitle className="text-lg">About TheFeed</CardTitle>
             <CardDescription>
               Learn more about the initiative
             </CardDescription>
@@ -192,8 +194,8 @@ export default async function ProfilePage() {
             >
               <Info className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-foreground">What is FoodShare?</p>
-                <p>Our mission to connect neighbours with food assistance.</p>
+                <p className="text-foreground">What is TheFeed?</p>
+                <p>Our mission to keep neighbors nourished with a playful safety net.</p>
               </div>
             </Link>
             <Link

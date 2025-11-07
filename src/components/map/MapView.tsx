@@ -97,7 +97,7 @@ export function MapView({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-border text-center text-sm text-muted-foreground">
         <span className="font-medium text-foreground">Map unavailable</span>
-        <p>Set NEXT_PUBLIC_MAPBOX_TOKEN to enable the FoodShare map experience.</p>
+        <p>Set NEXT_PUBLIC_MAPBOX_TOKEN to unlock TheFeed’s map experience.</p>
       </div>
     );
   }
