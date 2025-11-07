@@ -7,7 +7,8 @@ export function SiteFooter() {
         <div className="flex flex-col items-center space-y-3">
           <GitHubStars repo="zenchantlive/TheFeed" />
           <p>
-            FoodShare &copy; {new Date().getFullYear()} &middot; Built with the{" "}
+            TheFeed &copy; {new Date().getFullYear()} &middot; Powered by hungry
+            neighbors and the{" "}
             <a
               href="https://github.com/leonvanzyl/agentic-coding-starter-kit"
               target="_blank"
