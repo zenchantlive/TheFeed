@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**FoodShare** is a mobile-first Next.js application connecting people with food assistance resources. Built on the Agentic Coding Starter Kit, it adds:
+**TheFeed** (formerly FoodShare) is a hyperlocal food-sharing network connecting people experiencing food insecurity with nearby resources and community support. Built on the Agentic Coding Starter Kit, it adds:
 
 - **Interactive Map**: Mapbox GL-powered discovery of food banks with real-time filters
 - **AI-Powered Chat**: Context-aware assistant with tool-calling for food bank search, directions, and hours
-- **Community Features**: Social stories and programs showcase (Phase 1 static, Phase 2+ interactive)
-- **User Profiles**: Save locations, track visits with Better Auth + Supabase
+- **Community Potluck**: Full social network for peer-to-peer food sharing (posts, comments, follows, karma)
+- **User Profiles**: Save locations, track visits, build reputation with Better Auth + Supabase
 
 ### Tech Stack
 
@@ -62,10 +62,16 @@ pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sac
 - System Prompt: Empathetic, concise (2-3 sentences), prioritizes open locations
 
 **Database Schema** (`src/lib/schema.ts`)
+- Better Auth tables: `user`, `session`, `account`, `verification`
 - `foodBanks`: Core locations with lat/lng, hours (JSON), services (array), description
 - `savedLocations`: User bookmarks (userId → foodBankId)
 - `chatMessages`: Conversation history (optional sessionId grouping)
-- Better Auth tables: `user`, `session`, `account`, `verification`
+- **Community tables (Phase 2)**:
+  - `posts`: User-generated content with mood, kind, location, expiration
+  - `comments`: Threaded comments on posts
+  - `userProfiles`: Karma, role, bio, denormalized stats
+  - `follows`: Social graph (followerId → followingId)
+  - `helpfulMarks`: Upvotes for posts and comments (userId → targetType/targetId)
 
 **Geolocation Utilities** (`src/lib/geolocation.ts`)
 - `getUserLocation()`: Browser geolocation API wrapper
@@ -78,7 +84,56 @@ pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sac
 - `getAllFoodBanks()`: Fetch all from database
 - `getFoodBankById()`: Single record lookup
 
-### FoodShare-Specific Components
+**Community Social System** (`src/app/community/`, `src/app/api/posts/`) — **NEW in Phase 2**
+- Server Component: `src/app/community/page.tsx` - Fetches initial posts with pagination
+- Client Component: `src/app/community/page-client.tsx` - Feed rendering, mood toggles, filters
+- Post Queries: `src/lib/post-queries.ts` - Post data access layer with cursor pagination
+- API Routes:
+  - `GET/POST /api/posts` - List posts (paginated) and create new posts
+  - `GET/PATCH/DELETE /api/posts/[id]` - Single post operations
+  - `GET/POST /api/posts/[id]/comments` - Comments on posts
+  - `POST/DELETE /api/posts/[id]/helpful` - Mark post as helpful (upvote)
+  - `POST/DELETE /api/users/[id]/follow` - Follow/unfollow users
+  - `GET /api/users/[id]/profile` - User profile with karma and stats
+
+**Community Database Schema** (`src/lib/schema.ts`)
+- `posts`: User posts (content, mood, kind, location, expiration, engagement counts)
+- `comments`: Nested comments on posts
+- `userProfiles`: Extended user data (karma, role, bio, stats)
+- `follows`: Social graph (many-to-many user relationships)
+- `helpfulMarks`: Upvote system for posts and comments
+
+**Post Data Types**:
+```typescript
+type Post = {
+  id: string;
+  userId: string;
+  content: string;
+  mood: "hungry" | "full" | null;
+  kind: "share" | "request" | "update" | "resource";
+  location?: string; // Free text: "13th & P St"
+  locationCoords?: { lat: number; lng: number };
+  expiresAt?: Date; // Time-sensitive posts
+  urgency?: "asap" | "today" | "this_week";
+  photoUrl?: string; // Future: Supabase Storage URL
+  metadata?: { tags?: string[] };
+  helpfulCount: number;
+  commentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**Key Community Features**:
+1. **Mood-based posting**: "I'm hungry" (requesting) vs "I'm full" (sharing)
+2. **Location awareness**: Free text + optional coordinates for map integration
+3. **Urgency indicators**: ASAP, Today, This week badges
+4. **Karma system**: Points from helpful marks, displayed as badges (🌱 <10, 🌿 10-50, 🌳 50+)
+5. **Follow relationships**: Users can follow each other, filter feed to "Following"
+6. **Cursor-based pagination**: Infinite scroll using (createdAt, id) cursor
+7. **Dignity-preserving UX**: Requests look identical to shares (no visual stigma)
+
+### TheFeed-Specific Components
 
 - `src/components/foodshare/big-action-button.tsx` - Intent buttons (hungry/full variants)
 - `src/components/foodshare/status-badge.tsx` - Open/closed status pills
@@ -145,6 +200,70 @@ See `env.example` for complete list including Better Auth and Google OAuth.
 - **Search**: Modify `MapSearchBar.tsx` and server-side data fetching
 - **Popups**: Customize `LocationPopup.tsx` for different data displays
 
+### Working with Community Features
+
+**Adding a new post field**:
+1. Update `posts` table in `src/lib/schema.ts`
+2. Run `pnpm run db:generate` to create migration
+3. Apply with `pnpm run db:migrate`
+4. Update TypeScript types (inferred from schema via `$inferSelect`)
+5. Modify POST handler in `src/app/api/posts/route.ts`
+6. Update UI in `src/app/community/page-client.tsx`
+
+**Implementing pagination**:
+```typescript
+// Cursor format: { createdAt: ISO string, id: string }
+const cursor = searchParams.get('cursor')
+  ? JSON.parse(searchParams.get('cursor')!)
+  : null;
+
+const posts = await getPosts({ cursor, limit: 20 });
+
+// Return with nextCursor
+return { posts: posts.items, nextCursor: posts.nextCursor };
+```
+
+**Updating karma** (when helpful mark added):
+```typescript
+// Increment post.helpfulCount
+await db.update(posts)
+  .set({ helpfulCount: sql`${posts.helpfulCount} + 1` })
+  .where(eq(posts.id, postId));
+
+// Recalculate author karma (sum of all helpful marks)
+const totalHelpful = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(helpfulMarks)
+  .where(eq(helpfulMarks.userId, authorId));
+
+await db.update(userProfiles)
+  .set({ karma: totalHelpful[0].count })
+  .where(eq(userProfiles.userId, authorId));
+```
+
+**Feed filtering patterns**:
+```typescript
+// By kind (share/request)
+where: eq(posts.kind, 'share')
+
+// By mood
+where: eq(posts.mood, 'hungry')
+
+// By following (join with follows table)
+const followedUserIds = await db
+  .select({ userId: follows.followingId })
+  .from(follows)
+  .where(eq(follows.followerId, currentUserId));
+
+where: inArray(posts.userId, followedUserIds.map(f => f.userId))
+
+// Hide expired posts
+where: or(
+  isNull(posts.expiresAt),
+  gt(posts.expiresAt, new Date())
+)
+```
+
 ## Important Patterns
 
 ### Protected Routes
@@ -210,11 +329,19 @@ const result = streamText({
 
 ## Known Issues & Active Work
 
-### Current Bugs (see GitHub issues)
+### Current Sprint (Phase 2: Community Social Features - Week 1)
 
-1. **Map markers not rendering** after Supabase seed - likely data loading/hydration issue
-2. **Chat blank responses** after ZIP code input - tool execution/serialization problem
-3. **Community page static** - needs design/content for Phase 1 completion
+**Branch**: `feat/community-social-mvp`
+
+**Active Work**:
+1. **Community backend implementation** - Building posts, comments, userProfiles tables
+2. **API routes for posts** - CRUD operations with cursor-based pagination
+3. **Real data integration** - Replacing hardcoded posts with database queries
+
+**Previous Issues (Resolved in PR #12)**:
+- ~~Map markers not rendering~~ - Fixed in PR #12
+- ~~Chat blank responses after ZIP~~ - Fixed in PR #12
+- ~~Community page static~~ - Implementing full social features now
 
 ### Context Files
 

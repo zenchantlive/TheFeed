@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ComponentProps } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   MessageCircle,
@@ -109,9 +110,11 @@ export function CommunityPageClient({
   guideMoments,
   vibeStats,
 }: CommunityPageClientProps) {
+  const router = useRouter();
   const [mood, setMood] = useState<"hungry" | "full">("hungry");
   const [composerValue, setComposerValue] = useState("");
   const [filter, setFilter] = useState<FeedFilter>("all");
+  const [isPosting, setIsPosting] = useState(false);
 
   const visiblePosts = useMemo(() => {
     if (filter === "all") return posts;
@@ -125,6 +128,40 @@ export function CommunityPageClient({
 
   const handlePromptClick = (prompt: string) => {
     setComposerValue((prev) => (prev.length > 0 ? `${prev}\n${prompt}` : prompt));
+  };
+
+  const handlePost = async () => {
+    if (composerValue.trim().length === 0) return;
+
+    setIsPosting(true);
+    try {
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: composerValue.trim(),
+          mood,
+          kind: mood === "hungry" ? "request" : "share",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
+
+      // Clear the composer
+      setComposerValue("");
+
+      // Refresh the page to show new post
+      router.refresh();
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert("Failed to create post. Please try again.");
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
@@ -232,10 +269,11 @@ export function CommunityPageClient({
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
+                  onClick={handlePost}
                   className="rounded-full bg-primary px-5 text-primary-foreground shadow"
-                  disabled={composerValue.trim().length === 0}
+                  disabled={composerValue.trim().length === 0 || isPosting}
                 >
-                  Post to the potluck
+                  {isPosting ? "Posting..." : "Post to the potluck"}
                 </Button>
                 <Button asChild variant="outline" size="sm" className="rounded-full">
                   <Link href={`/chat?prefill=${encodeURIComponent(aiPrompt)}`}>
