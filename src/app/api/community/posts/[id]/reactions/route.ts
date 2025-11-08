@@ -18,7 +18,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: postId } = await context.params;
+    const { id: postId } = context.params;
     const body = await request.json();
     const { type } = body;
 
