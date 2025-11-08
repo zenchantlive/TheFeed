@@ -19,10 +19,13 @@ export async function GET() {
       // Count active posts today (shares and requests, excluding demo)
       db
         .select({ count: sql<number>`count(*)` })
-        .from(communityPosts)
         .where(
-          sql`${communityPosts.kind} = 'share' AND ${communityPosts.isDemo} = false AND ${communityPosts.createdAt} >= ${todayStart}`
-        ),
+          and(
+            eq(communityPosts.kind, "share"),
+            eq(communityPosts.isDemo, false),
+            gte(communityPosts.createdAt, todayStart)
+          )
+        )
       // Count total posts in last 24 hours (excluding demo)
       db
         .select({ count: sql<number>`count(*)` })
