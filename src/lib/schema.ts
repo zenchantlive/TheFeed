@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   text,
   timestamp,
   boolean,
@@ -8,6 +9,25 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
+
+// Define PostgreSQL enums for data integrity
+export const communityPostMood = pgEnum("community_post_mood", [
+  "hungry",
+  "full",
+  "update",
+]);
+export const communityPostKind = pgEnum("community_post_kind", [
+  "share",
+  "request",
+  "update",
+  "resource",
+]);
+export const communityPostStatus = pgEnum("community_post_status", [
+  "verified",
+  "community",
+  "needs-love",
+]);
+export const reactionType = pgEnum("reaction_type", ["on-it", "helpful"]);
 
 export type HoursType = Record<
   string,
@@ -121,18 +141,20 @@ export const communityPosts = pgTable("community_posts", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   authorName: text("author_name").notNull(), // Cached from user.name for display
-  mood: text("mood").notNull(), // "hungry" | "full" | "update"
-  kind: text("kind").notNull(), // "share" | "request" | "update" | "resource"
+  mood: communityPostMood("mood").notNull(),
+  kind: communityPostKind("kind").notNull(),
   body: text("body").notNull(),
   location: text("location"), // Optional location string like "13th & P St"
   availableUntil: text("available_until"), // Optional time string like "8:30 pm"
   tags: text("tags").array(), // ["Veggie friendly", "Warm meal"]
-  status: text("status").default("community"), // "verified" | "community" | "needs-love"
+  status: communityPostStatus("status").default("community"),
   latitude: real("latitude"), // Optional coordinates for proximity
   longitude: real("longitude"),
   isDemo: boolean("is_demo").default(false), // Flag for demo/seed data
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const postComments = pgTable("post_comments", {
@@ -160,7 +182,7 @@ export const postReactions = pgTable("post_reactions", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  type: text("type").notNull(), // "on-it" | "helpful"
+  type: reactionType("type").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -174,7 +196,7 @@ export const commentReactions = pgTable("comment_reactions", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  type: text("type").notNull(), // Currently just "helpful"
+  type: reactionType("type").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

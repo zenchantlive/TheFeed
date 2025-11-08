@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { communityPosts, postComments, postReactions } from "@/lib/schema";
+import { communityPosts, postComments } from "@/lib/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get("filter") || "all"; // "all" | "shares" | "requests" | "updates"
     const includeDemo = searchParams.get("includeDemo") === "true";
 
-    // Build where conditions
+    // Build where conditions using SQL builder
     const whereConditions = [];
 
     if (filter === "shares") {
@@ -27,67 +27,58 @@ export async function GET(request: NextRequest) {
       whereConditions.push(eq(communityPosts.isDemo, false));
     }
 
-    const baseQuery = db
-      .select({
-        id: communityPosts.id,
-        userId: communityPosts.userId,
-        authorName: communityPosts.authorName,
-        mood: communityPosts.mood,
-        kind: communityPosts.kind,
-        body: communityPosts.body,
-        location: communityPosts.location,
-        availableUntil: communityPosts.availableUntil,
-        tags: communityPosts.tags,
-        status: communityPosts.status,
-        latitude: communityPosts.latitude,
-        longitude: communityPosts.longitude,
-        isDemo: communityPosts.isDemo,
-        createdAt: communityPosts.createdAt,
-        updatedAt: communityPosts.updatedAt,
-        // Aggregate comment and reaction counts
-        commentCount: sql<number>`count(distinct ${postComments.id})`.as("comment_count"),
-        reactionCount: sql<number>`count(distinct ${postReactions.id})`.as("reaction_count"),
-      })
-      .from(communityPosts)
-      .leftJoin(postComments, eq(postComments.postId, communityPosts.id))
-      .leftJoin(postReactions, eq(postReactions.postId, communityPosts.id))
-      .where(whereConditions.length > 0 ? sql`${sql.join(whereConditions, sql` AND `)}` : undefined)
-      .groupBy(communityPosts.id)
-      .orderBy(desc(communityPosts.createdAt))
-      .limit(50);
+    // Build the final where clause
+    const whereClause =
+      whereConditions.length > 0
+        ? sql`${sql.join(whereConditions, sql` AND `)}`
+        : undefined;
 
-    const posts = await baseQuery;
-
-    // Fetch comments and reactions for each post
-    const postsWithDetails = await Promise.all(
-      posts.map(async (post) => {
-        const comments = await db.query.postComments.findMany({
-          where: eq(postComments.postId, post.id),
+    // Use relational queries to eager-load comments and reactions
+    // This avoids N+1 queries by fetching everything in 3 efficient queries
+    const posts = await db.query.communityPosts.findMany({
+      where: whereClause,
+      orderBy: [desc(communityPosts.createdAt)],
+      limit: 50,
+      with: {
+        comments: {
           orderBy: [postComments.createdAt],
           with: {
             reactions: true,
           },
-        });
+        },
+        reactions: true,
+      },
+    });
 
-        const reactions = await db.query.postReactions.findMany({
-          where: eq(postReactions.postId, post.id),
-        });
-
-        return {
-          ...post,
-          comments: comments.map((comment) => ({
-            id: comment.id,
-            authorName: comment.authorName,
-            body: comment.body,
-            createdAt: comment.createdAt,
-            helpfulCount: comment.reactions?.filter((r) => r.type === "helpful").length || 0,
-          })),
-          reactions: {
-            onIt: reactions.filter((r) => r.type === "on-it").length,
-          },
-        };
-      })
-    );
+    // Transform the data to match the expected format
+    const postsWithDetails = posts.map((post) => ({
+      id: post.id,
+      userId: post.userId,
+      authorName: post.authorName,
+      mood: post.mood,
+      kind: post.kind,
+      body: post.body,
+      location: post.location,
+      availableUntil: post.availableUntil,
+      tags: post.tags,
+      status: post.status,
+      latitude: post.latitude,
+      longitude: post.longitude,
+      isDemo: post.isDemo,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      comments: post.comments.map((comment) => ({
+        id: comment.id,
+        authorName: comment.authorName,
+        body: comment.body,
+        createdAt: comment.createdAt,
+        helpfulCount:
+          comment.reactions?.filter((r) => r.type === "helpful").length || 0,
+      })),
+      reactions: {
+        onIt: post.reactions.filter((r) => r.type === "on-it").length,
+      },
+    }));
 
     return NextResponse.json({ posts: postsWithDetails });
   } catch (error) {

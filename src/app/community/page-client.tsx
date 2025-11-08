@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -51,13 +51,6 @@ const FILTERS: Array<{ value: FeedFilter; label: string }> = [
   { value: "updates", label: "Community updates" },
 ];
 
-const kindToFilter: Record<FeedPost["kind"], FeedFilter> = {
-  share: "shares",
-  request: "requests",
-  update: "updates",
-  resource: "updates",
-};
-
 export function CommunityPageClient() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -97,11 +90,6 @@ export function CommunityPageClient() {
     fetchPosts();
   }, [filter, isFirstLoad]);
 
-  const visiblePosts = useMemo(() => {
-    if (filter === "all") return posts;
-    return posts.filter((post) => kindToFilter[post.kind] === filter);
-  }, [posts, filter]);
-
   const handleCreatePost = async () => {
     if (!session?.user) {
       router.push("/");
@@ -129,11 +117,10 @@ export function CommunityPageClient() {
         setShowComposer(false);
       } else {
         const error = await response.json();
-        alert(error.error || "Failed to create post");
+        console.error("Failed to create post:", error.error || "Unknown error");
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      alert("Failed to create post");
     } finally {
       setIsPosting(false);
     }
@@ -389,14 +376,14 @@ export function CommunityPageClient() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : visiblePosts.length === 0 ? (
+        ) : posts.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border/60 bg-muted/30 p-12 text-center">
             <p className="text-muted-foreground">
               No posts yet. Be the first to share or request food!
             </p>
           </div>
         ) : (
-          visiblePosts.map((post) => (
+          posts.map((post) => (
             <article
               key={post.id}
               className={cn(

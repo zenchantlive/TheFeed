@@ -8,33 +8,35 @@ export async function GET() {
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // Count active posts today (shares and requests, excluding demo)
-    const [sharesResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(communityPosts)
-      .where(
-        sql`${communityPosts.kind} = 'share'
-        AND ${communityPosts.isDemo} = false
-        AND ${communityPosts.createdAt} >= ${todayStart}`
-      );
-
-    // Count total posts in last 24 hours (excluding demo)
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const [recentPostsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(communityPosts)
-      .where(
-        sql`${communityPosts.isDemo} = false
-        AND ${communityPosts.createdAt} >= ${twentyFourHoursAgo}`
-      );
 
-    // Count guide replies today (comments where author is a guide)
-    // For now, we'll count all comments from the last 24 hours
-    const [commentsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(postComments)
-      .where(sql`${postComments.createdAt} >= ${twentyFourHoursAgo}`);
+    // Run all queries in parallel for better performance
+    const [
+      [sharesResult],
+      [recentPostsResult],
+      [commentsResult],
+    ] = await Promise.all([
+      // Count active posts today (shares and requests, excluding demo)
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(communityPosts)
+        .where(
+          sql`${communityPosts.kind} = 'share' AND ${communityPosts.isDemo} = false AND ${communityPosts.createdAt} >= ${todayStart}`
+        ),
+      // Count total posts in last 24 hours (excluding demo)
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(communityPosts)
+        .where(
+          sql`${communityPosts.isDemo} = false AND ${communityPosts.createdAt} >= ${twentyFourHoursAgo}`
+        ),
+      // Count guide replies today (comments where author is a guide)
+      // For now, we'll count all comments from the last 24 hours
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(postComments)
+        .where(sql`${postComments.createdAt} >= ${twentyFourHoursAgo}`),
+    ]);
 
     // Get count of active food banks nearby (from existing food banks data)
     // This would ideally use geolocation, but for now we'll return a placeholder

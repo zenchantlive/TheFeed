@@ -15,6 +15,13 @@
       "when": 1762551821528,
       "tag": "0001_wooden_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762560172199,
+      "tag": "0002_jazzy_stick",
+      "breakpoints": true
     }
   ]
 }
