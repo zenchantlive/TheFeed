@@ -67,11 +67,18 @@ pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sac
 - `savedLocations`: User bookmarks (userId → foodBankId)
 - `chatMessages`: Conversation history (optional sessionId grouping)
 - **Community tables (Phase 2)**:
-  - `posts`: User-generated content with mood, kind, location, expiration
+  - `posts`: User-generated content with mood, kind (including "event"), location, expiration
   - `comments`: Threaded comments on posts
   - `userProfiles`: Karma, role, bio, denormalized stats
   - `follows`: Social graph (followerId → followingId)
   - `helpfulMarks`: Upvotes for posts and comments (userId → targetType/targetId)
+- **Event hosting tables (Phase 3A)**:
+  - `events`: Main event details (potlucks, volunteer opportunities) with capacity, status, verification
+  - `eventRsvps`: RSVP tracking with guest count, waitlist support, and notes
+  - `signUpSlots`: Sign-up sheet categories for potluck coordination
+  - `signUpClaims`: Who signed up for which slots and what they're bringing
+  - `eventRecurrence`: Recurring event patterns (daily, weekly, biweekly, monthly)
+  - `eventAttendance`: Check-in tracking for completed events
 
 **Geolocation Utilities** (`src/lib/geolocation.ts`)
 - `getUserLocation()`: Browser geolocation API wrapper
@@ -110,7 +117,7 @@ type Post = {
   userId: string;
   content: string;
   mood: "hungry" | "full" | null;
-  kind: "share" | "request" | "update" | "resource";
+  kind: "share" | "request" | "update" | "resource" | "event"; // "event" added in Phase 3A
   location?: string; // Free text: "13th & P St"
   locationCoords?: { lat: number; lng: number };
   expiresAt?: Date; // Time-sensitive posts
@@ -132,6 +139,67 @@ type Post = {
 5. **Follow relationships**: Users can follow each other, filter feed to "Following"
 6. **Cursor-based pagination**: Infinite scroll using (createdAt, id) cursor
 7. **Dignity-preserving UX**: Requests look identical to shares (no visual stigma)
+
+**Event Hosting System** (`src/lib/event-queries.ts`, `src/app/api/events/`) — **NEW in Phase 3A**
+- **Status**: Backend complete (database + API routes), NO UI yet
+- Event Queries: `src/lib/event-queries.ts` - Event data access layer (650+ lines)
+- API Routes:
+  - `GET/POST /api/events` - List events (paginated) and create new events
+  - `GET/PATCH/DELETE /api/events/[id]` - Single event operations (host-only edit/delete)
+  - `GET/POST/DELETE /api/events/[id]/rsvp` - RSVP management with waitlist logic
+  - `GET/POST /api/events/[id]/slots` - Sign-up slot management (host creates slots)
+  - `POST/DELETE /api/events/[id]/slots/[slotId]/claim` - Claim/unclaim sign-up slots
+
+**Event Database Schema** (`src/lib/schema.ts`):
+- `events`: Main event table with capacity, status, guide verification, recurring event support
+- `eventRsvps`: RSVP tracking (attending/waitlisted/declined) with guest count and notes
+- `signUpSlots`: Sign-up sheet categories for potluck coordination (e.g., "Main dish", "Dessert")
+- `signUpClaims`: Who claimed which slots and what they're bringing
+- `eventRecurrence`: Recurring event patterns (weekly, monthly, etc.)
+- `eventAttendance`: Check-in tracking for karma and analytics
+
+**Event Data Types**:
+```typescript
+type Event = {
+  id: string;
+  postId: string; // Links to feed post (hybrid integration)
+  hostId: string;
+  title: string;
+  description: string;
+  eventType: "potluck" | "volunteer";
+  startTime: Date;
+  endTime: Date;
+  location: string;
+  locationCoords?: { lat: number; lng: number };
+  isPublicLocation: boolean; // Encouraged via UI
+  capacity?: number | null; // null = unlimited
+  rsvpCount: number; // Denormalized
+  waitlistCount: number; // Denormalized
+  status: "upcoming" | "in_progress" | "completed" | "cancelled";
+  isVerified: boolean; // Guide verification
+  recurrenceId?: string;
+  parentEventId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**Key Event Features**:
+1. **Hybrid integration**: Every event has a feed post (postId link) for discovery
+2. **Capacity management**: Automatic waitlist when full, promotion when spots open
+3. **Sign-up sheets**: Potluck coordination (what to bring)
+4. **Recurring events**: Weekly, monthly patterns with instance generation
+5. **Guide verification**: Trust badge for verified events
+6. **Host controls**: Only host can edit/cancel/check-in attendees
+7. **RSVP with guests**: Track guest count (+1, +2, etc.)
+8. **Waitlist automation**: First waitlisted user promoted when someone cancels
+
+**Phase 3B-3F TODO** (UI work):
+- Phase 3B: Event creation flow + detail page
+- Phase 3C: Sign-up sheet UI
+- Phase 3D: Event cards in feed, map pins, calendar view
+- Phase 3E: Host management tools, check-in UI
+- Phase 3F: Recurring event UI
 
 ### TheFeed-Specific Components
 

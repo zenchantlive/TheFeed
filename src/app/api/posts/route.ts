@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     // Validate optional fields
     if (
       kind &&
-      !["share", "request", "update", "resource"].includes(kind)
+      !["share", "request", "update", "resource", "event"].includes(kind)
     ) {
       return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
     }

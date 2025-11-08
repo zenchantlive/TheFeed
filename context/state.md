@@ -1,23 +1,49 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-07
+Last updated: 2025-11-08
 
-## Current Sprint: Community Social Features MVP
-Branch: `feat/community-social-mvp`
+## Current Sprint: Event Hosting System (Phase 3A)
+Branch: `feat/event-hosting-phase3a`
 
-### Phase 1: Core Infrastructure (Week 1) - IN PROGRESS
-**Goal**: Get real posting working end-to-end
+### Phase 3A: Event Foundation - BACKEND COMPLETE ✅
+**Goal**: Build database schema and API routes for community event hosting
+**Status**: Backend infrastructure complete, NO UI yet (UI starts in Phase 3B)
 
-#### Active Tasks
-- [IN PROGRESS] Update database schema with social tables (posts, comments, userProfiles, follows, helpfulMarks)
-- [PENDING] Generate and apply database migration
-- [PENDING] Create `src/lib/post-queries.ts` for post data access
-- [PENDING] Build API routes: `/api/posts` (GET, POST) and `/api/posts/[id]`
-- [PENDING] Update community page to fetch real data
-- [PENDING] Enable posting via temporary UI (before FAB implementation)
+#### Completed Tasks ✅
+- [COMPLETED] Add 6 event tables to schema.ts (events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance)
+- [COMPLETED] Generate and apply database migration (drizzle/0002_modern_impossible_man.sql)
+- [COMPLETED] Create `src/lib/event-queries.ts` data access layer (650+ lines, comprehensive)
+- [COMPLETED] Build API routes: `/api/events` (GET, POST)
+- [COMPLETED] Build API routes: `/api/events/[id]` (GET, PATCH, DELETE)
+- [COMPLETED] Build API routes: `/api/events/[id]/rsvp` (GET, POST, DELETE)
+- [COMPLETED] Build API routes: `/api/events/[id]/slots` (GET, POST)
+- [COMPLETED] Build API routes: `/api/events/[id]/slots/[slotId]/claim` (POST, DELETE)
+- [COMPLETED] Fix TypeScript errors (added "event" to post kind types)
+- [COMPLETED] Remove unused imports from event-queries.ts
+- [COMPLETED] Update context files (state.md, info.md, decisions.md)
 
 #### Context Updates
-- [IN PROGRESS] Updated context files with comprehensive plan
-- [IN PROGRESS] Updated CLAUDE.md with community architecture
+- [COMPLETED] Updated context/state.md with Phase 3A status
+- [COMPLETED] Updated context/info.md with event system roadmap
+- [IN PROGRESS] Updating CLAUDE.md with event database schema and API routes
+
+#### What's Working Now (Backend Only)
+✅ Complete database schema for events, RSVPs, and sign-up sheets
+✅ Full CRUD API for events with authentication and authorization
+✅ Capacity management and waitlist logic
+✅ Automatic promotion from waitlist when spots open
+✅ Sign-up slot claiming system for potlucks
+✅ Denormalized counts for performance (rsvpCount, waitlistCount, claimCount)
+
+#### What's NOT Working Yet (UI Pending)
+❌ No event creation form/UI
+❌ No event cards in community feed
+❌ No event detail pages
+❌ No calendar view
+❌ No map pins for events
+❌ No sign-up sheet UI
+❌ No host management interface
+
+**Next Steps**: Phase 3B will build the event creation flow and detail page UI
 
 ### Previous Work (PR #12)
 - Completed comprehensive rebranding from FoodShare to TheFeed
@@ -59,31 +85,51 @@ Branch: `feat/community-social-mvp`
 4. **Scalability**: Guide recruitment and moderation
    - Mitigation: Start with founder as guide, build tools for delegation
 
-## Last Completed Actions
-- Conducted comprehensive UI/UX critique of community page
-- Defined 6-phase implementation plan (Phases 1-6)
-- Made strategic product decisions (market, scope, success metrics)
-- Created new branch `feat/community-social-mvp` from PR #12 branch
+## Last Completed Actions (PR #15)
+- Implemented Phase 1 Community Social Features (posts, comments, userProfiles, follows, helpfulMarks)
+- Built complete API routes for posts and comments
+- Created post-queries.ts data layer with cursor-based pagination
+- Updated community page to fetch real data from database
+- Enabled actual post creation with mood-based composer
+
+## Last Completed Actions (Current Session - Phase 3A)
+- Designed and implemented 6 event tables in schema.ts
+- Created comprehensive event-queries.ts data layer with RSVP and sign-up slot management
+- Built full event API routes: events, single event, RSVPs, sign-up slots, claims
+- Implemented capacity limits, waitlist logic, and promotion from waitlist
+- Added support for kind="event" in posts table for hybrid integration
 
 ## Immediate Next Steps (This Session)
-1. ✅ Create branch `feat/community-social-mvp`
-2. 🔄 Update context files and CLAUDE.md
-3. ⏳ Add social tables to `src/lib/schema.ts`
-4. ⏳ Run `pnpm run db:generate` and review migration
-5. ⏳ Apply migration with `pnpm run db:migrate`
-6. ⏳ Build post-queries.ts following food-bank-queries.ts pattern
-7. ⏳ Implement /api/posts route
+1. ✅ Create branch `feat/event-hosting-phase3a`
+2. ✅ Add 6 event tables to schema.ts with comprehensive comments
+3. ✅ Generate and apply database migration (in PowerShell)
+4. ✅ Create event-queries.ts following post-queries.ts pattern
+5. ✅ Build /api/events routes (GET, POST)
+6. ✅ Build /api/events/[id] routes (GET, PATCH, DELETE)
+7. ✅ Build /api/events/[id]/rsvp routes (GET, POST, DELETE)
+8. ✅ Build /api/events/[id]/slots routes (GET, POST)
+9. ✅ Build /api/events/[id]/slots/[slotId]/claim routes (POST, DELETE)
+10. 🔄 Update context files
+11. ⏳ Run lint and typecheck
+12. ⏳ Commit and push Phase 3A
+13. ⏳ Create PR
 
-## Long-term Roadmap (6-week MVP timeline)
+## Long-term Roadmap
 
-- **Week 1 (Phase 1)**: Core infrastructure - posts, comments, API routes
-- **Week 2 (Phase 2)**: UI decluttering - feed-first layout, FAB, composer modal
-- **Week 3 (Phase 3)**: Comments & engagement - helpful marks, karma display
-- **Week 4 (Phase 4)**: Social graph - follows, reputation system, user profiles
-- **Week 5 (Phase 5)**: Location & urgency - expiration, nearby filter, distance display
-- **Week 6 (Phase 6)**: Real-time & polish - Supabase Realtime, animations, mobile optimization
+### Community Social Features (6-week MVP)
+- **Phase 1** ✅ (PR #15): Core infrastructure - posts, comments, API routes, real data
+- **Phase 2-6** ⏳: UI improvements, engagement features, social graph, real-time updates
+
+### Event Hosting System (6-week implementation)
+- **Phase 3A** 🔄 (Current): Event foundation - database schema and API routes
+- **Phase 3B** ⏳: Event creation and detail page UI
+- **Phase 3C** ⏳: Sign-up sheets UI for potluck coordination
+- **Phase 3D** ⏳: Discovery integration (feed cards, map pins, calendar view)
+- **Phase 3E** ⏳: Host tools and safety features (check-ins, verification, waitlist management)
+- **Phase 3F** ⏳: Recurring events functionality
 
 ## GitHub Tracking
 - Project Board: https://github.com/users/zenchantlive/projects/2
-- PR #12: https://github.com/zenchantlive/TheFeed/pull/12 (conceptual UI fixes)
-- Future PR: feat/community-social-mvp → claude/conceptual-ui-fixes → main
+- PR #12: https://github.com/zenchantlive/TheFeed/pull/12 (conceptual UI fixes) ✅ Merged
+- PR #15: https://github.com/zenchantlive/TheFeed/pull/15 (Phase 1 Community Social MVP) ✅ Merged
+- Future PR: feat/event-hosting-phase3a → feat/community-social-mvp → main

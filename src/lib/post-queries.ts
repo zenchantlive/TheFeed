@@ -31,7 +31,7 @@ export type PostCursor = {
 export type GetPostsParams = {
   cursor?: PostCursor | null;
   limit?: number;
-  kind?: "share" | "request" | "update" | "resource";
+  kind?: "share" | "request" | "update" | "resource" | "event";
   mood?: "hungry" | "full";
   userId?: string; // Filter by specific user
   followingUserId?: string; // Show posts from users this user follows
@@ -191,7 +191,7 @@ export async function createPost(data: {
   userId: string;
   content: string;
   mood?: "hungry" | "full" | null;
-  kind?: "share" | "request" | "update" | "resource";
+  kind?: "share" | "request" | "update" | "resource" | "event";
   location?: string;
   locationCoords?: { lat: number; lng: number };
   expiresAt?: Date;
@@ -224,7 +224,7 @@ export async function updatePost(
   data: {
     content?: string;
     mood?: "hungry" | "full" | null;
-    kind?: "share" | "request" | "update" | "resource";
+    kind?: "share" | "request" | "update" | "resource" | "event";
     location?: string;
     locationCoords?: { lat: number; lng: number };
     expiresAt?: Date;

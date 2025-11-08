@@ -1,5 +1,5 @@
 # TheFeed Project Overview (formerly FoodShare)
-Last updated: 2025-11-07
+Last updated: 2025-11-08
 
 ## Vision
 TheFeed is a hyperlocal food-sharing network that connects people experiencing food insecurity with:
@@ -37,91 +37,121 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - ✅ Mobile-first UI with bottom navigation
 - ✅ Static community page mockup (PR #12)
 
-### **Phase 2: Community Social Features** (IN PROGRESS - 6 weeks)
+### **Phase 2: Community Social Features** (COMPLETED - Week 1)
 **Goal**: Enable real peer-to-peer food sharing with full social features
 
-#### Week 1 - Core Infrastructure
+#### Week 1 - Core Infrastructure ✅ (PR #15)
 - Posts, comments, userProfiles database tables
 - API routes for posts CRUD
 - Real data fetching on community page
+- Post creation working end-to-end
 
-#### Week 2 - UI Decluttering
-- Feed-first layout (remove inline composer)
-- Floating Action Button (FAB) for posting
-- Composer modal/drawer
-- Mood toggles relocated to header
+#### Weeks 2-6 - Additional Features ⏳
+- UI decluttering (FAB, composer modal, feed-first layout)
+- Comments, helpful marks, karma display
+- Follow/unfollow, user profiles
+- Location & urgency features
+- Real-time updates and polish
 
-#### Week 3 - Engagement Features
-- Comments on posts
-- Helpful marks (upvote system)
-- Karma calculation and display
+### **Phase 3: Event Hosting System** (IN PROGRESS - 6 weeks)
+**Goal**: Enable neighbors to organize community potlucks and volunteer opportunities
 
-#### Week 4 - Social Graph
-- Follow/unfollow users
-- "Following" feed filter
-- User profiles with stats
+#### Phase 3A - Event Foundation 🔄 (Current)
+- 6 event tables: events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance
+- event-queries.ts data layer with RSVP and sign-up slot management
+- Complete API routes for events, RSVPs, and sign-up sheets
+- Capacity limits, waitlist logic, and promotion from waitlist
 
-#### Week 5 - Location & Urgency
-- Location sharing (text + coordinates)
-- Expiration timestamps ("Available until 6pm")
-- Urgency indicators (ASAP, Today, This week)
-- Nearby filter using geolocation
+#### Phase 3B - Event Creation & Detail Page ⏳
+- Event creation flow with multi-step form
+- Event detail page with RSVP section
+- Host-only edit/cancel controls
+- Map showing event location
 
-#### Week 6 - Real-Time & Polish
-- Supabase Realtime subscriptions
-- Photo upload infrastructure (Supabase Storage)
-- Animations and mobile optimization
-- Loading states and skeletons
+#### Phase 3C - Sign-Up Sheets ⏳
+- Sign-up slot management UI
+- Claim/unclaim slot functionality
+- Potluck coordination interface
 
-### **Phase 3: Launch & Iterate** (Post-MVP)
+#### Phase 3D - Discovery Integration ⏳
+- Event cards in community feed
+- Event pins on map
+- Calendar view for events
+- Event type filters
+
+#### Phase 3E - Host Tools & Safety ⏳
+- Attendee check-in flow
+- Guide verification system
+- Waitlist management UI
+- Event notifications
+
+#### Phase 3F - Recurring Events ⏳
+- Recurrence pattern UI
+- Recurring event instance generation
+- Calendar display for recurring events
+
+### **Phase 4: Launch & Iterate** (Post-MVP)
 - Recruit 10-15 founding members in Midtown Sacramento
 - Founder acts as guide, manually facilitates exchanges
 - Gather feedback, iterate on UX
-- Measure: 3 successful exchanges in first month
+- Measure: 3 successful exchanges and 2 community events in first month
 
-### **Phase 4: Food Bank Partner Tools**
+### **Phase 5: Food Bank Partner Tools**
 - Admin portal for food banks
 - Inventory/status management
 - Analytics dashboard for partners
 - Integration with existing food bank systems
 
-### **Phase 5: Scale & Expand**
+### **Phase 6: Scale & Expand**
 - Replicate to East Sacramento, Land Park
 - Recruit community guides (not just founder)
 - Automated moderation tools
 - Advanced search and filters
 
-### **Phase 6: Revenue & Sustainability**
+### **Phase 7: Revenue & Sustainability**
 - 501c3 application
 - Grant funding (USDA, local food security grants)
 - Partner sponsorships (grocery stores, restaurants)
 - Consider premium features for power users
 
-## Current Focus (2025-11-07)
-**Branch**: `feat/community-social-mvp`
+## Current Focus (2025-11-08)
+**Branch**: `feat/event-hosting-phase3a`
 
-### This Sprint (Week 1 of Phase 2)
-- 🔄 Update database schema with social tables
-- ⏳ Build API routes for posts and comments
-- ⏳ Connect community page to real data
-- ⏳ Enable actual posting (temporary UI)
+### This Sprint (Phase 3A - Event Foundation)
+- ✅ Design 6 event tables in database schema
+- ✅ Create event-queries.ts data layer
+- ✅ Build complete event API routes (events, RSVPs, slots, claims)
+- ✅ Implement capacity limits and waitlist logic
+- 🔄 Update documentation
+- ⏳ Run lint and typecheck
+- ⏳ Commit and create PR
 
-### Previous Sprint (PR #12)
-- ✅ Rebrand FoodShare → TheFeed
-- ✅ Build static community page mockup
-- ✅ Implement mood-based composer
-- ✅ Design feed filters and sidebar widgets
+### Previous Sprint (PR #15 - Phase 2 Week 1)
+- ✅ Implemented posts, comments, userProfiles, follows, helpfulMarks tables
+- ✅ Built complete API routes for posts CRUD
+- ✅ Created post-queries.ts with cursor-based pagination
+- ✅ Connected community page to real database
+- ✅ Enabled actual post creation
 
 ## Key Files
 
-### Community Features (New)
+### Event Hosting Features (Phase 3A - NEW)
+- `src/lib/schema.ts` — Event tables: events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance
+- `src/lib/event-queries.ts` — Event data access layer (NEW)
+- `src/app/api/events/route.ts` — Events CRUD API (NEW)
+- `src/app/api/events/[id]/route.ts` — Single event operations (NEW)
+- `src/app/api/events/[id]/rsvp/route.ts` — RSVP management (NEW)
+- `src/app/api/events/[id]/slots/route.ts` — Sign-up slots management (NEW)
+- `src/app/api/events/[id]/slots/[slotId]/claim/route.ts` — Claim/unclaim slots (NEW)
+
+### Community Features (Phase 2)
 - `src/lib/schema.ts` — Social tables: posts, comments, userProfiles, follows, helpfulMarks
-- `src/lib/post-queries.ts` — Post data access layer (NEW)
-- `src/app/api/posts/route.ts` — Posts CRUD API (NEW)
-- `src/app/api/posts/[id]/route.ts` — Single post operations (NEW)
-- `src/app/api/posts/[id]/comments/route.ts` — Comments API (NEW)
-- `src/app/community/page.tsx` — Server component (updated)
-- `src/app/community/page-client.tsx` — Client component with real data (updated)
+- `src/lib/post-queries.ts` — Post data access layer
+- `src/app/api/posts/route.ts` — Posts CRUD API
+- `src/app/api/posts/[id]/route.ts` — Single post operations
+- `src/app/api/posts/[id]/comments/route.ts` — Comments API
+- `src/app/community/page.tsx` — Server component (fetches real posts)
+- `src/app/community/page-client.tsx` — Client component with post creation
 
 ### Existing Core Features
 - `src/app/map/`, `src/components/map/` — Mapbox GL integration

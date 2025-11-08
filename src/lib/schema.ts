@@ -141,7 +141,7 @@ export const posts = pgTable("posts", {
     .references(() => user.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   mood: text("mood"), // "hungry" | "full" | null
-  kind: text("kind").notNull().default("update"), // "share" | "request" | "update" | "resource"
+  kind: text("kind").notNull().default("update"), // "share" | "request" | "update" | "resource" | "event"
   location: text("location"), // Free text: "13th & P St"
   locationCoords: json("location_coords").$type<{ lat: number; lng: number }>(),
   expiresAt: timestamp("expires_at"),
@@ -196,6 +196,170 @@ export const helpfulMarks = pgTable("helpful_marks", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Community Event Hosting Tables (Phase 3)
+
+/**
+ * Events table - Main event details for community potlucks and volunteer opportunities
+ * Links to posts table to create feed integration (every event has a corresponding post)
+ */
+export const events = pgTable("events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  // Link to the feed post about this event (for discovery in feed)
+  postId: text("post_id")
+    .notNull()
+    .references(() => posts.id, { onDelete: "cascade" }),
+  // Event host (organizer)
+  hostId: text("host_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // Basic event info
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  // Event type: "potluck" (shared meals) or "volunteer" (food bank shifts, etc.)
+  eventType: text("event_type").notNull(), // "potluck" | "volunteer"
+  // Time and duration
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  // Location details
+  location: text("location").notNull(), // Free text: "15th & P St Park"
+  locationCoords: json("location_coords").$type<{
+    lat: number;
+    lng: number;
+  }>(),
+  // Encourage public spaces for safety (UI will show tip, but not enforced)
+  isPublicLocation: boolean("is_public_location").notNull().default(true),
+  // Capacity management
+  capacity: integer("capacity"), // null = unlimited
+  rsvpCount: integer("rsvp_count").notNull().default(0), // Denormalized for performance
+  waitlistCount: integer("waitlist_count").notNull().default(0), // Denormalized
+  // Event lifecycle status
+  status: text("status").notNull().default("upcoming"), // "upcoming" | "in_progress" | "completed" | "cancelled"
+  // Guide verification for trust and safety
+  isVerified: boolean("is_verified").notNull().default(false),
+  // Recurring event support (links to eventRecurrence table)
+  recurrenceId: text("recurrence_id"), // FK to eventRecurrence if recurring
+  parentEventId: text("parent_event_id"), // For recurring instances, links to parent event
+  // Metadata
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * Event RSVPs - Tracks who's attending, waitlisted, or declined an event
+ * Includes guest count (bring a +1) and dietary notes
+ */
+export const eventRsvps = pgTable("event_rsvps", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // RSVP status: "attending" (confirmed), "waitlisted" (event full), "declined"
+  status: text("status").notNull().default("attending"), // "attending" | "waitlisted" | "declined"
+  // Guest count: 1 = just the user, 2 = user + 1 guest, etc.
+  guestCount: integer("guest_count").notNull().default(1),
+  // Optional notes: dietary restrictions, allergies, accessibility needs
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
+ * Sign-up slots - Categories for potluck coordination
+ * Example: "Main dish", "Salad", "Dessert", "Drinks"
+ * Each slot can have multiple claims (maxClaims)
+ */
+export const signUpSlots = pgTable("sign_up_slots", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  // Slot category name
+  slotName: text("slot_name").notNull(), // "Main dish", "Salad", "Dessert"
+  // How many people can sign up for this slot (e.g., 3 people can bring salads)
+  maxClaims: integer("max_claims").notNull(),
+  // Denormalized count of current claims for quick checks
+  claimCount: integer("claim_count").notNull().default(0),
+  // Optional description/instructions: "Serves 8-10 people"
+  description: text("description"),
+  // Display order for UI rendering
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Sign-up claims - Who signed up for what slot and what they're bringing
+ * Example: Alice claimed "Dessert" slot and is bringing "Chocolate cake"
+ */
+export const signUpClaims = pgTable("sign_up_claims", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  slotId: text("slot_id")
+    .notNull()
+    .references(() => signUpSlots.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // What the user is bringing: "Veggie lasagna", "Caesar salad", etc.
+  details: text("details").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Event recurrence patterns - For recurring events (weekly potlucks, etc.)
+ * Stores the pattern (frequency, day of week/month) for generating instances
+ */
+export const eventRecurrence = pgTable("event_recurrence", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  // The original event that serves as template for recurrence
+  parentEventId: text("parent_event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  // Frequency: "daily", "weekly", "biweekly", "monthly"
+  frequency: text("frequency").notNull(), // "daily" | "weekly" | "biweekly" | "monthly"
+  // For weekly/biweekly: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  dayOfWeek: integer("day_of_week"),
+  // For monthly: 1-31 (day of month)
+  dayOfMonth: integer("day_of_month"),
+  // Interval: every N days/weeks/months (e.g., interval=2 with frequency="weekly" = every 2 weeks)
+  interval: integer("interval").notNull().default(1),
+  // When to stop generating recurrences (null = no end date)
+  endsAt: timestamp("ends_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Event attendance - Check-in tracking for completed events
+ * Used for karma calculation and event analytics
+ */
+export const eventAttendance = pgTable("event_attendance", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // When the attendee was checked in by host
+  checkedInAt: timestamp("checked_in_at").notNull().defaultNow(),
+  // Optional notes from host: "Brought amazing lasagna!"
+  notes: text("notes"),
+});
+
+// Type exports - inferred from table schemas
 export type FoodBank = typeof foodBanks.$inferSelect;
 export type SavedLocation = typeof savedLocations.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
@@ -204,6 +368,12 @@ export type Post = typeof posts.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Follow = typeof follows.$inferSelect;
 export type HelpfulMark = typeof helpfulMarks.$inferSelect;
+export type Event = typeof events.$inferSelect;
+export type EventRsvp = typeof eventRsvps.$inferSelect;
+export type SignUpSlot = typeof signUpSlots.$inferSelect;
+export type SignUpClaim = typeof signUpClaims.$inferSelect;
+export type EventRecurrence = typeof eventRecurrence.$inferSelect;
+export type EventAttendance = typeof eventAttendance.$inferSelect;
 
 // Relations
 export const savedLocationsRelations = relations(savedLocations, ({ one }) => ({
@@ -228,6 +398,11 @@ export const userRelations = relations(user, ({ one, many }) => ({
   followers: many(follows, { relationName: "following" }),
   following: many(follows, { relationName: "follower" }),
   helpfulMarks: many(helpfulMarks),
+  // Event-related relations
+  hostedEvents: many(events), // Events this user is hosting
+  eventRsvps: many(eventRsvps), // Events this user has RSVPed to
+  signUpClaims: many(signUpClaims), // Sign-up slots this user has claimed
+  eventAttendance: many(eventAttendance), // Events this user has attended
 }));
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
@@ -278,6 +453,96 @@ export const followsRelations = relations(follows, ({ one }) => ({
 export const helpfulMarksRelations = relations(helpfulMarks, ({ one }) => ({
   user: one(user, {
     fields: [helpfulMarks.userId],
+    references: [user.id],
+  }),
+}));
+
+// Event Relations
+export const eventsRelations = relations(events, ({ one, many }) => ({
+  // The feed post associated with this event
+  post: one(posts, {
+    fields: [events.postId],
+    references: [posts.id],
+  }),
+  // The host (organizer) of the event
+  host: one(user, {
+    fields: [events.hostId],
+    references: [user.id],
+  }),
+  // Parent event for recurring instances
+  parentEvent: one(events, {
+    fields: [events.parentEventId],
+    references: [events.id],
+    relationName: "recurringInstances",
+  }),
+  // Child instances if this is a recurring event template
+  recurringInstances: many(events, { relationName: "recurringInstances" }),
+  // All RSVPs for this event
+  rsvps: many(eventRsvps),
+  // Sign-up slots for potluck coordination
+  signUpSlots: many(signUpSlots),
+  // Attendance records for completed event
+  attendance: many(eventAttendance),
+  // Recurrence pattern if this is a recurring event
+  recurrence: one(eventRecurrence, {
+    fields: [events.recurrenceId],
+    references: [eventRecurrence.id],
+  }),
+}));
+
+export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
+  // The event this RSVP is for
+  event: one(events, {
+    fields: [eventRsvps.eventId],
+    references: [events.id],
+  }),
+  // The user who RSVPed
+  user: one(user, {
+    fields: [eventRsvps.userId],
+    references: [user.id],
+  }),
+}));
+
+export const signUpSlotsRelations = relations(signUpSlots, ({ one, many }) => ({
+  // The event this slot belongs to
+  event: one(events, {
+    fields: [signUpSlots.eventId],
+    references: [events.id],
+  }),
+  // All claims (user sign-ups) for this slot
+  claims: many(signUpClaims),
+}));
+
+export const signUpClaimsRelations = relations(signUpClaims, ({ one }) => ({
+  // The slot this claim is for
+  slot: one(signUpSlots, {
+    fields: [signUpClaims.slotId],
+    references: [signUpSlots.id],
+  }),
+  // The user who claimed this slot
+  user: one(user, {
+    fields: [signUpClaims.userId],
+    references: [user.id],
+  }),
+}));
+
+export const eventRecurrenceRelations = relations(eventRecurrence, ({ one }) => ({
+  // The parent event that serves as the recurrence template
+  parentEvent: one(events, {
+    fields: [eventRecurrence.parentEventId],
+    references: [events.id],
+  }),
+}));
+
+export const eventAttendanceRelations = relations(eventAttendance, ({ one }) => ({
+  // The event this attendance record is for
+  event: one(events, {
+    fields: [eventAttendance.eventId],
+    references: [events.id],
+  }),
+  // The user who attended
+  user: one(user, {
+    fields: [eventAttendance.userId],
     references: [user.id],
   }),
 }));
