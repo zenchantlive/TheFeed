@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -12,6 +12,7 @@ import {
   Navigation2,
   ArrowRight,
   ChefHat,
+  CalendarPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -183,6 +184,12 @@ export function CommunityPageClient({
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline" className="rounded-full px-5">
+              <Link href="/community/events/new">
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Host Event
+              </Link>
+            </Button>
             <Button asChild variant="outline" className="rounded-full px-5">
               <Link href="/map">
                 <MapPin className="mr-2 h-4 w-4" />

@@ -1,0 +1,449 @@
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  Info,
+} from "lucide-react";
+import { format } from "date-fns";
+
+// Types matching event-queries.ts
+type EventDetails = {
+  id: string;
+  title: string;
+  description: string;
+  eventType: "potluck" | "volunteer";
+  startTime: string;
+  endTime: string;
+  location: string;
+  locationCoords: { lat: number; lng: number } | null;
+  isPublicLocation: boolean;
+  capacity: number | null;
+  rsvpCount: number;
+  waitlistCount: number;
+  status: "upcoming" | "in_progress" | "completed" | "cancelled";
+  isVerified: boolean;
+  host: { id: string; name: string; image: string | null };
+  attendees: Array<{
+    id: string;
+    userId: string;
+    user: { id: string; name: string; image: string | null };
+    status: "attending" | "waitlisted" | "declined";
+    guestCount: number;
+    notes: string | null;
+  }>;
+  slots: Array<{
+    id: string;
+    slotName: string;
+    maxClaims: number;
+    claimCount: number;
+    description: string | null;
+    claims: Array<{
+      id: string;
+      userId: string;
+      user: { id: string; name: string; image: string | null };
+      details: string;
+    }>;
+  }>;
+};
+
+interface EventDetailContentProps {
+  event: EventDetails;
+  currentUserId: string | null;
+}
+
+export function EventDetailContent({ event, currentUserId }: EventDetailContentProps) {
+  const router = useRouter();
+  const [isRsvping, setIsRsvping] = useState(false);
+  const [showRsvpForm, setShowRsvpForm] = useState(false);
+  const [guestCount, setGuestCount] = useState(1);
+  const [rsvpNotes, setRsvpNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Check if current user has RSVP'd
+  const userRsvp = event.attendees.find((a) => a.userId === currentUserId);
+  const isAttending = userRsvp?.status === "attending";
+  const isWaitlisted = userRsvp?.status === "waitlisted";
+  const hasRsvpd = Boolean(userRsvp);
+
+  // Check if event is full
+  const isFull = event.capacity !== null && event.rsvpCount >= event.capacity;
+
+  const handleRsvp = async () => {
+    if (!currentUserId) {
+      router.push("/");
+      return;
+    }
+
+    setIsRsvping(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/rsvp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "attending",
+          guestCount,
+          notes: rsvpNotes.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to RSVP");
+      }
+
+      // Refresh page to show updated data
+      router.refresh();
+      setShowRsvpForm(false);
+    } catch (err) {
+      console.error("RSVP error:", err);
+      setError(err instanceof Error ? err.message : "Failed to RSVP");
+    } finally {
+      setIsRsvping(false);
+    }
+  };
+
+  const handleCancelRsvp = async () => {
+    if (!currentUserId || !hasRsvpd) return;
+
+    setIsRsvping(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/rsvp`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to cancel RSVP");
+      }
+
+      router.refresh();
+    } catch (err) {
+      console.error("Cancel RSVP error:", err);
+      setError(err instanceof Error ? err.message : "Failed to cancel RSVP");
+    } finally {
+      setIsRsvping(false);
+    }
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return format(date, "EEEE, MMMM d, yyyy 'at' h:mm a");
+  };
+
+  const attending = event.attendees.filter((a) => a.status === "attending");
+  const waitlisted = event.attendees.filter((a) => a.status === "waitlisted");
+
+  return (
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+      {/* Event Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          {event.eventType === "potluck" && (
+            <Badge variant="secondary">🎉 Potluck</Badge>
+          )}
+          {event.eventType === "volunteer" && (
+            <Badge variant="secondary">🤝 Volunteer</Badge>
+          )}
+          {event.isVerified && <Badge variant="default">✓ Guide Verified</Badge>}
+          {event.isPublicLocation && <Badge variant="outline">Public Location</Badge>}
+        </div>
+
+        <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+
+        <div className="flex items-center gap-4 text-muted-foreground mb-6">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              {event.host.image && <img src={event.host.image} alt={event.host.name} />}
+            </Avatar>
+            <span>Hosted by <strong>{event.host.name}</strong></span>
+          </div>
+        </div>
+
+        {/* Event Metadata */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="h-5 w-5 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Date</p>
+              <p className="text-sm text-muted-foreground">
+                {formatDateTime(event.startTime)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Clock className="h-5 w-5 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Duration</p>
+              <p className="text-sm text-muted-foreground">
+                {format(new Date(event.startTime), "h:mm a")} -{" "}
+                {format(new Date(event.endTime), "h:mm a")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <MapPin className="h-5 w-5 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Location</p>
+              <p className="text-sm text-muted-foreground">{event.location}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Users className="h-5 w-5 mt-0.5 text-muted-foreground" />
+            <div>
+              <p className="font-medium">Attendance</p>
+              <p className="text-sm text-muted-foreground">
+                {event.rsvpCount} {event.rsvpCount === 1 ? "person" : "people"} attending
+                {event.capacity && ` (capacity: ${event.capacity})`}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Description */}
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-3">About this event</h2>
+        <p className="whitespace-pre-wrap text-muted-foreground">{event.description}</p>
+      </Card>
+
+      {/* RSVP Section */}
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">RSVP</h2>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {!hasRsvpd && !showRsvpForm && (
+          <div>
+            {isFull ? (
+              <Alert className="mb-4">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  This event is at capacity. You can join the waitlist and we'll notify you if a
+                  spot opens up.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Button onClick={() => setShowRsvpForm(true)} size="lg" className="w-full">
+              {isFull ? "Join Waitlist" : "RSVP to this event"}
+            </Button>
+          </div>
+        )}
+
+        {!hasRsvpd && showRsvpForm && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="guestCount">Guest count</Label>
+              <Input
+                id="guestCount"
+                type="number"
+                min={1}
+                max={10}
+                value={guestCount}
+                onChange={(e) => setGuestCount(parseInt(e.target.value, 10) || 1)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Including yourself (1 = just you, 2 = you + 1 guest)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rsvpNotes">Notes (optional)</Label>
+              <Textarea
+                id="rsvpNotes"
+                placeholder="Dietary restrictions, accessibility needs, etc."
+                value={rsvpNotes}
+                onChange={(e) => setRsvpNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleRsvp} disabled={isRsvping} className="flex-1">
+                {isRsvping ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Confirm RSVP
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowRsvpForm(false)}
+                disabled={isRsvping}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {hasRsvpd && (
+          <div className="space-y-4">
+            {isAttending && (
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>You're attending!</strong>
+                  {userRsvp?.guestCount && userRsvp.guestCount > 1 && (
+                    <> (with {userRsvp.guestCount - 1} guest{userRsvp.guestCount > 2 ? "s" : ""})</>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isWaitlisted && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>You're on the waitlist.</strong> We'll notify you if a spot opens up.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {userRsvp?.notes && (
+              <div className="text-sm text-muted-foreground">
+                <strong>Your notes:</strong> {userRsvp.notes}
+              </div>
+            )}
+
+            <Button variant="outline" onClick={handleCancelRsvp} disabled={isRsvping}>
+              {isRsvping ? "Canceling..." : "Cancel RSVP"}
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* Attendee List */}
+      {attending.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            Attending ({attending.length})
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {attending.map((rsvp) => (
+              <div key={rsvp.id} className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  {rsvp.user.image && <img src={rsvp.user.image} alt={rsvp.user.name} />}
+                </Avatar>
+                <span className="text-sm">
+                  {rsvp.user.name}
+                  {rsvp.guestCount > 1 && <span className="text-muted-foreground"> +{rsvp.guestCount - 1}</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Waitlist */}
+      {waitlisted.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            Waitlist ({waitlisted.length})
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {waitlisted.map((rsvp) => (
+              <div key={rsvp.id} className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  {rsvp.user.image && <img src={rsvp.user.image} alt={rsvp.user.name} />}
+                </Avatar>
+                <span className="text-sm text-muted-foreground">{rsvp.user.name}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Sign-up Sheet (Potlucks only) */}
+      {event.eventType === "potluck" && event.slots.length > 0 && (
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">What to bring</h2>
+          <div className="space-y-4">
+            {event.slots.map((slot) => (
+              <div key={slot.id} className="border rounded-lg p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-medium">{slot.slotName}</h3>
+                    {slot.description && (
+                      <p className="text-sm text-muted-foreground">{slot.description}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline">
+                    {slot.claimCount}/{slot.maxClaims}
+                  </Badge>
+                </div>
+
+                {slot.claims.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {slot.claims.map((claim) => (
+                      <div key={claim.id} className="flex items-center gap-2 text-sm">
+                        <Avatar className="h-6 w-6">
+                          {claim.user.image && (
+                            <img src={claim.user.image} alt={claim.user.name} />
+                          )}
+                        </Avatar>
+                        <span className="font-medium">{claim.user.name}:</span>
+                        <span className="text-muted-foreground">{claim.details}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {slot.claimCount < slot.maxClaims && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {slot.maxClaims - slot.claimCount} more needed
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <Alert className="mt-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Claim a slot after you RSVP to let everyone know what you're bringing!
+            </AlertDescription>
+          </Alert>
+        </Card>
+      )}
+    </div>
+  );
+}

@@ -194,9 +194,26 @@ type Event = {
 7. **RSVP with guests**: Track guest count (+1, +2, etc.)
 8. **Waitlist automation**: First waitlisted user promoted when someone cancels
 
-**Phase 3B-3F TODO** (UI work):
-- Phase 3B: Event creation flow + detail page
-- Phase 3C: Sign-up sheet UI
+**Phase 3B: Event Creation & Detail Page** ✅ COMPLETE:
+- **Status**: Full event creation and detail viewing implemented and working
+- **Routes**:
+  - `/community/events/new` - 5-step event creation wizard (protected)
+  - `/community/events/[id]` - Event detail page with RSVP functionality
+- **Components** (src/components/events/):
+  - `event-creation-wizard.tsx` - Multi-step form orchestrator with validation and API integration
+  - `event-basic-info-step.tsx` - Step 1: Event type (potluck/volunteer), title, description
+  - `event-datetime-step.tsx` - Step 2: Date/time pickers with shadcn calendar
+  - `event-location-step.tsx` - Step 3: Location text input + interactive Mapbox map picker
+  - `event-capacity-step.tsx` - Step 4: Capacity limits (unlimited or max attendees)
+  - `event-signup-sheet-step.tsx` - Step 5: Sign-up sheet builder (potlucks only)
+  - `event-detail-content.tsx` - Complete event detail page with RSVP, attendee list, sign-up sheet display
+- **Integration**:
+  - "Host Event" button added to `/community` page header
+  - Events automatically create feed posts with kind="event"
+  - Direct database queries (no API roundtrip) for server components
+
+**Phase 3C-3F TODO** (Future):
+- Phase 3C: Sign-up sheet claiming UI
 - Phase 3D: Event cards in feed, map pins, calendar view
 - Phase 3E: Host management tools, check-in UI
 - Phase 3F: Recurring event UI
@@ -233,6 +250,15 @@ OPENROUTER_MODEL=openai/gpt-4.1-mini  # Optional, defaults to this value
 ```
 
 See `env.example` for complete list including Better Auth and Google OAuth.
+
+## Platform Notes
+
+**Development Environment**: Windows 11 + WSL2
+- User runs commands in **PowerShell** (Windows)
+- Claude Code runs in **WSL** (Linux)
+- **Important**: User should run `npx shadcn@latest add` commands in PowerShell, not WSL
+- **Migration caveat**: Run `pnpm run db:generate` and `pnpm run db:migrate` in PowerShell if esbuild errors occur in WSL
+- Paths: Use WSL paths (`/mnt/c/Users/...`) when Claude makes file changes
 
 ## Development Workflow
 
@@ -397,19 +423,24 @@ const result = streamText({
 
 ## Known Issues & Active Work
 
-### Current Sprint (Phase 2: Community Social Features - Week 1)
+### Current Sprint (Phase 3B: Event Hosting UI - Week 2)
 
-**Branch**: `feat/community-social-mvp`
+**Branch**: `feat/event-hosting-phase3a`
 
 **Active Work**:
-1. **Community backend implementation** - Building posts, comments, userProfiles tables
-2. **API routes for posts** - CRUD operations with cursor-based pagination
-3. **Real data integration** - Replacing hardcoded posts with database queries
+1. **Event creation wizard** - 5-step form for creating potlucks and volunteer events
+2. **Event detail page** - Display event info, RSVP functionality, attendee list
+3. **UI components** - Calendar picker, location selector with Mapbox, sign-up sheets
 
-**Previous Issues (Resolved in PR #12)**:
+**Phase 3A Complete (PR #16)** ✅:
+- Backend infrastructure (6 database tables, event-queries.ts, 5 API route files)
+- PR: https://github.com/zenchantlive/TheFeed/pull/16
+
+**Previous Issues (Resolved)**:
 - ~~Map markers not rendering~~ - Fixed in PR #12
 - ~~Chat blank responses after ZIP~~ - Fixed in PR #12
-- ~~Community page static~~ - Implementing full social features now
+- ~~Community page static~~ - Fixed in PR #15 (Phase 1)
+- ~~Event TypeScript errors~~ - Fixed in Phase 3A (cache issue)
 
 ### Context Files
 
