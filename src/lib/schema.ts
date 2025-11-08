@@ -172,19 +172,25 @@ export const postComments = pgTable("post_comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const postReactions = pgTable("post_reactions", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  postId: text("post_id")
-    .notNull()
-    .references(() => communityPosts.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  type: reactionType("type").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
+export const postReactions = pgTable(
+  "post_reactions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    postId: text("post_id")
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: reactionType("type").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => ({
+    unq: unique().on(table.postId, table.userId, table.type),
+  }),
+);
 
 export const commentReactions = pgTable("comment_reactions", {
   id: text("id")
