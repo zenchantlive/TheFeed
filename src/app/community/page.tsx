@@ -1,3 +1,6 @@
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import {
   CommunityPageClient,
   type FeedPost,
@@ -5,121 +8,46 @@ import {
   type HotItem,
   type VibeStat,
 } from "./page-client";
+import { getPosts } from "@/lib/post-queries";
 
-const FEED_POSTS: FeedPost[] = [
-  {
-    id: "post-sarah",
-    author: "Sarah L.",
-    role: "neighbor",
-    mood: "full",
-    kind: "share",
-    distance: "0.2 mi",
-    timeAgo: "6 min ago",
-    body: "Big pot of coconut lentil soup and garlic flatbread up for grabs. Bring a container if you can!",
-    meta: {
-      location: "13th & P St stoop",
-      until: "Pickup before 8:30 pm",
-      status: "verified",
-    },
-    tags: ["Veggie friendly", "Warm meal"],
-    replies: [
-      {
-        id: "reply-marcus",
-        author: "Marcus",
-        role: "neighbor",
-        body: "On my way with bowls for two! Thanks for sharing.",
-        timeAgo: "2 min ago",
-        helpful: 3,
-      },
-    ],
-  },
-  {
-    id: "post-ana",
-    author: "Ana P.",
-    role: "neighbor",
-    mood: "hungry",
-    kind: "request",
-    distance: "0.4 mi",
-    timeAgo: "12 min ago",
-    body: "Looking for halal groceries or a hot meal for my family tonight. Any leads nearby?",
-    meta: {
-      status: "community",
-    },
-    tags: ["Family of four", "Halal"],
-    replies: [
-      {
-        id: "reply-guide-ahmed",
-        author: "Guide Ahmed",
-        role: "guide",
-        body: "City Harvest pantry on 21st just restocked halal meats. They&apos;re open until 7:30 pm—no appointment needed.",
-        timeAgo: "4 min ago",
-        helpful: 5,
-      },
-      {
-        id: "reply-lina",
-        author: "Lina",
-        role: "neighbor",
-        body: "I can drop off extra rice and veggies in 20 minutes if that helps!",
-        timeAgo: "1 min ago",
-      },
-    ],
-  },
-  {
-    id: "post-terrance",
-    author: "Terrance",
-    role: "community",
-    mood: "update",
-    kind: "resource",
-    distance: "1.1 mi",
-    timeAgo: "38 min ago",
-    body: "Just added Oak Park Community Pantry to the map. Friendly crew and fresh produce every Thursday evening.",
-    meta: {
-      location: "3725 MLK Jr Blvd",
-      status: "community",
-    },
-    tags: ["Community fridge", "Fresh produce"],
-  },
-  {
-    id: "post-guide-maria",
-    author: "Guide Maria",
-    role: "guide",
-    mood: "update",
-    kind: "update",
-    distance: "0.6 mi",
-    timeAgo: "1 hr ago",
-    body: "Heads up: Sacred Heart pantry got a surprise delivery of eggs and dairy. They&apos;ll close the line at 5:30 pm.",
-    meta: {
-      location: "Sacred Heart Pantry",
-      until: "Line closes 5:30 pm",
-      status: "verified",
-    },
-    replies: [
-      {
-        id: "reply-jasmine",
-        author: "Jasmine",
-        role: "neighbor",
-        body: "Thanks! I grabbed extra cartons—happy to share if anyone can&apos;t make it in time.",
-        timeAgo: "22 min ago",
-      },
-    ],
-  },
-  {
-    id: "post-ken",
-    author: "Ken",
-    role: "neighbor",
-    mood: "full",
-    kind: "share",
-    distance: "0.9 mi",
-    timeAgo: "2 hrs ago",
-    body: "Harvested more oranges than I can juice. Porch pickup all evening—bag what you need!",
-    meta: {
-      location: "24th & Broadway",
-      until: "Available until 10 pm",
-      status: "verified",
-    },
-    tags: ["Fresh produce"],
-  },
-];
+/**
+ * Format time ago from a date
+ */
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} min ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} hr${hours > 1 ? "s" : ""} ago`;
+  }
+  const days = Math.floor(diffInSeconds / 86400);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+}
+
+/**
+ * Format expiration time
+ */
+function formatUntil(expiresAt: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
+
+  if (diffInSeconds < 0) return "Expired";
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `Available for ${minutes} more min`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `Available until ${expiresAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  }
+  return `Available until ${expiresAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
 
 const PROMPTS = [
   "Need halal-friendly groceries tonight",
@@ -183,10 +111,44 @@ const VIBE_STATS: VibeStat[] = [
   },
 ];
 
-export default function CommunityPage() {
+export default async function CommunityPage() {
+  // Check authentication
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    redirect("/");
+  }
+
+  // Fetch real posts from database
+  const { items: dbPosts } = await getPosts({ limit: 20 });
+
+  // Transform database posts to FeedPost format
+  const posts: FeedPost[] = dbPosts.map((post) => {
+    const role = post.author.role as "neighbor" | "guide" | "community";
+    const mood = (post.mood || "update") as "hungry" | "full" | "update";
+    const kind = post.kind as "share" | "request" | "update" | "resource";
+
+    return {
+      id: post.id,
+      author: post.author.name,
+      role,
+      mood,
+      kind,
+      distance: "N/A", // TODO: Calculate distance from user location
+      timeAgo: formatTimeAgo(post.createdAt),
+      body: post.content,
+      meta: {
+        location: post.location || undefined,
+        until: post.expiresAt ? formatUntil(post.expiresAt) : undefined,
+        status: "community" as const, // TODO: Determine status based on verification
+      },
+      tags: post.metadata?.tags || undefined,
+      replies: [], // TODO: Fetch comments in future
+    };
+  });
+
   return (
     <CommunityPageClient
-      posts={FEED_POSTS}
+      posts={posts}
       prompts={PROMPTS}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
