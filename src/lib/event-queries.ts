@@ -787,7 +787,7 @@ export async function checkInAttendee({
     ),
   });
 
-  if (!existingRsvp || existingRsvp.status === "declined") {
+  if (!existingRsvp || existingRsvp.status !== "attendee") {
     throw new Error("Attendee must RSVP before check-in");
   }
 
@@ -915,3 +915,4 @@ async function promoteFromWaitlist(eventId: string): Promise<void> {
     }
   }
 }
+
