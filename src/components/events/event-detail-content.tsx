@@ -24,46 +24,7 @@ import {
   Info,
 } from "lucide-react";
 import { format } from "date-fns";
-
-// Types matching event-queries.ts
-type EventDetails = {
-  id: string;
-  title: string;
-  description: string;
-  eventType: "potluck" | "volunteer";
-  startTime: string;
-  endTime: string;
-  location: string;
-  locationCoords: { lat: number; lng: number } | null;
-  isPublicLocation: boolean;
-  capacity: number | null;
-  rsvpCount: number;
-  waitlistCount: number;
-  status: "upcoming" | "in_progress" | "completed" | "cancelled";
-  isVerified: boolean;
-  host: { id: string; name: string; image: string | null };
-  attendees: Array<{
-    id: string;
-    userId: string;
-    user: { id: string; name: string; image: string | null };
-    status: "attending" | "waitlisted" | "declined";
-    guestCount: number;
-    notes: string | null;
-  }>;
-  slots: Array<{
-    id: string;
-    slotName: string;
-    maxClaims: number;
-    claimCount: number;
-    description: string | null;
-    claims: Array<{
-      id: string;
-      userId: string;
-      user: { id: string; name: string; image: string | null };
-      details: string;
-    }>;
-  }>;
-};
+import type { EventDetails } from "@/lib/event-queries";
 
 interface EventDetailContentProps {
   event: EventDetails;
@@ -79,7 +40,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
   const [error, setError] = useState<string | null>(null);
 
   // Check if current user has RSVP'd
-  const userRsvp = event.attendees.find((a) => a.userId === currentUserId);
+  const userRsvp = event.rsvps.find((a) => a.userId === currentUserId);
   const isAttending = userRsvp?.status === "attending";
   const isWaitlisted = userRsvp?.status === "waitlisted";
   const hasRsvpd = Boolean(userRsvp);
@@ -148,13 +109,13 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
     }
   };
 
-  const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return format(date, "EEEE, MMMM d, yyyy 'at' h:mm a");
+  const formatDateTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return format(dateObj, "EEEE, MMMM d, yyyy 'at' h:mm a");
   };
 
-  const attending = event.attendees.filter((a) => a.status === "attending");
-  const waitlisted = event.attendees.filter((a) => a.status === "waitlisted");
+  const attending = event.rsvps.filter((a) => a.status === "attending");
+  const waitlisted = event.rsvps.filter((a) => a.status === "waitlisted");
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
@@ -199,8 +160,8 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
             <div>
               <p className="font-medium">Duration</p>
               <p className="text-sm text-muted-foreground">
-                {format(new Date(event.startTime), "h:mm a")} -{" "}
-                {format(new Date(event.endTime), "h:mm a")}
+                {format(event.startTime, "h:mm a")} -{" "}
+                {format(event.endTime, "h:mm a")}
               </p>
             </div>
           </div>
@@ -394,11 +355,11 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
       )}
 
       {/* Sign-up Sheet (Potlucks only) */}
-      {event.eventType === "potluck" && event.slots.length > 0 && (
+      {event.eventType === "potluck" && event.signUpSlots.length > 0 && (
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">What to bring</h2>
           <div className="space-y-4">
-            {event.slots.map((slot) => (
+            {event.signUpSlots.map((slot) => (
               <div key={slot.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
                   <div>

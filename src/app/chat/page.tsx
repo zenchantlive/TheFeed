@@ -179,7 +179,7 @@ export default function ChatPage() {
         parts: [
           {
             type: "text",
-            text: INTENT_PRESETS[intentParam],
+            text: INTENT_PRESETS[intentParam as keyof typeof INTENT_PRESETS],
           },
         ],
       });

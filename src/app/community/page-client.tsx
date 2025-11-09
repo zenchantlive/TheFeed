@@ -13,6 +13,9 @@ import {
   ArrowRight,
   ChefHat,
   CalendarPlus,
+  Users,
+  Calendar,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,8 +69,21 @@ export type VibeStat = {
   description?: string;
 };
 
+export type EventCardData = {
+  id: string;
+  title: string;
+  eventType: "potluck" | "volunteer";
+  hostName: string;
+  startTime: Date;
+  location: string;
+  rsvpCount: number;
+  capacity: number | null;
+  isVerified: boolean;
+};
+
 export type CommunityPageClientProps = {
   posts: FeedPost[];
+  events: EventCardData[];
   prompts: string[];
   hotItems: HotItem[];
   guideMoments: GuideMoment[];
@@ -106,6 +122,7 @@ const kindToFilter: Record<FeedPost["kind"], FeedFilter> = {
 
 export function CommunityPageClient({
   posts,
+  events,
   prompts,
   hotItems,
   guideMoments,
@@ -116,6 +133,7 @@ export function CommunityPageClient({
   const [composerValue, setComposerValue] = useState("");
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [isPosting, setIsPosting] = useState(false);
+  const [showComposer, setShowComposer] = useState(false);
 
   const visiblePosts = useMemo(() => {
     if (filter === "all") return posts;
@@ -126,6 +144,25 @@ export function CommunityPageClient({
     mood === "hungry"
       ? "I\'m hungry and need quick help finding nearby food tonight."
       : "I\'m full and want to share leftovers or volunteer this evening.";
+
+  const formatEventDate = (date: Date) => {
+    const now = new Date();
+    const diffInHours = (date.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      return `Today at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    } else if (diffInHours < 48) {
+      return `Tomorrow at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
+    }
+  };
 
   const handlePromptClick = (prompt: string) => {
     setComposerValue((prev) => (prev.length > 0 ? `${prev}\n${prompt}` : prompt));
@@ -208,90 +245,148 @@ export function CommunityPageClient({
           </div>
         </div>
 
-        <div className="mt-6 space-y-5">
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMood("hungry")}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                mood === "hungry"
-                  ? "bg-gradient-to-r from-hungry-start to-hungry-end text-white shadow-lg shadow-hungry-end/30"
-                  : "bg-secondary text-secondary-foreground"
-              )}
-            >
-              I&apos;m hungry
-            </button>
-            <button
-              type="button"
-              onClick={() => setMood("full")}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition-all",
-                mood === "full"
-                  ? "bg-gradient-to-r from-full-start to-full-end text-white shadow-lg shadow-full-end/30"
-                  : "bg-secondary text-secondary-foreground"
-              )}
-            >
-              I&apos;m full
-            </button>
-            <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              Tell everyone how you&apos;re rolling today
-            </span>
-          </div>
+        <div className="mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowComposer(!showComposer)}
+            className="w-full rounded-full"
+          >
+            {showComposer ? "Hide composer" : "Post to the community"}
+          </Button>
 
-          <div className="space-y-3 rounded-2xl border border-border bg-muted/40 p-4">
-            <label htmlFor="community-composer" className="text-sm font-semibold text-muted-foreground">
-              {mood === "hungry" ? "What are you craving?" : "What are you sharing?"}
-            </label>
-            <textarea
-              id="community-composer"
-              rows={mood === "hungry" ? 3 : 4}
-              value={composerValue}
-              onChange={(event) => setComposerValue(event.target.value)}
-              placeholder={
-                mood === "hungry"
-                  ? "Example: Looking for halal-friendly groceries and kid-friendly meals for tonight."
-                  : "Example: Extra veggie curry and rice for two. Pickup near 15th & J before 9pm."
-              }
-              className="w-full resize-none rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            />
-            <div className="flex flex-wrap gap-2">
-              {prompts.map((prompt) => (
-                <Button
-                  key={prompt}
+          {showComposer && (
+            <div className="mt-4 space-y-3 rounded-2xl border border-border bg-muted/40 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
                   type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="rounded-full bg-secondary px-3 text-xs"
-                  onClick={() => handlePromptClick(prompt)}
+                  onClick={() => setMood("hungry")}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                    mood === "hungry"
+                      ? "bg-gradient-to-r from-hungry-start to-hungry-end text-white"
+                      : "bg-secondary text-secondary-foreground"
+                  )}
                 >
-                  {prompt}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs text-muted-foreground">
-                Posts go to neighbors within 2 miles. Guides get alerted when you need extra help.
+                  I&apos;m hungry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMood("full")}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                    mood === "full"
+                      ? "bg-gradient-to-r from-full-start to-full-end text-white"
+                      : "bg-secondary text-secondary-foreground"
+                  )}
+                >
+                  I&apos;m full
+                </button>
               </div>
+
+              <textarea
+                id="community-composer"
+                rows={2}
+                value={composerValue}
+                onChange={(event) => setComposerValue(event.target.value)}
+                placeholder={
+                  mood === "hungry"
+                    ? "What are you looking for?"
+                    : "What are you sharing?"
+                }
+                className="w-full resize-none rounded-xl border border-border/60 bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              />
+
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   onClick={handlePost}
-                  className="rounded-full bg-primary px-5 text-primary-foreground shadow"
+                  size="sm"
+                  className="rounded-full bg-primary px-4 text-primary-foreground"
                   disabled={composerValue.trim().length === 0 || isPosting}
                 >
-                  {isPosting ? "Posting..." : "Post to the potluck"}
+                  {isPosting ? "Posting..." : "Post"}
                 </Button>
-                <Button asChild variant="outline" size="sm" className="rounded-full">
+                <Button asChild variant="ghost" size="sm" className="rounded-full">
                   <Link href={`/chat?prefill=${encodeURIComponent(aiPrompt)}`}>
-                    Ask the sous-chef first
+                    Ask sous-chef
                   </Link>
                 </Button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
+
+      {/* Upcoming Events Section */}
+      {events.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Calendar className="h-6 w-6" />
+              Upcoming Events
+            </h2>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/community/events/new">See all</Link>
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {events.slice(0, 6).map((event) => (
+              <Link
+                key={event.id}
+                href={`/community/events/${event.id}`}
+                className="group block"
+              >
+                <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-lg">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <Badge className={cn(
+                      "rounded-full text-xs font-semibold",
+                      event.eventType === "potluck"
+                        ? "bg-full-start/15 text-full-end border-full-end/30"
+                        : "bg-primary/15 text-primary border-primary/30"
+                    )}>
+                      {event.eventType === "potluck" ? "🎉 Potluck" : "🤝 Volunteer"}
+                    </Badge>
+                    {event.isVerified && (
+                      <Badge variant="default" className="rounded-full text-xs">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
+
+                  <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
+                    {event.title}
+                  </h3>
+
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{formatEventDate(event.startTime)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>
+                        {event.rsvpCount} attending
+                        {event.capacity && ` • ${event.capacity} max`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    Hosted by {event.hostName}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="flex flex-col gap-5">

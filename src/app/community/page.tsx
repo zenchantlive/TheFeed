@@ -7,8 +7,10 @@ import {
   type GuideMoment,
   type HotItem,
   type VibeStat,
+  type EventCardData,
 } from "./page-client";
 import { getPosts } from "@/lib/post-queries";
+import { getEvents } from "@/lib/event-queries";
 
 /**
  * Format time ago from a date
@@ -121,6 +123,13 @@ export default async function CommunityPage() {
   // Fetch real posts from database
   const { items: dbPosts } = await getPosts({ limit: 20 });
 
+  // Fetch upcoming events (only upcoming status)
+  const { items: dbEvents } = await getEvents({
+    limit: 6,
+    status: "upcoming",
+    onlyUpcoming: true,
+  });
+
   // Transform database posts to FeedPost format
   const posts: FeedPost[] = dbPosts.map((post) => {
     const role = post.author.role as "neighbor" | "guide" | "community";
@@ -146,9 +155,23 @@ export default async function CommunityPage() {
     };
   });
 
+  // Transform events to EventCardData format
+  const events: EventCardData[] = dbEvents.map((event) => ({
+    id: event.id,
+    title: event.title,
+    eventType: event.eventType as "potluck" | "volunteer",
+    hostName: event.host.name,
+    startTime: event.startTime,
+    location: event.location,
+    rsvpCount: event.rsvpCount,
+    capacity: event.capacity,
+    isVerified: event.isVerified,
+  }));
+
   return (
     <CommunityPageClient
       posts={posts}
+      events={events}
       prompts={PROMPTS}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
