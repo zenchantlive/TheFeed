@@ -16,8 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LocationCard } from "@/components/foodshare/location-card";
 import { SignInButton } from "@/components/auth/sign-in-button";
+import { SavedLocationsList } from "@/components/profile/SavedLocationsList";
 import Link from "next/link";
 import {
   BookmarkPlus,
@@ -28,7 +28,6 @@ import {
   Info,
   LifeBuoy,
 } from "lucide-react";
-import { isCurrentlyOpen } from "@/lib/geolocation";
 
 type SavedLocationRecord = {
   id: string;
@@ -89,22 +88,24 @@ export default async function ProfilePage() {
             </Avatar>
             <div className="space-y-1">
               <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
-                FoodShare Profile
+                TheFeed Pantry
               </p>
               <h1 className="text-2xl font-bold md:text-3xl">
-                {user ? `Welcome back, ${user.name ?? "FoodShare member"}` : "Sign in to personalize FoodShare"}
+                {user
+                  ? `Welcome back, ${user.name ?? "neighbor"}`
+                  : "Sign in to personalize your pantry"}
               </h1>
               <p className="text-sm text-white/80">
                 {user
-                  ? "Manage saved locations, preferences, and learn more about FoodShare."
-                  : "Create an account to save nearby food banks and sync your preferences across devices."}
+                  ? "Manage saved locations, keep your vibe stats synced, and let the sous-chef know your go-to spots."
+                  : "Create an account to save nearby food hubs and sync your preferences across devices."}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {user ? (
               <Button asChild variant="secondary" className="bg-white/10 hover:bg-white/20">
-                <Link href="/chat">Talk to the assistant</Link>
+                <Link href="/chat">Ping the sous-chef</Link>
               </Button>
             ) : (
               <SignInButton />
@@ -118,7 +119,7 @@ export default async function ProfilePage() {
           <CardHeader>
             <CardTitle className="text-lg">Account</CardTitle>
             <CardDescription>
-              Access your FoodShare account controls
+              Access your TheFeed pantry controls
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -129,7 +130,7 @@ export default async function ProfilePage() {
                   <p className="truncate">{user.email}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-primary/5 p-3 text-xs text-primary-foreground">
-                  Saving food banks helps FoodShare tailor quick suggestions for you.
+                  Saving food hubs helps TheFeed tailor quick suggestions for you.
                 </div>
                 <Button asChild className="w-full">
                   <Link href="/map">
@@ -166,7 +167,7 @@ export default async function ProfilePage() {
               <MapPinned className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-foreground">Location services</p>
-                <p>Allow FoodShare to find nearby resources faster.</p>
+                <p>Allow TheFeed to find nearby resources faster.</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-2xl border border-border/60 px-3 py-2">
@@ -181,7 +182,7 @@ export default async function ProfilePage() {
 
         <Card className="rounded-3xl border border-border/60 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg">About FoodShare</CardTitle>
+            <CardTitle className="text-lg">About TheFeed</CardTitle>
             <CardDescription>
               Learn more about the initiative
             </CardDescription>
@@ -193,7 +194,7 @@ export default async function ProfilePage() {
             >
               <Info className="h-4 w-4 text-primary" />
               <div>
-                <p className="text-foreground">What is FoodShare?</p>
+                <p className="text-foreground">What is TheFeed?</p>
                 <p>Our mission to connect neighbours with food assistance.</p>
               </div>
             </Link>
@@ -243,28 +244,7 @@ export default async function ProfilePage() {
 
         {user ? (
           saved.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {saved
-                .filter((entry) => entry.foodBank)
-                .map((entry) => {
-                  const bank = entry.foodBank!;
-                  const isOpen = bank.hours ? isCurrentlyOpen(bank.hours) : false;
-                  return (
-                    <LocationCard
-                      key={entry.id}
-                      location={bank}
-                      isOpen={isOpen}
-                      actionSlot={
-                        <Button asChild variant="outline" className="w-full">
-                          <Link href={`/map?highlight=${bank.id}`}>
-                            View on map
-                          </Link>
-                        </Button>
-                      }
-                    />
-                  );
-                })}
-            </div>
+            <SavedLocationsList savedLocations={saved} />
           ) : (
             <Card className="rounded-3xl border border-dashed border-border/60 bg-muted/40">
               <CardContent className="flex flex-col gap-3 p-6 text-sm text-muted-foreground">

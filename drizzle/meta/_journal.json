@@ -8,6 +8,20 @@
       "when": 1762386669576,
       "tag": "0000_loving_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762566370432,
+      "tag": "0001_classy_stingray",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762628541001,
+      "tag": "0002_modern_impossible_man",
+      "breakpoints": true
     }
   ]
 }
