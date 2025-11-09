@@ -131,9 +131,9 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
     return format(dateObj, "EEEE, MMMM d, yyyy 'at' h:mm a");
   };
 
-  const attending = event.rsvps.filter((a) => a.status === "attending");
-  const waitlisted = event.rsvps.filter((a) => a.status === "waitlisted");
-  const attendanceSet = new Set(event.attendance.map((record) => record.userId));
+  const attending = useMemo(() => event.rsvps.filter((a) => a.status === "attending"), [event.rsvps]);
+  const waitlisted = useMemo(() => event.rsvps.filter((a) => a.status === "waitlisted"), [event.rsvps]);
+  const attendanceSet = useMemo(() => new Set(event.attendance.map((record) => record.userId)), [event.attendance]);
 
   const handleOpenSlotModal = (slotId: string, slotName: string) => {
     setSlotModal({ id: slotId, name: slotName });
