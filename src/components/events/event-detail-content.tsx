@@ -183,7 +183,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
   };
 
   const handleUnclaimSlot = async (slotId: string) => {
-    if (!currentUserId) return;
+    if (!currentUserId || unclaimingSlotId) return;
     setUnclaimingSlotId(slotId);
     setSlotActionError(null);
 
