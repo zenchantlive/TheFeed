@@ -127,10 +127,8 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - ✅ PR #18 merged into `phase-3`
 
 ### Next Sprint (Phase 3E - Host Tools)
-- ⏳ Host dashboard for waitlist + attendee management
-- ⏳ Check-in UI and attendance tracking
-- ⏳ Guide verification workflows
-- ⏳ Notification strategy (waitlist promotions, reminders)
+- 📄 See `context/plan/phase-3e-host-tools.md` for full scope
+- 🧭 Deliver host dashboard, check-in UI, guide verification, waitlist tools
 
 ## Key Files
 

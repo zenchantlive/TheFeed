@@ -69,6 +69,10 @@ Last updated: 2025-11-09
   - Rationale: Potluck discovery should live where neighbors already check open locations; reduces navigation hops.
   - Implementation: `MapView` renders dual marker layers with distinct styling + popovers; map page fetches events with `onlyWithCoords=true`.
 
+- **2025-11-09** — **Host tools scope confirmed for Phase 3E**
+  - Rationale: Need structured plan before building check-ins/verification; reduces churn mid-sprint.
+  - Implementation: Added `context/plan/phase-3e-host-tools.md` covering goals, deliverables, and risks.
+
 ## Product Strategy
 
 - **2025-11-07** — **Target Sacramento (Midtown) as beachhead**

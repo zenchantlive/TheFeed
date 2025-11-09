@@ -173,9 +173,9 @@ Branch: `phase-3d-plan` (merged into `phase-3`)
 - ✅ Pushed to remote and updated PR #16
 
 ## Immediate Next Steps
-1. 🚧 Kick off Phase 3E: host tools + safety (check-ins, verification, waitlists)
-2. 🧪 QA discovery flows (feed filters, map pins, calendar nav) on mobile + desktop
-3. 🧭 Define notification/communication strategy before Phase 3E implementation
+1. 🚧 Implement Phase 3E host tools per [phase-3e plan](plan/phase-3e-host-tools.md).
+2. 🧪 QA discovery flows (feed filters, map pins, calendar nav) on mobile + desktop.
+3. 🧭 Define notification/communication strategy before Phase 3E implementation.
 
 ## Long-term Roadmap
 
