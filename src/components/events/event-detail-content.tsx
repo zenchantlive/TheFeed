@@ -156,6 +156,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
     setIsSubmittingSlot(true);
     setSlotModalError(null);
     setSlotActionError(null);
+    let didSucceed = false;
 
     try {
       const response = await fetch(
@@ -172,13 +173,16 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
         throw new Error(data.error || "Failed to claim slot");
       }
 
-      handleCloseSlotModal();
+      didSucceed = true;
       router.refresh();
     } catch (err) {
       console.error("Claim slot error:", err);
       setSlotModalError(err instanceof Error ? err.message : "Failed to claim slot");
     } finally {
       setIsSubmittingSlot(false);
+      if (didSucceed) {
+        handleCloseSlotModal();
+      }
     }
   };
 
@@ -454,97 +458,17 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
             </Alert>
           )}
           <div className="space-y-4">
-            {event.signUpSlots.map((slot) => {
-              const claimCount = slot.claimCount ?? 0;
-              const maxClaims = slot.maxClaims ?? 0;
-              const slotIsFull = maxClaims > 0 ? claimCount >= maxClaims : false;
-              const userSlotClaim = slot.claims.find(
-                (claim) => claim.user.id === currentUserId
-              );
-              const showClaimButton = isAttending && !userSlotClaim;
-              const canClaimSlot = showClaimButton && !slotIsFull;
-              const isUnclaiming = unclaimingSlotId === slot.id;
-
-              return (
-                <div key={slot.id} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium">{slot.slotName}</h3>
-                      {slot.description && (
-                        <p className="text-sm text-muted-foreground">{slot.description}</p>
-                      )}
-                    </div>
-                    <Badge variant={slotIsFull ? "secondary" : "outline"}>
-                      {claimCount}/{maxClaims}
-                    </Badge>
-                  </div>
-
-                  {slot.claims.length > 0 && (
-                    <div className="space-y-2">
-                      {slot.claims.map((claim) => (
-                        <div key={claim.id} className="flex items-center gap-2 text-sm">
-                          <Avatar className="h-6 w-6">
-                            {claim.user.image && (
-                              <img src={claim.user.image} alt={claim.user.name} />
-                            )}
-                          </Avatar>
-                          <span className="font-medium">{claim.user.name}:</span>
-                          <span className="text-muted-foreground">{claim.details}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    {userSlotClaim ? (
-                      <>
-                        <p className="text-sm">
-                          <span className="font-medium">You volunteered:</span>{" "}
-                          <span className="text-muted-foreground">{userSlotClaim.details}</span>
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleUnclaimSlot(slot.id)}
-                          disabled={isUnclaiming}
-                        >
-                          {isUnclaiming ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Removing...
-                            </>
-                          ) : (
-                            "Unclaim"
-                          )}
-                        </Button>
-                      </>
-                    ) : showClaimButton ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleOpenSlotModal(slot.id, slot.slotName)}
-                        disabled={!canClaimSlot}
-                      >
-                        {slotIsFull ? "Slot full" : "Claim this slot"}
-                      </Button>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        RSVP to claim this slot.
-                      </p>
-                    )}
-                  </div>
-
-                  {!slotIsFull && (
-                    <p className="text-sm text-muted-foreground">
-                      {Math.max(maxClaims - claimCount, 0)} more needed
-                    </p>
-                  )}
-
-                  {slotIsFull && !userSlotClaim && (
-                    <p className="text-xs text-muted-foreground">This slot is full.</p>
-                  )}
-                </div>
-              );
-            })}
+            {event.signUpSlots.map((slot) => (
+              <PotluckSlotItem
+                key={slot.id}
+                slot={slot}
+                isAttending={Boolean(isAttending)}
+                currentUserId={currentUserId}
+                unclaimingSlotId={unclaimingSlotId}
+                onClaim={handleOpenSlotModal}
+                onUnclaim={handleUnclaimSlot}
+              />
+            ))}
           </div>
           <Alert className="mt-4">
             <Info className="h-4 w-4" />
@@ -604,6 +528,108 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+type PotluckSlotItemProps = {
+  slot: EventDetails["signUpSlots"][number];
+  isAttending: boolean;
+  currentUserId: string | null;
+  unclaimingSlotId: string | null;
+  onClaim: (slotId: string, slotName: string) => void;
+  onUnclaim: (slotId: string) => void | Promise<void>;
+};
+
+function PotluckSlotItem({
+  slot,
+  isAttending,
+  currentUserId,
+  unclaimingSlotId,
+  onClaim,
+  onUnclaim,
+}: PotluckSlotItemProps) {
+  const claimCount = slot.claimCount ?? 0;
+  const maxClaims = slot.maxClaims ?? 0;
+  const slotIsFull = maxClaims > 0 ? claimCount >= maxClaims : false;
+  const userSlotClaim = slot.claims.find((claim) => claim.user.id === currentUserId);
+  const showClaimButton = isAttending && !userSlotClaim;
+  const canClaimSlot = showClaimButton && !slotIsFull;
+  const isUnclaiming = unclaimingSlotId === slot.id;
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-medium">{slot.slotName}</h3>
+          {slot.description && (
+            <p className="text-sm text-muted-foreground">{slot.description}</p>
+          )}
+        </div>
+        <Badge variant={slotIsFull ? "secondary" : "outline"}>
+          {claimCount}/{maxClaims}
+        </Badge>
+      </div>
+
+      {slot.claims.length > 0 && (
+        <div className="space-y-2">
+          {slot.claims.map((claim) => (
+            <div key={claim.id} className="flex items-center gap-2 text-sm">
+              <Avatar className="h-6 w-6">
+                {claim.user.image && <img src={claim.user.image} alt={claim.user.name} />}
+              </Avatar>
+              <span className="font-medium">{claim.user.name}:</span>
+              <span className="text-muted-foreground">{claim.details}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        {userSlotClaim ? (
+          <>
+            <p className="text-sm">
+              <span className="font-medium">You volunteered:</span>{" "}
+              <span className="text-muted-foreground">{userSlotClaim.details}</span>
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onUnclaim(slot.id)}
+              disabled={isUnclaiming}
+            >
+              {isUnclaiming ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                "Unclaim"
+              )}
+            </Button>
+          </>
+        ) : showClaimButton ? (
+          <Button
+            size="sm"
+            onClick={() => onClaim(slot.id, slot.slotName)}
+            disabled={!canClaimSlot}
+          >
+            {slotIsFull ? "Slot full" : "Claim this slot"}
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground">RSVP to claim this slot.</p>
+        )}
+      </div>
+
+      {!slotIsFull && (
+        <p className="text-sm text-muted-foreground">
+          {Math.max(maxClaims - claimCount, 0)} more needed
+        </p>
+      )}
+
+      {slotIsFull && !userSlotClaim && (
+        <p className="text-xs text-muted-foreground">This slot is full.</p>
+      )}
     </div>
   );
 }
