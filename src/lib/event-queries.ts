@@ -64,6 +64,7 @@ export type SlotWithClaims = SignUpSlotRecord & {
 export type EventDetails = EventWithHost & {
   rsvps: RsvpWithUser[];
   signUpSlots: SlotWithClaims[];
+  attendance: EventAttendanceRecord[];
 };
 
 /**
@@ -350,6 +351,13 @@ export async function getEventById(
     claims: claimRowsBySlot[slotRow.slot.id] ?? [],
   }));
 
+  const attendanceRows = await db
+    .select({
+      attendance: eventAttendance,
+    })
+    .from(eventAttendance)
+    .where(eq(eventAttendance.eventId, id));
+
   return {
     ...eventRow.event,
     host: {
@@ -361,6 +369,7 @@ export async function getEventById(
     },
     rsvps,
     signUpSlots: signUpSlotsWithClaims,
+    attendance: attendanceRows.map((row) => row.attendance),
   };
 }
 
@@ -758,6 +767,78 @@ export async function getEventSignUpSlots(
     ...slotRow.slot,
     claims: claimsBySlot[slotRow.slot.id] ?? [],
   }));
+}
+
+type CheckInParams = {
+  eventId: string;
+  attendeeId: string;
+  notes?: string | null;
+};
+
+export async function checkInAttendee({
+  eventId,
+  attendeeId,
+  notes,
+}: CheckInParams): Promise<EventAttendanceRecord> {
+  const existingRsvp = await db.query.eventRsvps.findFirst({
+    where: and(
+      eq(eventRsvps.eventId, eventId),
+      eq(eventRsvps.userId, attendeeId)
+    ),
+  });
+
+  if (!existingRsvp || existingRsvp.status === "declined") {
+    throw new Error("Attendee must RSVP before check-in");
+  }
+
+  const existingAttendance = await db.query.eventAttendance.findFirst({
+    where: and(
+      eq(eventAttendance.eventId, eventId),
+      eq(eventAttendance.userId, attendeeId)
+    ),
+  });
+
+  if (existingAttendance) {
+    const [updated] = await db
+      .update(eventAttendance)
+      .set({
+        notes: typeof notes === "string" ? notes : existingAttendance.notes,
+        checkedInAt: new Date(),
+      })
+      .where(eq(eventAttendance.id, existingAttendance.id))
+      .returning();
+    return updated;
+  }
+
+  const [attendanceRecord] = await db
+    .insert(eventAttendance)
+    .values({
+      eventId,
+      userId: attendeeId,
+      notes: typeof notes === "string" ? notes : null,
+    })
+    .returning();
+
+  return attendanceRecord;
+}
+
+export async function undoCheckInAttendee(
+  eventId: string,
+  attendeeId: string
+): Promise<boolean> {
+  const existingAttendance = await db.query.eventAttendance.findFirst({
+    where: and(
+      eq(eventAttendance.eventId, eventId),
+      eq(eventAttendance.userId, attendeeId)
+    ),
+  });
+
+  if (!existingAttendance) {
+    return false;
+  }
+
+  await db.delete(eventAttendance).where(eq(eventAttendance.id, existingAttendance.id));
+  return true;
 }
 
 // =============================================================================

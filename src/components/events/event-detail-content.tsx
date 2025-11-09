@@ -52,12 +52,15 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
   const [slotActionError, setSlotActionError] = useState<string | null>(null);
   const [isSubmittingSlot, setIsSubmittingSlot] = useState(false);
   const [unclaimingSlotId, setUnclaimingSlotId] = useState<string | null>(null);
+  const [hostActionError, setHostActionError] = useState<string | null>(null);
+  const [checkingInUserId, setCheckingInUserId] = useState<string | null>(null);
 
   // Check if current user has RSVP'd
   const userRsvp = event.rsvps.find((a) => a.userId === currentUserId);
   const isAttending = userRsvp?.status === "attending";
   const isWaitlisted = userRsvp?.status === "waitlisted";
   const hasRsvpd = Boolean(userRsvp);
+  const isHost = currentUserId === event.host.id;
 
   // Check if event is full
   const isFull = event.capacity !== null && event.rsvpCount >= event.capacity;
@@ -130,6 +133,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
 
   const attending = event.rsvps.filter((a) => a.status === "attending");
   const waitlisted = event.rsvps.filter((a) => a.status === "waitlisted");
+  const attendanceSet = new Set(event.attendance.map((record) => record.userId));
 
   const handleOpenSlotModal = (slotId: string, slotName: string) => {
     setSlotModal({ id: slotId, name: slotName });
@@ -207,6 +211,34 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
       setSlotActionError(err instanceof Error ? err.message : "Failed to unclaim slot");
     } finally {
       setUnclaimingSlotId(null);
+    }
+  };
+
+  const handleToggleCheckIn = async (attendeeId: string, shouldCheckIn: boolean) => {
+    if (!isHost) return;
+    setCheckingInUserId(attendeeId);
+    setHostActionError(null);
+
+    try {
+      const response = await fetch(`/api/events/${event.id}/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: attendeeId, checkedIn: shouldCheckIn }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update check-in status");
+      }
+
+      router.refresh();
+    } catch (err) {
+      console.error("Check-in update error:", err);
+      setHostActionError(
+        err instanceof Error ? err.message : "Failed to update check-in status"
+      );
+    } finally {
+      setCheckingInUserId(null);
     }
   };
 
@@ -406,6 +438,75 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
         )}
       </Card>
 
+      {isHost && (
+        <Card className="p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xl font-semibold">Host tools</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled title="Editing coming soon">
+                  Edit event
+                </Button>
+                <Button variant="ghost" size="sm" disabled title="Cancellation coming soon">
+                  Cancel event
+                </Button>
+              </div>
+            </div>
+            {hostActionError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{hostActionError}</AlertDescription>
+              </Alert>
+            )}
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Attendee check-ins</h3>
+              {attending.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No attendees yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {attending.map((rsvp) => {
+                    const attendeeCheckedIn = attendanceSet.has(rsvp.user.id);
+                    return (
+                      <div
+                        key={`host-${rsvp.id}`}
+                        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/60 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{rsvp.user.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            RSVP for {rsvp.guestCount}
+                            {attendeeCheckedIn ? " • Checked in" : ""}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={attendeeCheckedIn ? "secondary" : "outline"}
+                          onClick={() =>
+                            handleToggleCheckIn(rsvp.user.id, !attendeeCheckedIn)
+                          }
+                          disabled={checkingInUserId === rsvp.user.id}
+                        >
+                          {checkingInUserId === rsvp.user.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Updating...
+                            </>
+                          ) : attendeeCheckedIn ? (
+                            "Undo check-in"
+                          ) : (
+                            "Check in"
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Attendee List */}
       {attending.length > 0 && (
         <Card className="p-6">
@@ -418,10 +519,17 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
                 <Avatar className="h-8 w-8">
                   {rsvp.user.image && <img src={rsvp.user.image} alt={rsvp.user.name} />}
                 </Avatar>
-                <span className="text-sm">
-                  {rsvp.user.name}
-                  {rsvp.guestCount > 1 && <span className="text-muted-foreground"> +{rsvp.guestCount - 1}</span>}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm">
+                    {rsvp.user.name}
+                    {rsvp.guestCount > 1 && (
+                      <span className="text-muted-foreground"> +{rsvp.guestCount - 1}</span>
+                    )}
+                  </span>
+                  {attendanceSet.has(rsvp.user.id) && (
+                    <span className="text-xs text-primary">Checked in</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
