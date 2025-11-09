@@ -63,12 +63,12 @@ Branch: `feat/event-hosting-phase3a`
 ✅ Events automatically create feed posts for discovery
 
 **Phase 3C-3F Still Pending**:
-❌ Sign-up sheet UI for claiming slots (Phase 3C)
-❌ Event cards in community feed (Phase 3D)
-❌ Calendar view (Phase 3D)
-❌ Map pins for events (Phase 3D)
-❌ Host management interface (Phase 3E)
-❌ Check-in UI (Phase 3E)
+✅ Sign-up sheet UI for claiming slots (Phase 3C)
+✅ Event cards in community feed (Phase 3D)
+✅ Calendar view (Phase 3D)
+✅ Host management interface (Phase 3E)
+✅ Check-in UI (Phase 3E)
+❌ UI-Refactor of Commuinity Page
 ❌ Recurring events UI (Phase 3F)
 
 ### Previous Work (PR #12)
