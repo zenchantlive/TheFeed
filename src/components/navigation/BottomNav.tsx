@@ -13,22 +13,22 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    label: "Chat",
+    label: "Sous-chef",
     href: "/chat",
     icon: MessageCircle,
   },
   {
-    label: "Map",
+    label: "Food map",
     href: "/map",
     icon: MapPin,
   },
   {
-    label: "Community",
+    label: "Potluck",
     href: "/community",
     icon: Users,
   },
   {
-    label: "Profile",
+    label: "Pantry",
     href: "/profile",
     icon: UserRound,
   },
@@ -49,7 +49,7 @@ export function BottomNav() {
           const isActive =
             pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
 
-          const isMap = item.label === "Map";
+          const isMap = item.href === "/map";
 
           return (
             <Link

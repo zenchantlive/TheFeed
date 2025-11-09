@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TheFeed Community Mockup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        font-family: 'Inter', sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text-primary);
+        transition: background 0.4s ease, color 0.4s ease;
+      }
+
+      html[data-theme='light'] {
+        --bg: #faf9f6;
+        --surface: #ffffff;
+        --surface-subtle: #f5f3ed;
+        --border: #e7e4dd;
+        --text-primary: #2d2d34;
+        --text-secondary: #6b6b6b;
+        --text-tertiary: #8f8f8f;
+        --primary: #52796f;
+        --primary-soft: rgba(82, 121, 111, 0.12);
+        --accent: #e07a5f;
+        --warning: #d97706;
+        --success: #047857;
+        --card-shadow: 0 18px 32px rgba(82, 121, 111, 0.06);
+        --composer-bg: #ffffff;
+      }
+
+      html[data-theme='dark'] {
+        --bg: #2d2d34;
+        --surface: #3a3a44;
+        --surface-subtle: #32323a;
+        --border: #4a4a54;
+        --text-primary: #fffbf0;
+        --text-secondary: #d8d6ce;
+        --text-tertiary: #b4b1a8;
+        --primary: #8fa998;
+        --primary-soft: rgba(143, 169, 152, 0.18);
+        --accent: #f4a261;
+        --warning: #f6bd60;
+        --success: #7bd88f;
+        --card-shadow: 0 18px 32px rgba(0, 0, 0, 0.28);
+        --composer-bg: #34343c;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-areas:
+          'nav nav'
+          'header header'
+          'main aside';
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 32px;
+        padding: 32px clamp(24px, 5vw, 64px) 64px;
+        max-width: 1320px;
+        margin: 0 auto;
+      }
+
+      header {
+        grid-area: header;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px clamp(24px, 4vw, 36px);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .nav-bar {
+        grid-area: nav;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-primary);
+      }
+
+      .brand-logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        display: grid;
+        place-items: center;
+        color: #fffbf0;
+        font-weight: 700;
+        font-size: 20px;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .theme-toggle {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 999px;
+        padding: 6px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+      }
+
+      .theme-toggle:hover {
+        transform: translateY(-1px);
+      }
+
+      .profile-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+
+      .profile-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: grid;
+        place-items: center;
+        color: #fffbf0;
+        font-weight: 600;
+      }
+
+      .header-content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        width: 100%;
+        gap: 32px;
+      }
+
+      .location {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .location h1 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 32px);
+      }
+
+      .location p {
+        margin: 0;
+        color: var(--text-secondary);
+      }
+
+      .location-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: var(--surface-subtle);
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .cta-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .mood-toggles {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .mood-button {
+        border: none;
+        border-radius: 16px;
+        padding: 18px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--primary-soft);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .mood-button.primary {
+        background: var(--primary);
+        color: #fffbf0;
+      }
+
+      .mood-button.accent {
+        background: var(--accent);
+        color: #fffbf0;
+      }
+
+      .mood-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
+      }
+
+      main {
+        grid-area: main;
+        display: grid;
+        gap: 24px;
+      }
+
+      .composer {
+        background: var(--composer-bg);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .composer-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .composer-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .composer textarea {
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        min-height: 100px;
+        resize: vertical;
+        background: var(--surface);
+        color: var(--text-primary);
+        font-family: inherit;
+      }
+
+      .composer textarea::placeholder {
+        color: var(--text-tertiary);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chip {
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .feed-section {
+        display: grid;
+        gap: 24px;
+      }
+
+      .feed-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: var(--card-shadow);
+        display: grid;
+        gap: 16px;
+      }
+
+      .feed-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      .feed-meta strong {
+        color: var(--text-primary);
+      }
+
+      .feed-content {
+        display: grid;
+        gap: 12px;
+      }
+
+      .feed-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn.primary {
+        background: var(--primary);
+        color: #fffbf0;
+      }
+
+      .btn.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+
+      .reactions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .reaction {
+        border-radius: 999px;
+        background: var(--surface-subtle);
+        padding: 6px 12px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      aside {
+        grid-area: aside;
+        display: grid;
+        gap: 24px;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        display: grid;
+        gap: 16px;
+        box-shadow: var(--card-shadow);
+      }
+
+      .panel h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .panel-item {
+        display: grid;
+        gap: 6px;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--surface-subtle);
+        border: 1px solid var(--border);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge.success {
+        background: rgba(4, 120, 87, 0.14);
+        color: var(--success);
+      }
+
+      .badge.warning {
+        background: rgba(217, 119, 6, 0.18);
+        color: var(--warning);
+      }
+
+      .inline-thread {
+        margin-top: 12px;
+        padding-left: 20px;
+        border-left: 2px solid var(--border);
+        display: grid;
+        gap: 10px;
+      }
+
+      .thread-reply {
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: var(--surface-subtle);
+      }
+
+      .inline-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .filter-pills {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .filter-pill {
+        border-radius: 999px;
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .panel-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--text-tertiary);
+        font-size: 13px;
+      }
+
+      .guides {
+        display: grid;
+        gap: 14px;
+      }
+
+      .guide-card {
+        display: grid;
+        gap: 6px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: var(--surface-subtle);
+      }
+
+      .guide-card strong {
+        color: var(--text-primary);
+      }
+
+      .timeline {
+        display: grid;
+        gap: 12px;
+      }
+
+      .timeline-event {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .timeline-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      @media (max-width: 1080px) {
+        .app-shell {
+          grid-template-areas:
+            'nav'
+            'header'
+            'main'
+            'aside';
+          grid-template-columns: 1fr;
+          padding: 24px 20px 48px;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .header-content {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          order: 4;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .nav-actions {
+          gap: 12px;
+        }
+
+        .theme-toggle span {
+          display: none;
+        }
+
+        header {
+          padding: 20px;
+        }
+
+        .composer {
+          padding: 20px;
+        }
+
+        .feed-card {
+          padding: 20px;
+        }
+
+        .mood-button {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <nav class="nav-bar">
+        <div class="brand">
+          <div class="brand-logo">TF</div>
+          <div>
+            <strong>TheFeed</strong>
+            <div style="color: var(--text-tertiary); font-size: 14px">
+              A neighborly pantry with jokes on tap
+            </div>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="theme-toggle" id="themeToggle">
+            <span>Flip the vibe</span>
+            <span id="themeIcon">🌞</span>
+          </button>
+          <div class="profile-chip">
+            <div class="profile-avatar">J</div>
+            <span>Hey, Jamal</span>
+          </div>
+        </div>
+      </nav>
+
+      <header>
+        <div class="header-content">
+          <div class="location">
+            <div class="location-pill">📍 Cooking within 2 miles · 9 neighbors sizzling</div>
+            <h1>Tonight in Oak Park</h1>
+            <p>Hungry humans nearby are trading bites, tips, and pantry rescues.</p>
+          </div>
+          <div class="cta-stack">
+            <div class="mood-toggles">
+              <button class="mood-button primary">🍽️ I'm hungry</button>
+              <button class="mood-button accent">🥡 I'm full</button>
+            </div>
+            <div style="color: var(--text-secondary); font-size: 13px">
+              Pick a mood. We'll keep the jokes warm either way.
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="composer">
+          <div class="composer-title">
+            <strong>What's cooking, neighbor?</strong>
+            <div class="composer-actions">
+              <div class="chip">🔥 Popular: Soup swaps</div>
+              <div class="chip">🧃 Pantry rescue</div>
+            </div>
+          </div>
+          <textarea placeholder="Tell folks what's on your stove or in your heart." rows="4"></textarea>
+          <div class="inline-actions">
+            <button class="btn primary">Post to the block</button>
+            <button class="btn secondary">Draft for later</button>
+          </div>
+        </section>
+
+        <section class="feed-section">
+          <article class="feed-card">
+            <div class="feed-meta">
+              <div>
+                <strong>Guide Maria</strong> · 0.4 miles · 6 min ago
+              </div>
+              <span class="badge success">✓ Guide verified</span>
+            </div>
+            <div class="feed-content">
+<h3 class="card-title">Fresh produce drop at Sacred Heart until 8pm</h3>
+              <p style="margin: 0; color: var(--text-secondary)">
+                There's a rainbow of veggies tonight — no appointment needed. Bring a tote and an appetite.
+              </p>
+              <div class="chips">
+                <div class="chip">🥬 Fresh greens</div>
+                <div class="chip">🕗 Hot until 8pm</div>
+                <div class="chip">🚶‍♀️ 8 min walk</div>
+              </div>
+            </div>
+            <div class="feed-actions">
+              <button class="btn primary">Get directions</button>
+              <button class="btn secondary">Save for later</button>
+              <div class="reactions">
+                <div class="reaction">👍 Yum (12)</div>
+                <div class="reaction">🤝 On my way (5)</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="feed-card">
+            <div class="feed-meta">
+              <div>
+                <strong>Sam & Luna</strong> · 0.2 miles · 18 min ago
+              </div>
+              <span class="badge warning">⚠️ Community-added spot</span>
+            </div>
+            <div class="feed-content">
+              <h3 style="margin: 0">Leftover tamales & arroz con leche (6 servings)</h3>
+              <p style="margin: 0; color: var(--text-secondary)">
+                Pick up near 35th & Broadway before midnight. Bring a container unless you like carrying rice with your hands.
+              </p>
+              <div class="chips">
+                <div class="chip">🌮 Tamales</div>
+                <div class="chip">🥛 Sweet treat</div>
+                <div class="chip">🕛 Available till 12am</div>
+              </div>
+              <div class="inline-thread">
+                <div class="thread-reply">
+                  <strong>Nessa (3 blocks)</strong>
+                  <p style="margin: 6px 0; color: var(--text-secondary)">
+                    Can confirm — had one, cried tears of masa joy.
+                  </p>
+                  <div class="inline-actions">
+                    <button class="btn secondary" style="padding: 6px 12px">Add your review</button>
+                    <button class="btn secondary" style="padding: 6px 12px">Mark as picked up</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="feed-actions">
+              <button class="btn primary">Claim a plate</button>
+              <button class="btn secondary">Ask a question</button>
+            </div>
+          </article>
+
+          <article class="feed-card">
+            <div class="feed-meta">
+              <div>
+                <strong>Malik</strong> · 1.1 miles · 32 min ago
+              </div>
+              <span class="badge success">✓ 4 neighbors confirmed</span>
+            </div>
+            <div class="feed-content">
+              <p style="margin: 0">
+                "Anyone know where to snag halal chicken near Oak Park tonight?"
+              </p>
+              <div class="inline-thread">
+                <div class="thread-reply">
+                  <strong>Guide Ahmed</strong>
+                  <p style="margin: 4px 0; color: var(--text-secondary)">
+                    Mercy Center restocked today. They do halal after 5pm. Tell them Ahmed sent you for extra smiles.
+                  </p>
+                  <div class="chips">
+                    <div class="chip">📍 0.9 miles away</div>
+                    <div class="chip">🕔 Open till 9pm</div>
+                  </div>
+                </div>
+                <div class="thread-reply">
+                  <strong>Jessie</strong>
+                  <p style="margin: 4px 0; color: var(--text-secondary)">
+                    Al-Noor Market has a solid deal on half chickens tonight. Bring cash.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="feed-actions">
+              <button class="btn primary">Add a tip</button>
+              <button class="btn secondary">Follow updates</button>
+              <div class="reactions">
+                <div class="reaction">❤️ Helpful (9)</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="feed-card" style="background: var(--surface-subtle)">
+            <div class="feed-meta">
+              <div>
+                <strong>Empty bowl?</strong>
+              </div>
+              <span class="badge warning">Psst</span>
+            </div>
+            <p style="margin: 0; color: var(--text-secondary)">
+              No fresh posts in the last hour. Stir the pot with a new share or widen your radius. We promise the neighbors can handle the heat.
+            </p>
+            <div class="feed-actions">
+              <button class="btn primary">Expand to Midtown</button>
+              <button class="btn secondary">Summon AI sous-chef</button>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <aside>
+        <section class="panel">
+          <h3>Tonight's sizzle</h3>
+          <div class="panel-item">
+            <strong>7 neighbors sharing now</strong>
+            <span style="color: var(--text-secondary)">3 soups · 2 stews · 12 jokes</span>
+          </div>
+          <div class="panel-item">
+            <strong>Hot tip</strong>
+            <span style="color: var(--text-secondary)">Swap jars tonight, not gossip. Both tend to spill.</span>
+          </div>
+          <div class="filter-pills">
+            <button class="filter-pill">🍜 Show soups</button>
+            <button class="filter-pill">🕌 Halal</button>
+            <button class="filter-pill">🥬 Veggie-forward</button>
+          </div>
+          <div class="panel-footer">
+            <span>Powered by hungry neighbors</span>
+<a href="/map" style="color: var(--primary); text-decoration: none">View map →</a>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Kitchen roll call</h3>
+          <div class="guides">
+            <div class="guide-card">
+              <strong>Guide Maria</strong>
+              <span style="color: var(--text-secondary)">Verified 18 spots · Legendary pozole</span>
+              <button class="btn secondary" style="width: fit-content">Ping Maria</button>
+            </div>
+            <div class="guide-card">
+              <strong>Guide Ahmed</strong>
+              <span style="color: var(--text-secondary)">Halal hero · Maps memorized</span>
+              <button class="btn secondary" style="width: fit-content">Ask for directions</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Fresh out of the oven</h3>
+          <div class="timeline">
+            <div class="timeline-event">
+              <span class="timeline-dot"></span>
+              <span>Rosa verified "Oak Park Pantry" 12 min ago</span>
+            </div>
+            <div class="timeline-event">
+              <span class="timeline-dot"></span>
+              <span>3 new neighbors joined since lunch</span>
+            </div>
+            <div class="timeline-event">
+              <span class="timeline-dot"></span>
+              <span>AI sous-chef drafted 4 meal plans</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <script>
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const root = document.documentElement;
+
+      const storedTheme = localStorage.getItem('thefeed-theme');
+      if (storedTheme) {
+        root.setAttribute('data-theme', storedTheme);
+        themeIcon.textContent = storedTheme === 'dark' ? '🌙' : '🌞';
+      }
+
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = root.getAttribute('data-theme');
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        root.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('thefeed-theme', nextTheme);
+        themeIcon.textContent = nextTheme === 'dark' ? '🌙' : '🌞';
+      });
+    </script>
+  </body>
+</html>

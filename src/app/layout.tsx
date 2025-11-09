@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Coding Boilerplate",
+  title: "TheFeed — Your neighborhood potluck hotline",
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling - perfect for building AI-powered applications and autonomous agents by Leon van Zyl",
+    "TheFeed keeps hungry neighbors, generous sharers, maps, and our AI sous-chef in sync so you can find food fast, share leftovers, and stay in the loop without the guesswork.",
 };
 
 export default function RootLayout({

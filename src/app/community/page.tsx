@@ -1,135 +1,181 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, MapPin } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import {
+  CommunityPageClient,
+  type FeedPost,
+  type GuideMoment,
+  type HotItem,
+  type VibeStat,
+  type EventCardData,
+} from "./page-client";
+import { getPosts } from "@/lib/post-queries";
+import { getEvents } from "@/lib/event-queries";
 
-const demoStories = [
+/**
+ * Format time ago from a date
+ */
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes} min ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours} hr${hours > 1 ? "s" : ""} ago`;
+  }
+  const days = Math.floor(diffInSeconds / 86400);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+}
+
+/**
+ * Format expiration time
+ */
+function formatUntil(expiresAt: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((expiresAt.getTime() - now.getTime()) / 1000);
+
+  if (diffInSeconds < 0) return "Expired";
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `Available for ${minutes} more min`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `Available until ${expiresAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  }
+  return `Available until ${expiresAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
+
+const PROMPTS = [
+  "Need halal-friendly groceries tonight",
+  "Sharing leftover taco fillings for two",
+  "Looking for a produce box for my neighbor",
+  "Anyone know where to get baby formula today?",
+];
+
+const HOT_ITEMS: HotItem[] = [
   {
-    id: "story-1",
-    author: "Maria G.",
-    role: "Parent, San Jose",
-    summary:
-      "“FoodShare helped me find a pantry just 5 minutes away that offers fresh produce every Tuesday. My family has healthy meals again.”",
+    id: "hot-1",
+    title: "Coconut lentil soup & flatbread",
+    host: "Sarah L.",
+    until: "Ready until 8:30 pm",
+    distance: "0.2 mi away",
   },
   {
-    id: "story-2",
-    author: "Jacob L.",
-    role: "Veteran, Sunnyvale",
-    summary:
-      "“I was hesitant to ask for help, but the FoodShare chat connected me with local programs that understood my situation.”",
-  },
-  {
-    id: "story-3",
-    author: "Danielle T.",
-    role: "Volunteer, Santa Clara",
-    summary:
-      "“Volunteering through FoodShare introduced me to neighbours I never knew. We’re building a real community.”",
+    id: "hot-2",
+    title: "Veggie curry leftovers",
+    host: "Imani",
+    until: "Pickup until 9:00 pm",
+    distance: "0.5 mi away",
   },
 ];
 
-const localPrograms = [
+const GUIDE_MOMENTS: GuideMoment[] = [
   {
-    id: "program-1",
-    name: "Family Grocery Night",
-    host: "Sacred Heart Community Service",
-    schedule: "Wednesdays • 5:00 – 7:30 PM",
-    location: "1381 S 1st St, San Jose, CA",
-    tags: ["Fresh Produce", "Kid Friendly"],
+    id: "guide-1",
+    guide: "Guide Maria",
+    tip: "City Harvest has a short line right now and they&apos;re stocked with pantry staples and diapers.",
+    linkLabel: "View on the map",
+    href: "/map",
   },
   {
-    id: "program-2",
-    name: "Weekend Community Meals",
-    host: "Loaves & Fishes Family Kitchen",
-    schedule: "Saturdays • 11:30 AM – 1:30 PM",
-    location: "50 Washington St, San Jose, CA",
-    tags: ["Hot Meals", "Takeaway"],
-  },
-  {
-    id: "program-3",
-    name: "Nutrition & Wellness Workshops",
-    host: "Second Harvest of Silicon Valley",
-    schedule: "First Thursday • 6:00 – 7:00 PM",
-    location: "Virtual + In-person",
-    tags: ["Education", "Recipes"],
+    id: "guide-2",
+    guide: "Guide Ahmed",
+    tip: "Cooking for others? Check the volunteer shifts open at River City Kitchen this weekend.",
+    linkLabel: "See volunteer spots",
+    href: "/chat?prefill=Show%20me%20volunteer%20opportunities%20at%20River%20City%20Kitchen",
   },
 ];
 
-export default function CommunityPage() {
+const VIBE_STATS: VibeStat[] = [
+  {
+    id: "stat-1",
+    value: "8",
+    label: "Neighbors sharing tonight",
+    description: "Soup, produce, and pantry runs are flowing right now.",
+  },
+  {
+    id: "stat-2",
+    value: "5",
+    label: "Open locations nearby",
+    description: "Map tab has them pinned if you want directions.",
+  },
+  {
+    id: "stat-3",
+    value: "12",
+    label: "Replies from guides today",
+    description: "The sous-chef can recap them anytime.",
+  },
+];
+
+export default async function CommunityPage() {
+  // Check authentication
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    redirect("/");
+  }
+
+  // Fetch real posts from database
+  const { items: dbPosts } = await getPosts({ limit: 20 });
+
+  // Fetch upcoming events (only upcoming status)
+  const { items: dbEvents } = await getEvents({
+    limit: 6,
+    status: "upcoming",
+    onlyUpcoming: true,
+  });
+
+  // Transform database posts to FeedPost format
+  const posts: FeedPost[] = dbPosts.map((post) => {
+    const role = post.author.role as "neighbor" | "guide" | "community";
+    const mood = (post.mood || "update") as "hungry" | "full" | "update";
+    const kind = post.kind as "share" | "request" | "update" | "resource";
+
+    return {
+      id: post.id,
+      author: post.author.name,
+      role,
+      mood,
+      kind,
+      distance: "N/A", // TODO: Calculate distance from user location
+      timeAgo: formatTimeAgo(post.createdAt),
+      body: post.content,
+      meta: {
+        location: post.location || undefined,
+        until: post.expiresAt ? formatUntil(post.expiresAt) : undefined,
+        status: "community" as const, // TODO: Determine status based on verification
+      },
+      tags: post.metadata?.tags || undefined,
+      replies: [], // TODO: Fetch comments in future
+    };
+  });
+
+  // Transform events to EventCardData format
+  const events: EventCardData[] = dbEvents.map((event) => ({
+    id: event.id,
+    title: event.title,
+    eventType: event.eventType as "potluck" | "volunteer",
+    hostName: event.host.name,
+    startTime: event.startTime,
+    location: event.location,
+    rsvpCount: event.rsvpCount,
+    capacity: event.capacity,
+    isVerified: event.isVerified,
+  }));
+
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 pb-12 md:py-10">
-      <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Community
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Stories and programs that keep our community fed
-        </h1>
-        <p className="text-sm text-muted-foreground md:text-base">
-          Hear from neighbors using FoodShare today and explore local programs
-          you can join. These examples are curated to inspire what&apos;s possible.
-        </p>
-      </header>
-
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" />
-          <h2 className="text-xl font-semibold">Community Stories</h2>
-        </div>
-        <div className="grid gap-4">
-          {demoStories.map((story) => (
-            <Card key={story.id} className="rounded-3xl border border-border/60 bg-card/95 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">{story.author}</CardTitle>
-                <CardDescription>{story.role}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{story.summary}</p>
-                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Demo story for Phase 1
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-primary" />
-          <h2 className="text-xl font-semibold">Local Programs</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {localPrograms.map((program) => (
-            <Card key={program.id} className="rounded-3xl border border-border/60 bg-card/95 shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold leading-tight">
-                  {program.name}
-                </CardTitle>
-                <CardDescription>{program.host}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span>{program.schedule}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span>{program.location}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {program.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="rounded-full border-primary/20 bg-primary/5 text-primary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  These listings showcase how FoodShare can highlight programs in future phases.
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-    </div>
+    <CommunityPageClient
+      posts={posts}
+      events={events}
+      prompts={PROMPTS}
+      hotItems={HOT_ITEMS}
+      guideMoments={GUIDE_MOMENTS}
+      vibeStats={VIBE_STATS}
+    />
   );
 }
