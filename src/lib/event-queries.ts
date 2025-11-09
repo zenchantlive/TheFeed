@@ -9,7 +9,7 @@ import {
   user,
   userProfiles,
 } from "./schema";
-import { eq, desc, and, lt, or, gte, lte, sql, isNotNull } from "drizzle-orm";
+import { eq, desc, and, lt, or, gte, lte, sql, isNotNull, inArray } from "drizzle-orm";
 
 // Type definitions - inferred from schema
 export type EventRecord = typeof events.$inferSelect;
@@ -309,34 +309,46 @@ export async function getEventById(
     .where(eq(signUpSlots.eventId, id))
     .orderBy(signUpSlots.sortOrder);
 
-  const signUpSlotsWithClaims: SlotWithClaims[] = await Promise.all(
-    slotRows.map(async (slotRow) => {
-      // Fetch claims for this slot
-      const claimRows = await db
-        .select({
-          claim: signUpClaims,
-          userName: user.name,
-          userImage: user.image,
-          userId: user.id,
-        })
-        .from(signUpClaims)
-        .leftJoin(user, eq(signUpClaims.userId, user.id))
-        .where(eq(signUpClaims.slotId, slotRow.slot.id))
-        .orderBy(desc(signUpClaims.createdAt));
+  const slotIds = slotRows.map((row) => row.slot.id);
 
-      return {
-        ...slotRow.slot,
-        claims: claimRows.map((claimRow) => ({
-          ...claimRow.claim,
+  let claimRowsBySlot: Record<string, SlotWithClaims["claims"]> = {};
+  if (slotIds.length > 0) {
+    const claimRows = await db
+      .select({
+        claim: signUpClaims,
+        userName: user.name,
+        userImage: user.image,
+        userId: user.id,
+      })
+      .from(signUpClaims)
+      .leftJoin(user, eq(signUpClaims.userId, user.id))
+      .where(inArray(signUpClaims.slotId, slotIds))
+      .orderBy(desc(signUpClaims.createdAt));
+
+    claimRowsBySlot = claimRows.reduce<Record<string, SlotWithClaims["claims"]>>(
+      (acc, row) => {
+        const slotId = row.claim.slotId;
+        if (!acc[slotId]) {
+          acc[slotId] = [];
+        }
+        acc[slotId].push({
+          ...row.claim,
           user: {
-            id: claimRow.userId || "",
-            name: claimRow.userName || "Unknown User",
-            image: claimRow.userImage,
+            id: row.userId || "",
+            name: row.userName || "Unknown User",
+            image: row.userImage,
           },
-        })),
-      };
-    })
-  );
+        });
+        return acc;
+      },
+      {}
+    );
+  }
+
+  const signUpSlotsWithClaims: SlotWithClaims[] = slotRows.map((slotRow) => ({
+    ...slotRow.slot,
+    claims: claimRowsBySlot[slotRow.slot.id] ?? [],
+  }));
 
   return {
     ...eventRow.event,
@@ -706,35 +718,46 @@ export async function getEventSignUpSlots(
     .where(eq(signUpSlots.eventId, eventId))
     .orderBy(signUpSlots.sortOrder);
 
-  const slotsWithClaims: SlotWithClaims[] = await Promise.all(
-    slotRows.map(async (slotRow) => {
-      const claimRows = await db
-        .select({
-          claim: signUpClaims,
-          userName: user.name,
-          userImage: user.image,
-          userId: user.id,
-        })
-        .from(signUpClaims)
-        .leftJoin(user, eq(signUpClaims.userId, user.id))
-        .where(eq(signUpClaims.slotId, slotRow.slot.id))
-        .orderBy(desc(signUpClaims.createdAt));
+  const slotIds = slotRows.map((row) => row.slot.id);
 
-      return {
-        ...slotRow.slot,
-        claims: claimRows.map((claimRow) => ({
-          ...claimRow.claim,
+  let claimsBySlot: Record<string, SlotWithClaims["claims"]> = {};
+  if (slotIds.length > 0) {
+    const claimRows = await db
+      .select({
+        claim: signUpClaims,
+        userName: user.name,
+        userImage: user.image,
+        userId: user.id,
+      })
+      .from(signUpClaims)
+      .leftJoin(user, eq(signUpClaims.userId, user.id))
+      .where(inArray(signUpClaims.slotId, slotIds))
+      .orderBy(desc(signUpClaims.createdAt));
+
+    claimsBySlot = claimRows.reduce<Record<string, SlotWithClaims["claims"]>>(
+      (acc, row) => {
+        const slotId = row.claim.slotId;
+        if (!acc[slotId]) {
+          acc[slotId] = [];
+        }
+        acc[slotId].push({
+          ...row.claim,
           user: {
-            id: claimRow.userId || "",
-            name: claimRow.userName || "Unknown User",
-            image: claimRow.userImage,
+            id: row.userId || "",
+            name: row.userName || "Unknown User",
+            image: row.userImage,
           },
-        })),
-      };
-    })
-  );
+        });
+        return acc;
+      },
+      {}
+    );
+  }
 
-  return slotsWithClaims;
+  return slotRows.map((slotRow) => ({
+    ...slotRow.slot,
+    claims: claimsBySlot[slotRow.slot.id] ?? [],
+  }));
 }
 
 // =============================================================================

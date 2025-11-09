@@ -177,7 +177,7 @@ export default async function CommunityPage() {
   return (
     <CommunityPageClient
       posts={posts}
-      events={events}
+      initialEvents={events}
       prompts={PROMPTS}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
