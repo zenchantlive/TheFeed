@@ -1,42 +1,56 @@
 # Schema & Structure
-Last updated: 2025-01-11 23:10 UTC
+Last updated: 2025-11-09
 
 ## Repository Layout
 - `src/app` — Next.js routes
-  - `map/` (page + client controller)
-  - `community/` (static stories/programs)
-  - `profile/` (server component pulling saved locations)
-  - `api/chat/route.ts` (Vercel AI SDK + tool definitions)
+  - `map/` (page + client controller w/ event pins)
+  - `community/` (feed, events, calendar)
+  - `profile/` (saved locations, karma, etc.)
+  - `api/*` (chat, posts, events, sign-up claims)
 - `src/components`
-  - `foodshare/` custom UI primitives (big action button, location card, status badge)
-  - `map/` Mapbox GL client components
+  - `events/` (creation wizard, detail content, cards)
+  - `map/` (MapView, popups, search bar)
   - `navigation/BottomNav.tsx` persistent mobile nav
+  - `ui/` shadcn primitives
 - `src/lib`
-  - `schema.ts` Drizzle models (`food_banks`, `saved_locations`, `chat_messages`)
-  - `food-bank-queries.ts` read helpers, distance filtering
-  - `geolocation.ts` browser geolocation + helpers
+  - `schema.ts` Drizzle models (food banks + community + events)
+  - `event-queries.ts` higher-level event data access
+  - `post-queries.ts`, `food-bank-queries.ts`, `geolocation.ts`
 - `scripts/seed-food-banks.ts` — TSX seed script for `food_banks`
 - `drizzle/` — auto-generated migrations/journal
 - `context/` — long-term memory (this folder)
 
 ## Database (Drizzle / Supabase)
 - `food_banks`
-  - `id` (uuid text)
-  - `name`, `address`, `city`, `state`, `zipCode`
+  - `id`, `name`, `address`, `city`, `state`, `zipCode`
   - `latitude`, `longitude`
-  - Optional fields: `phone`, `website`, `description`
+  - Optional: `phone`, `website`, `description`
   - `services` (text[]), `hours` (json → `HoursType`)
-  - Timestamps: `createdAt`, `updatedAt`
+  - `createdAt`, `updatedAt`
 - `saved_locations`
-  - `id`
-  - `userId` → references `user.id`
-  - `foodBankId` → references `food_banks.id`
-  - `createdAt`
+  - `id`, `userId` → `user.id`, `foodBankId` → `food_banks.id`, timestamps
 - `chat_messages`
-  - `id`
-  - `userId` (nullable), `sessionId`
-  - `role`, `content`, `metadata`
-  - `createdAt`
+  - `id`, `userId?`, `sessionId`, `role`, `content`, `metadata`, `createdAt`
+- **Community / Social**
+  - `posts` (`id`, `authorId`, `kind`, `mood`, `content`, `location`, `locationCoords`, `expiresAt`, `metadata`)
+  - `comments`, `userProfiles`, `follows`, `helpfulMarks`
+- **Event Hosting**
+  - `events`
+    - `id`, `postId`, `hostId`, `title`, `description`, `eventType ("potluck"|"volunteer")`
+    - Time: `startTime`, `endTime`; Location: `location`, `locationCoords`, `isPublicLocation`
+    - Capacity: `capacity`, `rsvpCount`, `waitlistCount`
+    - Status: `status`, `isVerified`; Recurrence: `recurrenceId`, `parentEventId`
+    - Audit: `createdAt`, `updatedAt`
+  - `eventRsvps`
+    - `id`, `eventId`, `userId`, `status`, `guestCount`, `notes`, timestamps (unique per user/event)
+  - `signUpSlots`
+    - `id`, `eventId`, `slotName`, `maxClaims`, `claimCount`, `description`, `sortOrder`, `createdAt`
+  - `signUpClaims`
+    - `id`, `slotId`, `userId`, `details`, `createdAt` (unique per slot/user)
+  - `eventRecurrence`
+    - `id`, `parentEventId`, `frequency`, `dayOfWeek`, `dayOfMonth`, `interval`, `endsAt`
+  - `eventAttendance`
+    - `id`, `eventId`, `userId`, `checkedInAt`, `notes`
 
 ## Environment Variables (must exist in `.env`)
 - `POSTGRES_URL` (Supabase/Postgres)
@@ -50,3 +64,4 @@ Last updated: 2025-01-11 23:10 UTC
 ## Seed Data Fields
 - Hours stored as object keyed by weekday with `{ open, close, closed? }`
 - Services are freeform strings → standardize for filters (e.g., `Emergency Groceries`, `CalFresh Assistance`)
+- Event coordinates stored as `{ lat, lng }` JSON; required for map pins/filtering

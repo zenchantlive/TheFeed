@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Interactive Map**: Mapbox GL-powered discovery of food banks with real-time filters
 - **AI-Powered Chat**: Context-aware assistant with tool-calling for food bank search, directions, and hours
 - **Community Potluck**: Full social network for peer-to-peer food sharing (posts, comments, follows, karma)
+- **Event Discovery**: Feed spotlight cards, map pins, and calendar view with shared filters
 - **User Profiles**: Save locations, track visits, build reputation with Better Auth + Supabase
 
 ### Tech Stack
@@ -46,10 +47,10 @@ pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sac
 
 ### Core FoodShare Features
 
-**Map System** (`src/app/map/`, `src/components/map/`)
-- Server Component: `src/app/map/page.tsx` - Fetches all food banks, extracts unique services
-- Client Component: `src/app/map/pageClient.tsx` - Manages filters, search, geolocation state
-- Map Rendering: `src/components/map/MapView.tsx` - Mapbox GL with markers, clustering, popups
+- **Map System** (`src/app/map/`, `src/components/map/`)
+  - Server Component: `src/app/map/page.tsx` - Fetches all food banks, extracts unique services
+  - Client Component: `src/app/map/pageClient.tsx` - Manages filters, search, geolocation state **plus event pins**
+  - Map Rendering: `src/components/map/MapView.tsx` - Mapbox GL with food bank + event markers, popups
 - Search: `src/components/map/MapSearchBar.tsx` - Debounced search input
 - Popup: `src/components/map/LocationPopup.tsx` - Food bank details with directions
 
@@ -91,7 +92,7 @@ pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sac
 - `getAllFoodBanks()`: Fetch all from database
 - `getFoodBankById()`: Single record lookup
 
-**Community Social System** (`src/app/community/`, `src/app/api/posts/`) — **NEW in Phase 2**
+**Community Social System** (`src/app/community/`, `src/app/api/posts/`) — Phase 2 baseline + Phase 3 discovery
 - Server Component: `src/app/community/page.tsx` - Fetches initial posts with pagination
 - Client Component: `src/app/community/page-client.tsx` - Feed rendering, mood toggles, filters
 - Post Queries: `src/lib/post-queries.ts` - Post data access layer with cursor pagination
@@ -140,15 +141,16 @@ type Post = {
 6. **Cursor-based pagination**: Infinite scroll using (createdAt, id) cursor
 7. **Dignity-preserving UX**: Requests look identical to shares (no visual stigma)
 
-**Event Hosting System** (`src/lib/event-queries.ts`, `src/app/api/events/`) — **NEW in Phase 3A**
-- **Status**: Backend complete (database + API routes), NO UI yet
+**Event Hosting System** (`src/lib/event-queries.ts`, `src/app/api/events/`) — **Phase 3A-3D Complete**
+- **Status**: Backend + RSVP + sign-up UI + discovery surfaces all live (Phase 3E next)
 - Event Queries: `src/lib/event-queries.ts` - Event data access layer (650+ lines)
 - API Routes:
-  - `GET/POST /api/events` - List events (paginated) and create new events
+  - `GET/POST /api/events` - List events (paginated) and create new events (supports filters: eventType, startAfter/before, coords)
   - `GET/PATCH/DELETE /api/events/[id]` - Single event operations (host-only edit/delete)
   - `GET/POST/DELETE /api/events/[id]/rsvp` - RSVP management with waitlist logic
   - `GET/POST /api/events/[id]/slots` - Sign-up slot management (host creates slots)
   - `POST/DELETE /api/events/[id]/slots/[slotId]/claim` - Claim/unclaim sign-up slots
+  - `GET /api/events/calendar` - Month view for calendar page
 
 **Event Database Schema** (`src/lib/schema.ts`):
 - `events`: Main event table with capacity, status, guide verification, recurring event support
@@ -212,11 +214,21 @@ type Event = {
   - Events automatically create feed posts with kind="event"
   - Direct database queries (no API roundtrip) for server components
 
-**Phase 3C-3F TODO** (Future):
-- Phase 3C: Sign-up sheet claiming UI
-- Phase 3D: Event cards in feed, map pins, calendar view
-- Phase 3E: Host management tools, check-in UI
-- Phase 3F: Recurring event UI
+**Phase 3C: Sign-up Sheet Claiming UI** ✅ COMPLETE:
+- RSVP-gated claim/unclaim buttons with modal form for “what I’m bringing”
+- Reusable `PotluckSlotItem` component keeps event detail tidy
+- Batched sign-up claim queries prevent Supabase connection exhaustion
+
+**Phase 3D: Discovery Surfaces** ✅ COMPLETE:
+- Reusable `EventCard` + shared discovery filters (`src/app/community/discovery-context.tsx`)
+- Client-side fetcher `use-discovery-events.ts` powers feed cards with persistence
+- Calendar API + page: `/api/events/calendar`, `/community/events/calendar`
+- Map page fetches `onlyWithCoords=true` events and renders pins w/ popovers
+- Bottom nav now links directly to calendar for mobile users
+
+**Phase 3E-3F TODO** (Upcoming):
+- Phase 3E: Host management tools, check-in UI, guide verification, notifications
+- Phase 3F: Recurring event UI and calendar surfacing
 
 ### TheFeed-Specific Components
 

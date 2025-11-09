@@ -1,5 +1,5 @@
 # TheFeed Project Overview (formerly FoodShare)
-Last updated: 2025-11-08
+Last updated: 2025-11-09
 
 ## Vision
 TheFeed is a hyperlocal food-sharing network that connects people experiencing food insecurity with:
@@ -56,28 +56,29 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 ### **Phase 3: Event Hosting System** (IN PROGRESS - 6 weeks)
 **Goal**: Enable neighbors to organize community potlucks and volunteer opportunities
 
-#### Phase 3A - Event Foundation 🔄 (Current)
+#### Phase 3A - Event Foundation ✅
 - 6 event tables: events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance
 - event-queries.ts data layer with RSVP and sign-up slot management
 - Complete API routes for events, RSVPs, and sign-up sheets
 - Capacity limits, waitlist logic, and promotion from waitlist
 
-#### Phase 3B - Event Creation & Detail Page ⏳
+#### Phase 3B - Event Creation & Detail Page ✅
 - Event creation flow with multi-step form
 - Event detail page with RSVP section
 - Host-only edit/cancel controls
 - Map showing event location
 
-#### Phase 3C - Sign-Up Sheets ⏳
+#### Phase 3C - Sign-Up Sheets ✅
 - Sign-up slot management UI
 - Claim/unclaim slot functionality
 - Potluck coordination interface
 
-#### Phase 3D - Discovery Integration ⏳
-- Event cards in community feed
-- Event pins on map
-- Calendar view for events
-- Event type filters
+#### Phase 3D - Discovery Integration ✅
+- Event cards in community feed (shared filters, persistence)
+- Event pins on map with popovers + CTA
+- Calendar view for events with month nav + agenda
+- Discovery filters synced across feed/map/calendar
+- Calendar shortcut added to bottom nav
 
 #### Phase 3E - Host Tools & Safety ⏳
 - Attendee check-in flow
@@ -114,35 +115,39 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - Partner sponsorships (grocery stores, restaurants)
 - Consider premium features for power users
 
-## Current Focus (2025-11-08)
-**Branch**: `feat/event-hosting-phase3a`
+## Current Focus (2025-11-09)
+**Branch**: `phase-3` (Phase 3E upcoming)
 
-### This Sprint (Phase 3A - Event Foundation)
-- ✅ Design 6 event tables in database schema
-- ✅ Create event-queries.ts data layer
-- ✅ Build complete event API routes (events, RSVPs, slots, claims)
-- ✅ Implement capacity limits and waitlist logic
-- 🔄 Update documentation
-- ⏳ Run lint and typecheck
-- ⏳ Commit and create PR
+### Latest Sprint Wrap (Phase 3D - Discovery Surfaces)
+- ✅ Event cards + client-side filters on community feed
+- ✅ Shared discovery filter context with persistence
+- ✅ `/api/events/calendar` + calendar page
+- ✅ Map-based event pins with popovers + CTA
+- ✅ Calendar button added to bottom nav
+- ✅ PR #18 merged into `phase-3`
 
-### Previous Sprint (PR #15 - Phase 2 Week 1)
-- ✅ Implemented posts, comments, userProfiles, follows, helpfulMarks tables
-- ✅ Built complete API routes for posts CRUD
-- ✅ Created post-queries.ts with cursor-based pagination
-- ✅ Connected community page to real database
-- ✅ Enabled actual post creation
+### Next Sprint (Phase 3E - Host Tools)
+- ⏳ Host dashboard for waitlist + attendee management
+- ⏳ Check-in UI and attendance tracking
+- ⏳ Guide verification workflows
+- ⏳ Notification strategy (waitlist promotions, reminders)
 
 ## Key Files
 
-### Event Hosting Features (Phase 3A - NEW)
+### Event Hosting Features
 - `src/lib/schema.ts` — Event tables: events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance
 - `src/lib/event-queries.ts` — Event data access layer (NEW)
-- `src/app/api/events/route.ts` — Events CRUD API (NEW)
-- `src/app/api/events/[id]/route.ts` — Single event operations (NEW)
-- `src/app/api/events/[id]/rsvp/route.ts` — RSVP management (NEW)
-- `src/app/api/events/[id]/slots/route.ts` — Sign-up slots management (NEW)
-- `src/app/api/events/[id]/slots/[slotId]/claim/route.ts` — Claim/unclaim slots (NEW)
+- `src/app/api/events/route.ts` — Events CRUD + discovery filters (eventType, dates, coords)
+- `src/app/api/events/[id]/route.ts` — Single event operations
+- `src/app/api/events/[id]/rsvp/route.ts` — RSVP management
+- `src/app/api/events/[id]/slots/route.ts` — Sign-up slots management
+- `src/app/api/events/[id]/slots/[slotId]/claim/route.ts` — Claim/unclaim slots
+- `src/app/api/events/calendar/route.ts` — Month-level calendar data
+- `src/app/community/events/calendar/page.tsx` — Calendar UI + agenda
+- `src/app/community/discovery-context.tsx` — Shared filters (type/date) w/ persistence
+- `src/app/community/use-discovery-events.ts` — Client fetcher for feed cards
+- `src/components/events/event-card.tsx` — Reusable event card
+- `src/app/map/pageClient.tsx` + `src/components/map/MapView.tsx` — Event pins/popovers
 
 ### Community Features (Phase 2)
 - `src/lib/schema.ts` — Social tables: posts, comments, userProfiles, follows, helpfulMarks

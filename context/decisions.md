@@ -1,5 +1,5 @@
 # Decisions & Rationale
-Last updated: 2025-11-07
+Last updated: 2025-11-09
 
 ## Infrastructure & Database
 
@@ -56,6 +56,18 @@ Last updated: 2025-11-07
 - **2025-11-07** — **Follow system for personalized feed**
   - Rationale: Builds relationships beyond geography; lets users curate their experience; enables "Following" filter.
   - Implementation: Many-to-many self-join on users table.
+
+- **2025-11-09** — **Shared discovery filters (type/date) across feed, map, calendar**
+  - Rationale: Keeps event discovery consistent; avoids three divergent filter states; enables future persistence.
+  - Implementation: Client context with `localStorage` persistence powering feed cards, map pins, and calendar API queries.
+
+- **2025-11-09** — **Bottom-nav calendar shortcut**
+  - Rationale: Mobile users needed one-tap access to discovery surfaces; calendar is now core navigation artifact.
+  - Implementation: Added calendar icon/link to `BottomNav`, matching map CTA style.
+
+- **2025-11-09** — **Map shows event pins alongside food resources**
+  - Rationale: Potluck discovery should live where neighbors already check open locations; reduces navigation hops.
+  - Implementation: `MapView` renders dual marker layers with distinct styling + popovers; map page fetches events with `onlyWithCoords=true`.
 
 ## Product Strategy
 

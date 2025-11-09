@@ -1,8 +1,8 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-08
+Last updated: 2025-11-09
 
-## Current Sprint: Event Hosting System (Phase 3B) - COMPLETE ✅
-Branch: `feat/event-hosting-phase3a`
+## Current Focus: Event Hosting System (Phase 3E prep)
+Branch: `phase-3d-plan` (merged into `phase-3`)
 
 ### Phase 3A: Event Foundation - COMPLETE ✅
 **Goal**: Build database schema and API routes for community event hosting
@@ -11,7 +11,30 @@ Branch: `feat/event-hosting-phase3a`
 
 ### Phase 3B: Event Creation & Detail Page - COMPLETE ✅
 **Goal**: Build event creation wizard and detail page UI
-**Status**: All UI components implemented and working, ready to commit
+**Status**: Live on `phase-3` (see PR #16 history)
+
+### Phase 3C: Potluck Sign-Up Sheets UI - COMPLETE ✅
+**Goal**: Let attendees claim/unclaim potluck slots with real-time updates
+**Status**: Shipping on `phase-3` via PR #17
+
+#### Completed Tasks ✅
+- Added RSVP-gated slot claim buttons with inline validation and error states
+- Built modal form for “What are you bringing?” notes + optimistic loaders
+- Wired claim/unclaim endpoints to refresh via `router.refresh()` (no full reload)
+- Extracted reusable `PotluckSlotItem` component for clarity + future reuse
+- Hardened `getEventById` to batch slot-claim queries (prevents connection flood)
+
+### Phase 3D: Event Discovery Surfaces - COMPLETE ✅ (PR #18)
+**Goal**: Make upcoming events impossible to miss across feed, map, and calendar
+
+#### Completed Tasks ✅
+- Implemented reusable `<EventCard>` + shared discovery filter context (type/date)
+- Hooked community feed to client-side event fetching with filter pills + persistence
+- Added `/api/events/calendar` and `getEventsWithinRange` helper for month queries
+- Built `/community/events/calendar` (month nav, filters, grid + agenda, host CTA)
+- Enhanced map page with event pins, popovers, and filter-synced fetcher
+- Added calendar shortcut to bottom nav
+- Persisted discovery filters in `localStorage` for cross-page reuse
 
 #### Completed Tasks ✅
 
@@ -61,15 +84,19 @@ Branch: `feat/event-hosting-phase3a`
 ✅ "Host Event" button in community page header
 ✅ Direct database queries (no API roundtrip) for server-rendered pages
 ✅ Events automatically create feed posts for discovery
+✅ Sign-up slot UI with RSVP gating, modal input, and inline error states
+✅ Batch slot-claim queries to avoid hitting Supabase connection caps
+✅ Event cards injected into feed with shared filters + persistence
+✅ Event pins rendered on map with popovers and CTA
+✅ Calendar page with month navigation and agenda view
+✅ Bottom-nav calendar shortcut for mobile discovery flows
 
-**Phase 3C-3F Still Pending**:
-❌ Sign-up sheet UI for claiming slots (Phase 3C)
-❌ Event cards in community feed (Phase 3D)
-❌ Calendar view (Phase 3D)
-❌ Map pins for events (Phase 3D)
+**Phase 3E-3F Still Pending**:
 ❌ Host management interface (Phase 3E)
 ❌ Check-in UI (Phase 3E)
-❌ Recurring events UI (Phase 3F)
+❌ Guide verification workflow (Phase 3E)
+❌ Notification / waitlist management UI (Phase 3E)
+❌ Recurring events UI + scheduling (Phase 3F)
 
 ### Previous Work (PR #12)
 - Completed comprehensive rebranding from FoodShare to TheFeed
@@ -146,9 +173,9 @@ Branch: `feat/event-hosting-phase3a`
 - ✅ Pushed to remote and updated PR #16
 
 ## Immediate Next Steps
-1. ⏳ Test event creation and RSVP flows in development environment
-2. ⏳ Consider Phase 3C next: Sign-up slot claiming UI
-3. ⏳ Plan UI redesign: Make community page more event-focused, reduce composer real estate
+1. 🚧 Kick off Phase 3E: host tools + safety (check-ins, verification, waitlists)
+2. 🧪 QA discovery flows (feed filters, map pins, calendar nav) on mobile + desktop
+3. 🧭 Define notification/communication strategy before Phase 3E implementation
 
 ## Long-term Roadmap
 
@@ -157,10 +184,10 @@ Branch: `feat/event-hosting-phase3a`
 - **Phase 2-6** ⏳: UI improvements, engagement features, social graph, real-time updates
 
 ### Event Hosting System (6-week implementation)
-- **Phase 3A** 🔄 (Current): Event foundation - database schema and API routes
-- **Phase 3B** ⏳: Event creation and detail page UI
-- **Phase 3C** ⏳: Sign-up sheets UI for potluck coordination
-- **Phase 3D** ⏳: Discovery integration (feed cards, map pins, calendar view)
+- **Phase 3A** ✅: Event foundation - database schema and API routes
+- **Phase 3B** ✅: Event creation and detail page UI
+- **Phase 3C** ✅: Sign-up sheets UI for potluck coordination
+- **Phase 3D** ✅: Discovery integration (feed cards, map pins, calendar view)
 - **Phase 3E** ⏳: Host tools and safety features (check-ins, verification, waitlist management)
 - **Phase 3F** ⏳: Recurring events functionality
 
@@ -168,5 +195,6 @@ Branch: `feat/event-hosting-phase3a`
 - Project Board: https://github.com/users/zenchantlive/projects/2
 - PR #12: https://github.com/zenchantlive/TheFeed/pull/12 (conceptual UI fixes) ✅ Merged
 - PR #15: https://github.com/zenchantlive/TheFeed/pull/15 (Phase 1 Community Social MVP) ✅ Merged
-- PR #16: https://github.com/zenchantlive/TheFeed/pull/16 (Phase 3A Event Hosting Backend) 🔄 Open
-- Future PR: Phase 3B Event Creation & Detail Page UI
+- PR #16: https://github.com/zenchantlive/TheFeed/pull/16 (Phase 3A Event Hosting Backend) ✅ Merged into `phase-3`
+- PR #17: https://github.com/zenchantlive/TheFeed/pull/17 (Phase 3C Sign-up Sheets UI) ✅ Merged
+- PR #18: https://github.com/zenchantlive/TheFeed/pull/18 (Phase 3D Discovery Surfaces) ✅ Merged into `phase-3`
