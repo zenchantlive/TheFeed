@@ -9,7 +9,7 @@ import {
   user,
   userProfiles,
 } from "./schema";
-import { eq, desc, and, lt, or, gte, sql } from "drizzle-orm";
+import { eq, desc, and, lt, or, gte, lte, sql, isNotNull } from "drizzle-orm";
 
 // Type definitions - inferred from schema
 export type EventRecord = typeof events.$inferSelect;
@@ -84,6 +84,9 @@ export type GetEventsParams = {
   status?: "upcoming" | "in_progress" | "completed" | "cancelled"; // Filter by status
   hostId?: string; // Filter by specific host
   onlyUpcoming?: boolean; // Only show events that haven't started yet
+  startAfter?: Date; // Start time is on/after this date
+  startBefore?: Date; // Start time is on/before this date
+  onlyWithCoords?: boolean; // Only events with map coordinates
 };
 
 /**
@@ -105,6 +108,9 @@ export async function getEvents({
   status,
   hostId,
   onlyUpcoming = true,
+  startAfter,
+  startBefore,
+  onlyWithCoords = false,
 }: GetEventsParams = {}): Promise<GetEventsResult> {
   // Build WHERE conditions
   const conditions = [];
@@ -140,6 +146,18 @@ export async function getEvents({
   // Only show upcoming events (startTime >= now)
   if (onlyUpcoming) {
     conditions.push(gte(events.startTime, new Date()));
+  }
+
+  if (startAfter) {
+    conditions.push(gte(events.startTime, startAfter));
+  }
+
+  if (startBefore) {
+    conditions.push(lte(events.startTime, startBefore));
+  }
+
+  if (onlyWithCoords) {
+    conditions.push(isNotNull(events.locationCoords));
   }
 
   // Execute query with joins to get host details
@@ -180,6 +198,56 @@ export async function getEvents({
     : null;
 
   return { items, nextCursor };
+}
+
+export type GetEventsWithinRangeParams = {
+  start: Date;
+  end: Date;
+  eventType?: "potluck" | "volunteer";
+  onlyWithCoords?: boolean;
+};
+
+export async function getEventsWithinRange({
+  start,
+  end,
+  eventType,
+  onlyWithCoords = false,
+}: GetEventsWithinRangeParams): Promise<EventWithHost[]> {
+  const conditions = [gte(events.startTime, start), lt(events.startTime, end)];
+
+  if (eventType) {
+    conditions.push(eq(events.eventType, eventType));
+  }
+
+  if (onlyWithCoords) {
+    conditions.push(isNotNull(events.locationCoords));
+  }
+
+  const rows = await db
+    .select({
+      event: events,
+      hostName: user.name,
+      hostImage: user.image,
+      hostId: user.id,
+      hostKarma: userProfiles.karma,
+      hostRole: userProfiles.role,
+    })
+    .from(events)
+    .leftJoin(user, eq(events.hostId, user.id))
+    .leftJoin(userProfiles, eq(user.id, userProfiles.userId))
+    .where(and(...conditions))
+    .orderBy(events.startTime, events.id);
+
+  return rows.map((row) => ({
+    ...row.event,
+    host: {
+      id: row.hostId || "",
+      name: row.hostName || "Unknown Host",
+      image: row.hostImage,
+      karma: row.hostKarma || 0,
+      role: row.hostRole || "neighbor",
+    },
+  }));
 }
 
 /**
