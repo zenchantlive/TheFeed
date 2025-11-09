@@ -11,6 +11,7 @@ import {
 } from "./page-client";
 import { getPosts } from "@/lib/post-queries";
 import { getEvents } from "@/lib/event-queries";
+import { addDays } from "date-fns";
 
 /**
  * Format time ago from a date
@@ -123,11 +124,16 @@ export default async function CommunityPage() {
   // Fetch real posts from database
   const { items: dbPosts } = await getPosts({ limit: 20 });
 
-  // Fetch upcoming events (only upcoming status)
+  const now = new Date();
+  const spotlightRangeEnd = addDays(now, 14);
+
+  // Fetch upcoming spotlight events within the next 2 weeks
   const { items: dbEvents } = await getEvents({
     limit: 6,
     status: "upcoming",
     onlyUpcoming: true,
+    startAfter: now,
+    startBefore: spotlightRangeEnd,
   });
 
   // Transform database posts to FeedPost format
@@ -171,7 +177,7 @@ export default async function CommunityPage() {
   return (
     <CommunityPageClient
       posts={posts}
-      events={events}
+      initialEvents={events}
       prompts={PROMPTS}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}

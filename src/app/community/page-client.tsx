@@ -13,13 +13,17 @@ import {
   ArrowRight,
   ChefHat,
   CalendarPlus,
-  Users,
   Calendar,
-  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { EventCard } from "@/components/events/event-card";
+import {
+  DiscoveryFiltersProvider,
+  useDiscoveryFilters,
+} from "./discovery-context";
+import { useDiscoveryEvents } from "./use-discovery-events";
 
 export type FeedPost = {
   id: string;
@@ -83,7 +87,7 @@ export type EventCardData = {
 
 export type CommunityPageClientProps = {
   posts: FeedPost[];
-  events: EventCardData[];
+  initialEvents: EventCardData[];
   prompts: string[];
   hotItems: HotItem[];
   guideMoments: GuideMoment[];
@@ -97,6 +101,17 @@ const FILTERS: Array<{ value: FeedFilter; label: string }> = [
   { value: "shares", label: "People sharing" },
   { value: "requests", label: "I\'m hungry" },
   { value: "updates", label: "Guides & spots" },
+];
+
+const EVENT_TYPE_FILTERS = [
+  { value: "all" as const, label: "All events" },
+  { value: "potluck" as const, label: "Potlucks" },
+  { value: "volunteer" as const, label: "Volunteer shifts" },
+];
+
+const DATE_RANGE_FILTERS = [
+  { value: "week" as const, label: "This week" },
+  { value: "month" as const, label: "This month" },
 ];
 
 const ROLE_BADGE: Record<FeedPost["role"], { label: string; tone: string }> = {
@@ -120,9 +135,17 @@ const kindToFilter: Record<FeedPost["kind"], FeedFilter> = {
   resource: "updates",
 };
 
-export function CommunityPageClient({
+export function CommunityPageClient(props: CommunityPageClientProps) {
+  return (
+    <DiscoveryFiltersProvider>
+      <CommunityPageView {...props} />
+    </DiscoveryFiltersProvider>
+  );
+}
+
+function CommunityPageView({
   posts,
-  events,
+  initialEvents,
   prompts,
   hotItems,
   guideMoments,
@@ -131,38 +154,30 @@ export function CommunityPageClient({
   const router = useRouter();
   const [mood, setMood] = useState<"hungry" | "full">("hungry");
   const [composerValue, setComposerValue] = useState("");
-  const [filter, setFilter] = useState<FeedFilter>("all");
+  const [postFilter, setPostFilter] = useState<FeedFilter>("all");
   const [isPosting, setIsPosting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const {
+    eventTypeFilter,
+    dateRangeFilter,
+    setEventTypeFilter,
+    setDateRangeFilter,
+  } = useDiscoveryFilters();
+  const {
+    events,
+    isLoading: isLoadingEvents,
+    error: eventsError,
+  } = useDiscoveryEvents(initialEvents);
 
   const visiblePosts = useMemo(() => {
-    if (filter === "all") return posts;
-    return posts.filter((post) => kindToFilter[post.kind] === filter);
-  }, [posts, filter]);
+    if (postFilter === "all") return posts;
+    return posts.filter((post) => kindToFilter[post.kind] === postFilter);
+  }, [posts, postFilter]);
 
   const aiPrompt =
     mood === "hungry"
       ? "I\'m hungry and need quick help finding nearby food tonight."
       : "I\'m full and want to share leftovers or volunteer this evening.";
-
-  const formatEventDate = (date: Date) => {
-    const now = new Date();
-    const diffInHours = (date.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return `Today at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-    } else if (diffInHours < 48) {
-      return `Tomorrow at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-    } else {
-      return date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      });
-    }
-  };
 
   const handlePromptClick = (prompt: string) => {
     setComposerValue((prev) => (prev.length > 0 ? `${prev}\n${prompt}` : prompt));
@@ -319,74 +334,83 @@ export function CommunityPageClient({
       </section>
 
       {/* Upcoming Events Section */}
-      {events.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+      <section>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
               <Calendar className="h-6 w-6" />
               Upcoming Events
             </h2>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/community/events/new">See all</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/community/events/calendar">Calendar view</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/community/events/new">Host an event</Link>
+              </Button>
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.slice(0, 6).map((event) => (
-              <Link
-                key={event.id}
-                href={`/community/events/${event.id}`}
-                className="group block"
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {EVENT_TYPE_FILTERS.map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                size="sm"
+                variant={eventTypeFilter === option.value ? "default" : "secondary"}
+                className={cn(
+                  "rounded-full",
+                  eventTypeFilter === option.value
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "bg-secondary text-secondary-foreground"
+                )}
+                onClick={() => setEventTypeFilter(option.value)}
               >
-                <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-lg">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <Badge className={cn(
-                      "rounded-full text-xs font-semibold",
-                      event.eventType === "potluck"
-                        ? "bg-full-start/15 text-full-end border-full-end/30"
-                        : "bg-primary/15 text-primary border-primary/30"
-                    )}>
-                      {event.eventType === "potluck" ? "🎉 Potluck" : "🤝 Volunteer"}
-                    </Badge>
-                    {event.isVerified && (
-                      <Badge variant="default" className="rounded-full text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {event.title}
-                  </h3>
-
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{formatEventDate(event.startTime)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {event.rsvpCount} attending
-                        {event.capacity && ` • ${event.capacity} max`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Hosted by {event.hostName}
-                  </div>
-                </div>
-              </Link>
+                {option.label}
+              </Button>
             ))}
           </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {DATE_RANGE_FILTERS.map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                size="sm"
+                variant={dateRangeFilter === option.value ? "default" : "secondary"}
+                className={cn(
+                  "rounded-full",
+                  dateRangeFilter === option.value
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "bg-secondary text-secondary-foreground"
+                )}
+                onClick={() => setDateRangeFilter(option.value)}
+              >
+                {option.label}
+              </Button>
+            ))}
+            {eventsError && <span className="text-xs text-destructive">{eventsError}</span>}
+          </div>
+
+          {isLoadingEvents && (
+            <p className="mb-2 text-sm text-muted-foreground">Loading events…</p>
+          )}
+
+          {events.length === 0 && !isLoadingEvents ? (
+            <div className="rounded-2xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+              No events match these filters yet. Be the first to{" "}
+              <Link href="/community/events/new" className="text-primary underline">
+                host something
+              </Link>
+              !
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {events.slice(0, 6).map((event) => (
+                <EventCard key={event.id} {...event} />
+              ))}
+            </div>
+          )}
         </section>
-      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="flex flex-col gap-5">
@@ -395,15 +419,15 @@ export function CommunityPageClient({
               <Button
                 key={filterOption.value}
                 type="button"
-                variant={filter === filterOption.value ? "default" : "secondary"}
+                variant={postFilter === filterOption.value ? "default" : "secondary"}
                 size="sm"
                 className={cn(
                   "rounded-full px-4",
-                  filter === filterOption.value
+                  postFilter === filterOption.value
                     ? "bg-primary text-primary-foreground shadow"
                     : "bg-secondary text-secondary-foreground"
                 )}
-                onClick={() => setFilter(filterOption.value)}
+                onClick={() => setPostFilter(filterOption.value)}
               >
                 {filterOption.label}
               </Button>
