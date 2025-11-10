@@ -24,7 +24,7 @@ export function PostFeed({ posts, mode }: PostFeedProps) {
 
   const displayPosts = useMemo(() => {
     // First sort by mode
-    const sorted = sortPostsByMode(posts, mode);
+    const sorted = sortPostsByMode([...posts], mode);
 
     // Then filter by type
     return filterPostsByType(sorted, postFilter, kindToFilter);
