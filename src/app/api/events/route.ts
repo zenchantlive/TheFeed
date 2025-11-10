@@ -58,6 +58,13 @@ export async function GET(req: NextRequest) {
       startBeforeParam && !Number.isNaN(Date.parse(startBeforeParam))
         ? new Date(startBeforeParam)
         : undefined;
+
+    if (startAfter && startBefore && startAfter > startBefore) {
+      return NextResponse.json(
+        { error: "Invalid time range: 'startAfter' must be before 'startBefore'." },
+        { status: 400 }
+      );
+    }
     const onlyUpcoming = searchParams.get("onlyUpcoming") !== "false"; // Default true
 
     // Fetch events
