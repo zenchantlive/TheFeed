@@ -175,7 +175,7 @@ export function MapView({
               <span
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform",
-                  selectedEventId === eventPin.id ? "scale-115" : "scale-100",
+                  selectedEventId === eventPin.id ? "scale-110" : "scale-100",
                   eventPin.eventType === "potluck"
                     ? "bg-gradient-to-r from-full-start to-full-end"
                     : "bg-gradient-to-r from-primary-start to-primary-end"
