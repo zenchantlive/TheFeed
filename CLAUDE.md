@@ -1,506 +1,280 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI assistants when working with code in this repository.
 
 ## Project Overview
 
-**TheFeed** (formerly FoodShare) is a hyperlocal food-sharing network connecting people experiencing food insecurity with nearby resources and community support. Built on the Agentic Coding Starter Kit, it adds:
+**TheFeed** (formerly FoodShare) is a hyperlocal food-sharing network connecting people experiencing food insecurity with nearby resources and neighbor-to-neighbor support. It is built on the Agentic Coding Starter Kit and extended with:
 
-- **Interactive Map**: Mapbox GL-powered discovery of food banks with real-time filters
-- **AI-Powered Chat**: Context-aware assistant with tool-calling for food bank search, directions, and hours
-- **Community Potluck**: Full social network for peer-to-peer food sharing (posts, comments, follows, karma)
-- **User Profiles**: Save locations, track visits, build reputation with Better Auth + Supabase
+- **Interactive Map**: Mapbox GL-powered discovery of food banks and resources.
+- **AI-Powered Chat**: Context-aware sous-chef assistant for search, directions, and coordination.
+- **Community Potluck**: Social feed for offers, requests, events, and volunteer opportunities.
+- **User Profiles**: Reputation, saved locations, and social graph via Better Auth + Supabase.
 
-### Tech Stack
+You are expected to:
+- Preserve dignity and safety.
+- Optimize for real food exchanges.
+- Maintain strict type-safety and consistent architecture.
+- Keep context files in sync when making meaningful changes.
 
-- **Framework**: Next.js 15 (App Router), React 19, TypeScript
-- **Database**: PostgreSQL (Supabase) with Drizzle ORM
-- **AI**: Vercel AI SDK 5 + OpenRouter (default: `openai/gpt-4.1-mini`)
-- **Authentication**: Better Auth with Google OAuth
-- **Maps**: Mapbox GL JS via `react-map-gl`
-- **UI**: shadcn/ui + Tailwind CSS 4 with dark mode
+## Tech Stack
+
+- Framework: Next.js 15 (App Router), React 19, TypeScript
+- Database: PostgreSQL (Supabase) with Drizzle ORM
+- Auth: Better Auth with Google OAuth
+- UI: shadcn/ui + Tailwind CSS 4, dark mode via theme provider
+- Maps: Mapbox GL JS (`react-map-gl`)
+- AI: Vercel AI SDK 5 + OpenRouter (`openai/gpt-4.1-mini` default)
 
 ## Essential Commands
 
 ```bash
-# Development
-pnpm dev                              # Start dev server (Turbopack) - DON'T run yourself
-pnpm build                            # Production build (runs db:migrate first)
-pnpm start                            # Start production server
+# Development (user runs, AI should not)
+pnpm dev
 
-# Quality checks (ALWAYS run after changes)
-pnpm lint && pnpm typecheck           # Run both linters
+# Production build
+pnpm build
+pnpm start
 
-# Database operations
-pnpm run db:generate                  # Generate migrations from schema changes
-pnpm run db:migrate                   # Apply migrations to database
-pnpm run db:push                      # Push schema directly (dev only)
-pnpm run db:studio                    # Open Drizzle Studio GUI
-pnpm run db:reset                     # Drop all tables and repush
+# Quality (ALWAYS run / respect before merge)
+pnpm lint
+pnpm typecheck
+
+# Database
+pnpm run db:generate
+pnpm run db:migrate
+pnpm run db:push
+pnpm run db:studio
+pnpm run db:reset
 
 # Seeding
-pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts  # Seed food banks (Sacramento dataset)
+pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts
 ```
+
+Use pnpm exclusively.
 
 ## Architecture & Key Files
 
-### Core FoodShare Features
+### Map System
 
-**Map System** (`src/app/map/`, `src/components/map/`)
-- Server Component: `src/app/map/page.tsx` - Fetches all food banks, extracts unique services
-- Client Component: `src/app/map/pageClient.tsx` - Manages filters, search, geolocation state
-- Map Rendering: `src/components/map/MapView.tsx` - Mapbox GL with markers, clustering, popups
-- Search: `src/components/map/MapSearchBar.tsx` - Debounced search input
-- Popup: `src/components/map/LocationPopup.tsx` - Food bank details with directions
+- `src/app/map/page.tsx`: Server component, loads data.
+- `src/app/map/pageClient.tsx`: Client filters, search, geolocation.
+- `src/components/map/MapView.tsx`: Mapbox view.
+- `src/components/map/MapSearchBar.tsx`, `LocationPopup.tsx`: Search and detail UI.
 
-**AI Chat System** (`src/app/chat/`, `src/app/api/chat/`)
-- Backend: `src/app/api/chat/route.ts` - OpenRouter streaming with 3 tools:
-  - `search_food_banks`: Proximity search with filters (distance, open now, services)
-  - `get_directions`: Generate Google Maps URL
-  - `check_hours`: Verify current open status
-- Frontend: `src/app/chat/page.tsx` - Intent-based UI (hungry/full), quick actions, markdown rendering
-- System Prompt: Empathetic, concise (2-3 sentences), prioritizes open locations
+### AI Chat System
 
-**Database Schema** (`src/lib/schema.ts`)
-- Better Auth tables: `user`, `session`, `account`, `verification`
-- `foodBanks`: Core locations with lat/lng, hours (JSON), services (array), description
-- `savedLocations`: User bookmarks (userId → foodBankId)
-- `chatMessages`: Conversation history (optional sessionId grouping)
-- **Community tables (Phase 2)**:
-  - `posts`: User-generated content with mood, kind (including "event"), location, expiration
-  - `comments`: Threaded comments on posts
-  - `userProfiles`: Karma, role, bio, denormalized stats
-  - `follows`: Social graph (followerId → followingId)
-  - `helpfulMarks`: Upvotes for posts and comments (userId → targetType/targetId)
-- **Event hosting tables (Phase 3A)**:
-  - `events`: Main event details (potlucks, volunteer opportunities) with capacity, status, verification
-  - `eventRsvps`: RSVP tracking with guest count, waitlist support, and notes
-  - `signUpSlots`: Sign-up sheet categories for potluck coordination
-  - `signUpClaims`: Who signed up for which slots and what they're bringing
-  - `eventRecurrence`: Recurring event patterns (daily, weekly, biweekly, monthly)
-  - `eventAttendance`: Check-in tracking for completed events
+- `src/app/chat/page.tsx`: Chat UI.
+- `src/app/api/chat/route.ts`: Tools + OpenRouter integration.
+- Tools:
+  - `search_food_banks`
+  - `get_directions`
+  - `check_hours`
 
-**Geolocation Utilities** (`src/lib/geolocation.ts`)
-- `getUserLocation()`: Browser geolocation API wrapper
-- `calculateDistance()`: Haversine formula (returns miles)
-- `isCurrentlyOpen()`: Parses hours JSON, handles overnight schedules
-- `formatHoursForDisplay()`: User-friendly hour strings
+Use `openrouter()` provider; do NOT call OpenAI directly.
 
-**Food Bank Queries** (`src/lib/food-bank-queries.ts`)
-- `searchFoodBanks()`: In-memory filtering by distance/open status/services
-- `getAllFoodBanks()`: Fetch all from database
-- `getFoodBankById()`: Single record lookup
+### Database Schema
 
-**Community Social System** (`src/app/community/`, `src/app/api/posts/`) — **NEW in Phase 2**
-- Server Component: `src/app/community/page.tsx` - Fetches initial posts with pagination
-- Client Component: `src/app/community/page-client.tsx` - Feed rendering, mood toggles, filters
-- Post Queries: `src/lib/post-queries.ts` - Post data access layer with cursor pagination
-- API Routes:
-  - `GET/POST /api/posts` - List posts (paginated) and create new posts
-  - `GET/PATCH/DELETE /api/posts/[id]` - Single post operations
-  - `GET/POST /api/posts/[id]/comments` - Comments on posts
-  - `POST/DELETE /api/posts/[id]/helpful` - Mark post as helpful (upvote)
-  - `POST/DELETE /api/users/[id]/follow` - Follow/unfollow users
-  - `GET /api/users/[id]/profile` - User profile with karma and stats
+- `src/lib/schema.ts`: Single source of truth.
+- Includes:
+  - Auth tables.
+  - `foodBanks`, `savedLocations`, `chatMessages`.
+  - Community tables: `posts`, `comments`, `userProfiles`, `follows`, `helpfulMarks`.
+  - Event hosting tables: `events`, `eventRsvps`, `signUpSlots`, `signUpClaims`, `eventRecurrence`, `eventAttendance`.
 
-**Community Database Schema** (`src/lib/schema.ts`)
-- `posts`: User posts (content, mood, kind, location, expiration, engagement counts)
-- `comments`: Nested comments on posts
-- `userProfiles`: Extended user data (karma, role, bio, stats)
-- `follows`: Social graph (many-to-many user relationships)
-- `helpfulMarks`: Upvote system for posts and comments
+### Community Social System (Important)
 
-**Post Data Types**:
-```typescript
-type Post = {
-  id: string;
-  userId: string;
-  content: string;
-  mood: "hungry" | "full" | null;
-  kind: "share" | "request" | "update" | "resource" | "event"; // "event" added in Phase 3A
-  location?: string; // Free text: "13th & P St"
-  locationCoords?: { lat: number; lng: number };
-  expiresAt?: Date; // Time-sensitive posts
-  urgency?: "asap" | "today" | "this_week";
-  photoUrl?: string; // Future: Supabase Storage URL
-  metadata?: { tags?: string[] };
-  helpfulCount: number;
-  commentCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+**Component Structure (Refactored from 762-line monolith):**
+
+```
+src/app/community/
+├── page.tsx                    # Server: fetches posts/events, maps to types
+├── page-client.tsx             # Client: main orchestrator (~220 lines)
+├── types.ts                    # Shared types (FeedPost, EventCardData, etc.)
+├── discovery-context.tsx       # Event filter state management
+├── use-discovery-events.ts     # Event data fetching hook
+└── components/
+    ├── composer/
+    │   ├── index.tsx          # Post composer (supports hideIntentToggle)
+    │   └── use-composer.ts    # Submission logic
+    ├── events-section/
+    │   ├── index.tsx          # Event cards with quick actions
+    │   └── event-filters.tsx  # Filter controls
+    ├── post-feed/
+    │   ├── index.tsx          # Feed container
+    │   ├── post-card.tsx      # Individual post
+    │   ├── post-filters.tsx   # Filter pills
+    │   └── utils/
+    │       ├── sorting.ts     # Mode-based sorting
+    │       └── filtering.ts   # Filter logic
+    ├── mode-toggle/            # (Not currently used)
+    └── sidebar/
+        └── index.tsx          # Stats, mini-map, context helpers
 ```
 
-**Key Community Features**:
-1. **Mood-based posting**: "I'm hungry" (requesting) vs "I'm full" (sharing)
-2. **Location awareness**: Free text + optional coordinates for map integration
-3. **Urgency indicators**: ASAP, Today, This week badges
-4. **Karma system**: Points from helpful marks, displayed as badges (🌱 <10, 🌿 10-50, 🌳 50+)
-5. **Follow relationships**: Users can follow each other, filter feed to "Following"
-6. **Cursor-based pagination**: Infinite scroll using (createdAt, id) cursor
-7. **Dignity-preserving UX**: Requests look identical to shares (no visual stigma)
-
-**Event Hosting System** (`src/lib/event-queries.ts`, `src/app/api/events/`) — **NEW in Phase 3A**
-- **Status**: Backend complete (database + API routes), NO UI yet
-- Event Queries: `src/lib/event-queries.ts` - Event data access layer (650+ lines)
-- API Routes:
-  - `GET/POST /api/events` - List events (paginated) and create new events
-  - `GET/PATCH/DELETE /api/events/[id]` - Single event operations (host-only edit/delete)
-  - `GET/POST/DELETE /api/events/[id]/rsvp` - RSVP management with waitlist logic
-  - `GET/POST /api/events/[id]/slots` - Sign-up slot management (host creates slots)
-  - `POST/DELETE /api/events/[id]/slots/[slotId]/claim` - Claim/unclaim sign-up slots
-
-**Event Database Schema** (`src/lib/schema.ts`):
-- `events`: Main event table with capacity, status, guide verification, recurring event support
-- `eventRsvps`: RSVP tracking (attending/waitlisted/declined) with guest count and notes
-- `signUpSlots`: Sign-up sheet categories for potluck coordination (e.g., "Main dish", "Dessert")
-- `signUpClaims`: Who claimed which slots and what they're bringing
-- `eventRecurrence`: Recurring event patterns (weekly, monthly, etc.)
-- `eventAttendance`: Check-in tracking for karma and analytics
-
-**Event Data Types**:
-```typescript
-type Event = {
-  id: string;
-  postId: string; // Links to feed post (hybrid integration)
-  hostId: string;
-  title: string;
-  description: string;
-  eventType: "potluck" | "volunteer";
-  startTime: Date;
-  endTime: Date;
-  location: string;
-  locationCoords?: { lat: number; lng: number };
-  isPublicLocation: boolean; // Encouraged via UI
-  capacity?: number | null; // null = unlimited
-  rsvpCount: number; // Denormalized
-  waitlistCount: number; // Denormalized
-  status: "upcoming" | "in_progress" | "completed" | "cancelled";
-  isVerified: boolean; // Guide verification
-  recurrenceId?: string;
-  parentEventId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
-
-**Key Event Features**:
-1. **Hybrid integration**: Every event has a feed post (postId link) for discovery
-2. **Capacity management**: Automatic waitlist when full, promotion when spots open
-3. **Sign-up sheets**: Potluck coordination (what to bring)
-4. **Recurring events**: Weekly, monthly patterns with instance generation
-5. **Guide verification**: Trust badge for verified events
-6. **Host controls**: Only host can edit/cancel/check-in attendees
-7. **RSVP with guests**: Track guest count (+1, +2, etc.)
-8. **Waitlist automation**: First waitlisted user promoted when someone cancels
-
-**Phase 3B: Event Creation & Detail Page** ✅ COMPLETE:
-- **Status**: Full event creation and detail viewing implemented and working
-- **Routes**:
-  - `/community/events/new` - 5-step event creation wizard (protected)
-  - `/community/events/[id]` - Event detail page with RSVP functionality
-- **Components** (src/components/events/):
-  - `event-creation-wizard.tsx` - Multi-step form orchestrator with validation and API integration
-  - `event-basic-info-step.tsx` - Step 1: Event type (potluck/volunteer), title, description
-  - `event-datetime-step.tsx` - Step 2: Date/time pickers with shadcn calendar
-  - `event-location-step.tsx` - Step 3: Location text input + interactive Mapbox map picker
-  - `event-capacity-step.tsx` - Step 4: Capacity limits (unlimited or max attendees)
-  - `event-signup-sheet-step.tsx` - Step 5: Sign-up sheet builder (potlucks only)
-  - `event-detail-content.tsx` - Complete event detail page with RSVP, attendee list, sign-up sheet display
-- **Integration**:
-  - "Host Event" button added to `/community` page header
-  - Events automatically create feed posts with kind="event"
-  - Direct database queries (no API roundtrip) for server components
-
-**Phase 3C-3F TODO** (Future):
-- Phase 3C: Sign-up sheet claiming UI
-- Phase 3D: Event cards in feed, map pins, calendar view
-- Phase 3E: Host management tools, check-in UI
-- Phase 3F: Recurring event UI
-
-### TheFeed-Specific Components
-
-- `src/components/foodshare/big-action-button.tsx` - Intent buttons (hungry/full variants)
-- `src/components/foodshare/status-badge.tsx` - Open/closed status pills
-- `src/components/foodshare/location-card.tsx` - Food bank card with distance, hours, services
-- `src/components/navigation/BottomNav.tsx` - Mobile bottom navigation
-
-### Navigation Structure
-
-- `/` - Home/landing page
-- `/map` - Interactive food bank map
-- `/chat` - AI assistant (protected)
-- `/community` - Stories/programs showcase
-- `/dashboard` - User dashboard (protected)
-- `/profile` - Saved locations (protected)
-
-## Environment Variables
-
-Required beyond standard boilerplate:
-
-```env
-# Mapbox (required for map features)
-NEXT_PUBLIC_MAPBOX_TOKEN=pk.your-mapbox-token
-
-# Database (Supabase)
-POSTGRES_URL=postgresql://postgres:password@db.xxx.supabase.co:5432/postgres?sslmode=require
-
-# AI (OpenRouter)
-OPENROUTER_MODEL=openai/gpt-4.1-mini  # Optional, defaults to this value
-```
-
-See `env.example` for complete list including Better Auth and Google OAuth.
-
-## Platform Notes
-
-**Development Environment**: Windows 11 + WSL2
-- User runs commands in **PowerShell** (Windows)
-- Claude Code runs in **WSL** (Linux)
-- **Important**: User should run `npx shadcn@latest add` commands in PowerShell, not WSL
-- **Migration caveat**: Run `pnpm run db:generate` and `pnpm run db:migrate` in PowerShell if esbuild errors occur in WSL
-- Paths: Use WSL paths (`/mnt/c/Users/...`) when Claude makes file changes
-
-## Development Workflow
-
-### Adding Food Bank Data
-
-1. Update `scripts/seed-food-banks.ts` with new locations
-2. Ensure hours follow format: `{ Monday: { open: "9:00 AM", close: "5:00 PM" }, ... }`
-3. Services must match existing categories for filters to work
-4. Run: `pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts`
-5. Verify in Drizzle Studio: `pnpm run db:studio`
-
-### Modifying Database Schema
-
-1. Edit `src/lib/schema.ts` (use Drizzle syntax)
-2. Generate migration: `pnpm run db:generate`
-3. Review migration in `drizzle/` folder
-4. Apply: `pnpm run db:migrate`
-5. Update related TypeScript types (inferred from schema)
-
-### Working with AI Chat Tools
-
-1. Tool definitions in `src/app/api/chat/route.ts` (`tools` object)
-2. Add Zod schema for input validation (`z.object()`)
-3. Implement `execute` function (can be async, call DB/external APIs)
-4. Return serializable JSON (no functions, undefined → null)
-5. Update system prompt if tool requires special instructions
-6. Test with user messages that trigger tool calls
-
-### Map Component Changes
-
-- **Markers**: Edit `MapView.tsx` marker rendering logic
-- **Filters**: Update `pageClient.tsx` filter state and logic
-- **Search**: Modify `MapSearchBar.tsx` and server-side data fetching
-- **Popups**: Customize `LocationPopup.tsx` for different data displays
-
-### Working with Community Features
-
-**Adding a new post field**:
-1. Update `posts` table in `src/lib/schema.ts`
-2. Run `pnpm run db:generate` to create migration
-3. Apply with `pnpm run db:migrate`
-4. Update TypeScript types (inferred from schema via `$inferSelect`)
-5. Modify POST handler in `src/app/api/posts/route.ts`
-6. Update UI in `src/app/community/page-client.tsx`
-
-**Implementing pagination**:
-```typescript
-// Cursor format: { createdAt: ISO string, id: string }
-const cursor = searchParams.get('cursor')
-  ? JSON.parse(searchParams.get('cursor')!)
-  : null;
-
-const posts = await getPosts({ cursor, limit: 20 });
-
-// Return with nextCursor
-return { posts: posts.items, nextCursor: posts.nextCursor };
-```
-
-**Updating karma** (when helpful mark added):
-```typescript
-// Increment post.helpfulCount
-await db.update(posts)
-  .set({ helpfulCount: sql`${posts.helpfulCount} + 1` })
-  .where(eq(posts.id, postId));
-
-// Recalculate author karma (sum of all helpful marks)
-const totalHelpful = await db
-  .select({ count: sql<number>`count(*)` })
-  .from(helpfulMarks)
-  .where(eq(helpfulMarks.userId, authorId));
-
-await db.update(userProfiles)
-  .set({ karma: totalHelpful[0].count })
-  .where(eq(userProfiles.userId, authorId));
-```
-
-**Feed filtering patterns**:
-```typescript
-// By kind (share/request)
-where: eq(posts.kind, 'share')
-
-// By mood
-where: eq(posts.mood, 'hungry')
-
-// By following (join with follows table)
-const followedUserIds = await db
-  .select({ userId: follows.followingId })
-  .from(follows)
-  .where(eq(follows.followerId, currentUserId));
-
-where: inArray(posts.userId, followedUserIds.map(f => f.userId))
-
-// Hide expired posts
-where: or(
-  isNull(posts.expiresAt),
-  gt(posts.expiresAt, new Date())
-)
-```
-
-## Important Patterns
-
-### Protected Routes
-
-```typescript
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-
-export default async function ProtectedPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    redirect("/");
-  }
-  // ... authenticated content
-}
-```
-
-### Client-Side Auth Hooks
-
-```typescript
-import { useSession } from "@/lib/auth-client";
-
-export default function Component() {
-  const { data: session, isPending } = useSession();
-  // ... use session data
-}
-```
-
-### Database Queries (Drizzle)
-
-```typescript
-import { db } from "@/lib/db";
-import { foodBanks } from "@/lib/schema";
-import { eq } from "drizzle-orm";
-
-// Find all
-const all = await db.select().from(foodBanks);
-
-// With filter
-const filtered = await db.select().from(foodBanks).where(eq(foodBanks.state, "CA"));
-
-// Relational queries (use db.query)
-const withRelations = await db.query.foodBanks.findMany({
-  where: (fb, { eq }) => eq(fb.id, id),
-});
-```
-
-### OpenRouter AI Integration
-
-```typescript
-import { openrouter } from "@openrouter/ai-sdk-provider";
-import { streamText } from "ai";
-
-const result = streamText({
-  model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini"),
-  system: "System prompt here",
-  messages: convertToModelMessages(messages),
-  tools: { /* tool definitions */ },
-});
-```
-
-**CRITICAL**: Always use `openrouter()` from `@openrouter/ai-sdk-provider`, NOT `openai()` from `@ai-sdk/openai`.
-
-## Known Issues & Active Work
-
-### Current Sprint (Phase 3B: Event Hosting UI - Week 2)
-
-**Branch**: `feat/event-hosting-phase3a`
-
-**Active Work**:
-1. **Event creation wizard** - 5-step form for creating potlucks and volunteer events
-2. **Event detail page** - Display event info, RSVP functionality, attendee list
-3. **UI components** - Calendar picker, location selector with Mapbox, sign-up sheets
-
-**Phase 3A Complete (PR #16)** ✅:
-- Backend infrastructure (6 database tables, event-queries.ts, 5 API route files)
-- PR: https://github.com/zenchantlive/TheFeed/pull/16
-
-**Previous Issues (Resolved)**:
-- ~~Map markers not rendering~~ - Fixed in PR #12
-- ~~Chat blank responses after ZIP~~ - Fixed in PR #12
-- ~~Community page static~~ - Fixed in PR #15 (Phase 1)
-- ~~Event TypeScript errors~~ - Fixed in Phase 3A (cache issue)
-
-### Context Files
-
-The `context/` directory maintains project memory between sessions:
-
-- `context/decisions.md` - Architecture decisions with rationale
-- `context/state.md` - Active tasks, blockers, next steps
-- `context/info.md` - Vision, roadmap, key files reference
-- `context/insights.md` - Lessons learned, patterns
-- `context/git.md` - Git workflow notes
-
-**Update these files** when making significant changes or discoveries.
-
-## Testing & Validation
-
-Before considering work complete:
-
-1. **Always run**: `pnpm lint && pnpm typecheck`
-2. **Manual testing**:
-   - Map: Verify markers appear, filters work, popup opens
-   - Chat: Test intent buttons, tool calls, quick actions
-   - Auth: Sign in/out flow, protected route redirects
-3. **Database**: Check Drizzle Studio for expected data
-4. **Mobile**: Test responsive layout (375px width minimum)
-
-## Styling Guidelines
-
-- Use Tailwind utility classes (Tailwind CSS 4)
-- Follow shadcn/ui color tokens: `bg-background`, `text-foreground`, `text-muted-foreground`
-- Support dark mode with Tailwind's `dark:` prefix (next-themes provider in layout)
-- FoodShare brand colors:
-  - Primary gradient: `from-primary-start to-primary-end`
-  - Accent: `text-primary`, `bg-primary`
-- Mobile-first: Design for 375px, enhance for larger screens
-- Use `cn()` utility from `@/lib/utils` for conditional classes
-
-## Package Manager
-
-This project uses **pnpm**. Always use `pnpm` commands, not `npm` or `yarn`.
-
-## Documentation
-
-Technical guides in `docs/`:
-- `docs/technical/ai/streaming.md` - AI streaming patterns
-- `docs/technical/ai/structured-data.md` - Structured output extraction
-- `docs/technical/react-markdown.md` - Markdown rendering in chat
-- `docs/business/starter-prompt.md` - Business context for prompts
-
-## Contributing
-
-When working on FoodShare:
-
-1. Check `context/state.md` for current priorities
-2. Reference GitHub project board: https://github.com/users/zenchantlive/projects/2
-3. Create feature branches from `master`: `git checkout -b feat/description`
-4. Run lint/typecheck before committing
-5. Update context files if making architectural changes
-6. Link commits to GitHub issues when applicable
-
-## Support
-
-- GitHub Issues: https://github.com/zenchantlive/TheFeed/issues
-- Project Board: https://github.com/users/zenchantlive/projects/2
+**API Routes:**
+  - `/api/posts`, `/api/posts/[id]`
+  - `/api/posts/[id]/comments`
+  - `/api/posts/[id]/helpful`
+  - `/api/users/[id]/follow`
+  - `/api/users/[id]/profile`
+
+#### Current Community Page Architecture (Events-First UX)
+
+**Core Principle: Events are PRIMARY, Posts are SECONDARY**
+
+The page is designed to get people to food resources FAST while maintaining community engagement.
+
+**Key Behaviors:**
+
+1. **Simple Mode Toggle (No Sticky Header)**
+   - Two buttons at top: "I'm hungry" and "I'm Full"
+   - Clicking toggles mode (click again to deactivate)
+   - NO redundant sticky header - removed for cleaner UX
+
+2. **TheFeed Branding**
+   - Located below mode buttons
+   - Shows: "TheFeed" title + "Connecting neighbors with food resources and community support"
+
+3. **Events-First Layout**
+   - **LEFT COLUMN (Main Content):**
+     - Events section (PRIMARY, full-width)
+     - Composer (appears when mode active, NO redundant mood selectors)
+     - Community posts (ALWAYS visible, never hidden)
+
+   - **RIGHT COLUMN (Sidebar):**
+     - "Today in your neighborhood" stats card
+     - Mini-map (shows nearby resources) - TODO: needs implementation
+     - Context-aware helper cards (change based on active mode)
+     - "Tonight's hot dishes" (useful real-time info)
+
+4. **Mode Behaviors:**
+   - **"I'm hungry" mode:**
+     - Events filter to show food/potluck events
+     - Header: "Food & resources near you"
+     - Posts prioritize shares/resources
+     - Sidebar shows: "Need help now?" helper with map link
+     - Composer appears for asking neighbors
+
+   - **"I'm Full" mode:**
+     - Events filter to show volunteer opportunities
+     - Header: "Ways to help" + "Host an event" button
+     - Posts prioritize requests
+     - Sidebar shows: "Ready to help?" helper with create event link
+     - Composer appears for offering help
+
+   - **No mode (default):**
+     - Shows ALL events
+     - Shows ALL posts (neutral ordering)
+     - Header: "Upcoming events"
+
+5. **Event Cards with Quick Actions**
+   - Each event has overlay buttons:
+     - **Map pin icon** → Links to `/map?event={id}` for location
+     - **RSVP button** → Links to `/community/events/{id}` for quick RSVP
+   - 2-column grid on desktop
+
+6. **Posts: Always Visible, Smart Filtering**
+   - Posts NEVER disappear based on mode
+   - Mode affects sorting priority, NOT visibility
+   - Filter pills still available for additional refinement
+   - Uses PostFeed component with mode prop for intelligent sorting
+
+7. **Composer Intelligence**
+   - Only shows when mode is active (hungry/full)
+   - NO redundant mood selectors inside (set by mode button above)
+   - `hideIntentToggle` prop removes internal toggle
+   - Heading changes based on mode:
+     - Hungry: "Ask neighbors for help"
+     - Full: "Offer to help neighbors"
+
+**DO NOT:**
+- Hide posts or events based on mode
+- Add redundant mood selectors when mode is already set
+- Bring back the sticky mode toggle header
+- Create separate composers for different modes
+
+**ALWAYS:**
+- Keep events as the primary focus
+- Maintain posts visibility (they're for community building)
+- Use smart filtering/prioritization instead of hiding content
+- Keep the clean, muted color palette
+
+### Event Hosting System
+
+Backend and core UI implemented as documented in `context/state.md`:
+- Event creation wizard.
+- Event detail page.
+- Sign-up sheet display.
+- Events create corresponding posts (`kind = "event"`).
+
+Follow `context/state.md` for latest event system status.
+
+## Context Files
+
+Always consult and update:
+
+- `foodshare/context/state.md`
+  - Current sprint, completed work, next steps.
+- `foodshare/context/info.md`
+  - Vision, roadmap, high-level architecture.
+- `foodshare/context/decisions.md`
+  - Architecture decisions and rationales.
+- `foodshare/context/insights.md`
+  - UX/product learnings.
+
+When you change architecture, critical flows, or semantics for posts/events, update these files.
+
+## Styling & UX Guidelines
+
+- Use shadcn/ui patterns and Tailwind utilities.
+- Maintain subdued, calm palette:
+  - Neutrals + soft Hungry (warm) and Helper (cool) accents.
+  - Respect dark mode via `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, and `dark:` variants.
+- Keep:
+  - Clear hierarchy:
+    - Mode toggle > hero/composer > events > feed > sidebar.
+  - Distinct visuals:
+    - Events: structured, future-focused.
+    - Posts: flatter, timeline-style.
+- DO NOT:
+  - Re-introduce a fake/non-functional map into the community hero.
+  - Overcomplicate animations; subtle transitions only.
+
+## Workflow Expectations
+
+When working in this repo:
+
+1. Read `foodshare/context/state.md` to understand current focus.
+2. For community page work:
+   - Start from `src/app/community/page.tsx` + `page-client.tsx`.
+   - Preserve existing mode/composer/snapshot semantics.
+3. Keep types strict:
+   - No `any`.
+   - Use shared types from schema/data layers.
+4. Run `pnpm lint && pnpm typecheck` before considering work complete.
+5. Update context files when:
+   - Changing routes, major components, or introducing new modes/behaviors.
+
+## Known Completed vs Pending (High Level)
+
+- Completed:
+  - Core map & chat.
+  - Phase 1 community social (posts, comments, follows, karma).
+  - Phase 3A/3B event backend + creation + detail UI.
+  - Initial mode-based community layout refactor (this document + state.md describe it).
+
+- Pending / Future:
+  - Deeper discovery (event cards in main feed, calendar view).
+  - Full signup sheet UI (Phase 3C).
+  - Host tools, check-ins, safety flows (Phase 3E).
+  - Recurring event UX (Phase 3F).
+  - Additional visual polish passes on community UI.
+
+This file is your authoritative onboarding for how to think about and extend TheFeed. Always align changes with the principles:
+
+- Dignity.
+- Clarity.
+- Hierarchy over hiding.
+- Strict typing.
+- Minimal surprises for users.
