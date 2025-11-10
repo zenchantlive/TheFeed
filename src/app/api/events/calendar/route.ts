@@ -40,10 +40,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const monthParam = searchParams.get("month");
-    const eventType = searchParams.get("eventType") as
-      | "potluck"
-      | "volunteer"
-      | null;
+    const eventTypeParam = searchParams.get("eventType");
+    const eventType =
+      eventTypeParam === "potluck" || eventTypeParam === "volunteer"
+        ? eventTypeParam
+        : null;
     const onlyWithCoords = searchParams.get("onlyWithCoords") === "true";
 
     const bounds = getMonthBounds(monthParam);
