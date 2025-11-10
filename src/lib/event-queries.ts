@@ -845,3 +845,98 @@ async function promoteFromWaitlist(eventId: string): Promise<void> {
     }
   }
 }
+
+/**
+ * Search events for AI assistant
+ * Filters by location proximity, event type, and only shows upcoming events
+ */
+export async function searchEventsForAI(params: {
+  userLocation?: { lat: number; lng: number };
+  maxDistance?: number; // in km
+  eventType?: "potluck" | "volunteer";
+  limit?: number;
+}): Promise<EventWithHost[]> {
+  const { userLocation, maxDistance = 10, eventType, limit = 10 } = params;
+
+  const conditions = [];
+
+  // Only show upcoming events
+  conditions.push(gte(events.startTime, new Date()));
+
+  // Only show active events
+  conditions.push(eq(events.status, "upcoming"));
+
+  // Filter by event type
+  if (eventType) {
+    conditions.push(eq(events.eventType, eventType));
+  }
+
+  // Execute query with joins to get host details
+  const rows = await db
+    .select({
+      event: events,
+      hostName: user.name,
+      hostImage: user.image,
+      hostId: user.id,
+      hostKarma: userProfiles.karma,
+      hostRole: userProfiles.role,
+    })
+    .from(events)
+    .leftJoin(user, eq(events.hostId, user.id))
+    .leftJoin(userProfiles, eq(user.id, userProfiles.userId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(events.startTime)
+    .limit(limit * 2); // Fetch more to filter by distance
+
+  // Map to EventWithHost format
+  let items = rows.map((row) => ({
+    ...row.event,
+    host: {
+      id: row.hostId || "",
+      name: row.hostName || "Unknown Host",
+      image: row.hostImage,
+      karma: row.hostKarma || 0,
+      role: row.hostRole || "neighbor",
+    },
+  }));
+
+  // If location provided, filter by distance
+  if (userLocation && maxDistance) {
+    items = items.filter((item) => {
+      if (!item.locationCoords) return false;
+      const coords = item.locationCoords as { lat: number; lng: number };
+      const distance = calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        coords.lat,
+        coords.lng
+      );
+      return distance <= maxDistance;
+    });
+  }
+
+  // Limit to requested number
+  return items.slice(0, limit);
+}
+
+/**
+ * Calculate distance between two coordinates in kilometers using Haversine formula
+ */
+function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}

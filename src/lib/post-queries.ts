@@ -312,3 +312,101 @@ export async function deleteComment(id: string): Promise<boolean> {
   // Note: Post's commentCount will need to be decremented separately if needed
   return !!deleted;
 }
+
+/**
+ * Search posts for AI assistant
+ * Filters by location proximity, mood, kind, and excludes expired posts
+ */
+export async function searchPostsForAI(params: {
+  userLocation?: { lat: number; lng: number };
+  maxDistance?: number; // in km
+  mood?: "hungry" | "full";
+  kind?: "share" | "request" | "update" | "resource";
+  limit?: number;
+}): Promise<PostWithAuthor[]> {
+  const { userLocation, maxDistance = 10, mood, kind, limit = 10 } = params;
+
+  const conditions = [];
+
+  // Filter by mood
+  if (mood) {
+    conditions.push(eq(posts.mood, mood));
+  }
+
+  // Filter by kind
+  if (kind) {
+    conditions.push(eq(posts.kind, kind));
+  }
+
+  // Exclude expired posts
+  conditions.push(or(isNull(posts.expiresAt), gt(posts.expiresAt, new Date())));
+
+  const query = db
+    .select({
+      post: posts,
+      userName: user.name,
+      userImage: user.image,
+      userId: user.id,
+      karma: userProfiles.karma,
+      role: userProfiles.role,
+    })
+    .from(posts)
+    .leftJoin(user, eq(posts.userId, user.id))
+    .leftJoin(userProfiles, eq(user.id, userProfiles.userId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(posts.createdAt))
+    .limit(limit);
+
+  const rows = await query;
+
+  // Map to PostWithAuthor format
+  let items = rows.map((row) => ({
+    ...row.post,
+    author: {
+      id: row.userId || "",
+      name: row.userName || "Unknown User",
+      image: row.userImage,
+      karma: row.karma || 0,
+      role: row.role || "neighbor",
+    },
+  }));
+
+  // If location provided, filter by distance
+  if (userLocation && maxDistance) {
+    items = items.filter((item) => {
+      if (!item.locationCoords) return false;
+      const coords = item.locationCoords as { lat: number; lng: number };
+      const distance = calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        coords.lat,
+        coords.lng
+      );
+      return distance <= maxDistance;
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Calculate distance between two coordinates in kilometers using Haversine formula
+ */
+function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
