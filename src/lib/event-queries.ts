@@ -834,3 +834,113 @@ async function promoteFromWaitlist(eventId: string): Promise<void> {
     }
   }
 }
+
+/**
+ * Search events by location and filters (for AI chat)
+ */
+export async function searchEventsForAI(params: {
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // miles
+  eventType?: "potluck" | "volunteer";
+  startAfter?: Date;
+  limit?: number;
+}): Promise<
+  Array<
+    EventWithHost & {
+      distance?: number;
+      rsvpLink: string;
+      mapLink: string;
+    }
+  >
+> {
+  const {
+    latitude,
+    longitude,
+    radius = 10,
+    eventType,
+    startAfter = new Date(),
+    limit = 10,
+  } = params;
+
+  // Build WHERE conditions
+  const conditions = [
+    gte(events.startTime, startAfter), // Only future events
+    eq(events.status, "upcoming"), // Only upcoming events
+  ];
+
+  if (eventType) {
+    conditions.push(eq(events.eventType, eventType));
+  }
+
+  // Fetch events with host details
+  const rows = await db
+    .select({
+      event: events,
+      hostName: user.name,
+      hostImage: user.image,
+      hostId: user.id,
+      hostKarma: userProfiles.karma,
+      hostRole: userProfiles.role,
+    })
+    .from(events)
+    .leftJoin(user, eq(events.hostId, user.id))
+    .leftJoin(userProfiles, eq(user.id, userProfiles.userId))
+    .where(and(...conditions))
+    .orderBy(events.startTime)
+    .limit(100); // Fetch more for distance filtering
+
+  // Calculate distances if location provided
+  let results = rows.map((row) => {
+    const eventCoords = row.event.locationCoords as
+      | { lat: number; lng: number }
+      | null;
+    let distance: number | undefined = undefined;
+
+    if (latitude && longitude && eventCoords) {
+      const R = 3959; // Earth's radius in miles
+      const dLat = ((eventCoords.lat - latitude) * Math.PI) / 180;
+      const dLon = ((eventCoords.lng - longitude) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((latitude * Math.PI) / 180) *
+          Math.cos((eventCoords.lat * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distance = R * c;
+    }
+
+    return {
+      ...row.event,
+      host: {
+        id: row.hostId || "",
+        name: row.hostName || "Unknown Host",
+        image: row.hostImage,
+        karma: row.hostKarma || 0,
+        role: row.hostRole || "neighbor",
+      },
+      distance,
+      rsvpLink: `/community/events/${row.event.id}`,
+      mapLink: `/map?event=${row.event.id}`,
+    };
+  });
+
+  // Filter by radius if location provided
+  if (latitude && longitude && radius) {
+    results = results.filter(
+      (r) => r.distance === undefined || r.distance <= radius
+    );
+  }
+
+  // Sort by distance if location provided, otherwise by start time
+  if (latitude && longitude) {
+    results.sort((a, b) => {
+      if (a.distance === undefined) return 1;
+      if (b.distance === undefined) return -1;
+      return a.distance - b.distance;
+    });
+  }
+
+  return results.slice(0, limit);
+}

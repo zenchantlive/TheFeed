@@ -131,30 +131,110 @@ const INTENT_PRESETS = {
 };
 
 function renderMessageContent(message: MaybePartsMessage): ReactNode {
+  console.log("🎨 Rendering message:", {
+    id: message.id,
+    role: message.role,
+    hasDisplay: !!message.display,
+    hasParts: !!message.parts,
+    hasContent: !!message.content,
+    messageKeys: Object.keys(message),
+  });
+
   if (message.display) return message.display;
   const parts = Array.isArray(message.parts)
     ? message.parts
     : Array.isArray(message.content)
     ? message.content
     : [];
-  return parts.map((p, idx) =>
-    p?.type === "text" && p.text ? (
-      <ReactMarkdown key={idx} components={markdownComponents}>
-        {p.text}
-      </ReactMarkdown>
-    ) : null
-  );
+
+  console.log("📝 Parts to render:", parts);
+
+  // Log each part's structure
+  parts.forEach((p, idx) => {
+    console.log(`  Part ${idx}:`, {
+      type: p?.type,
+      hasText: !!p?.text,
+      keys: p ? Object.keys(p) : [],
+      part: p,
+    });
+  });
+
+  return parts.map((p, idx) => {
+    // Handle text parts
+    if (p?.type === "text" && p.text) {
+      return (
+        <ReactMarkdown key={idx} components={markdownComponents}>
+          {p.text}
+        </ReactMarkdown>
+      );
+    }
+
+    // Handle reasoning parts (AI thinking out loud)
+    if (p?.type === "reasoning" && p.text) {
+      return (
+        <div key={idx} className="text-xs text-muted-foreground italic mb-2">
+          💭 {p.text}
+        </div>
+      );
+    }
+
+    // Handle tool call parts - show what the AI is doing
+    if (p?.type?.startsWith("tool-")) {
+      const toolName = p.type.replace("tool-", "");
+      return (
+        <div key={idx} className="text-xs text-muted-foreground mb-1">
+          🔧 Calling {toolName}...
+        </div>
+      );
+    }
+
+    // Log other parts being skipped
+    console.warn(`⚠️ Skipping part ${idx} - type: ${p?.type}, hasText: ${!!p?.text}`);
+    return null;
+  });
 }
 
 export default function ChatPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
   const { messages, sendMessage, status, error, stop } = useChat();
   const [composerValue, setComposerValue] = useState("");
   const [isWelcomeVisible, setIsWelcomeVisible] = useState(true);
   const [hasAppliedIntent, setHasAppliedIntent] = useState(false);
   const [hasPrefilledComposer, setHasPrefilledComposer] = useState(false);
+
+  // Get user's location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          console.log("📍 GPS location acquired:", location);
+          setUserLocation(location);
+        },
+        (err) => {
+          console.warn("Geolocation error:", err);
+          // Fallback: use a default location (Sacramento, CA as per your app)
+          const fallbackLocation = { lat: 38.5816, lng: -121.4944 };
+          console.log("📍 Using fallback location (Sacramento):", fallbackLocation);
+          setUserLocation(fallbackLocation);
+        }
+      );
+    } else {
+      // Fallback if geolocation not available
+      const fallbackLocation = { lat: 38.5816, lng: -121.4944 };
+      console.log("📍 Geolocation not available, using Sacramento:", fallbackLocation);
+      setUserLocation(fallbackLocation);
+    }
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -220,10 +300,13 @@ export default function ChatPage() {
 
   const handleIntent = (intent: keyof typeof INTENT_PRESETS) => {
     setIsWelcomeVisible(false);
-    void sendMessage({
-      role: "user",
-      parts: [{ type: "text", text: INTENT_PRESETS[intent] }],
-    });
+    void sendMessage(
+      {
+        role: "user",
+        parts: [{ type: "text", text: INTENT_PRESETS[intent] }],
+      },
+      { body: { userLocation } }
+    );
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -231,16 +314,22 @@ export default function ChatPage() {
     const text = composerValue.trim();
     if (!text) return;
     setIsWelcomeVisible(false);
-    void sendMessage({ role: "user", parts: [{ type: "text", text }] });
+    void sendMessage(
+      { role: "user", parts: [{ type: "text", text }] },
+      { body: { userLocation } }
+    );
     setComposerValue("");
   };
 
   const handleQuickAction = (action: QuickAction) => {
     if (action.type === "message") {
-      void sendMessage({
-        role: "user",
-        parts: [{ type: "text", text: action.message }],
-      });
+      void sendMessage(
+        {
+          role: "user",
+          parts: [{ type: "text", text: action.message }],
+        },
+        { body: { userLocation } }
+      );
       return;
     }
     router.push(action.href);
@@ -299,9 +388,9 @@ export default function ChatPage() {
                 Start a conversation to see recommendations.
               </div>
             ) : (
-              messages.map((message) => (
+              messages.map((message, idx) => (
                 <article
-                  key={message.id}
+                  key={`${message.id}-${idx}`}
                   className={cn(
                     "max-w-[80%] rounded-2xl px-4 py-3 text-sm shadow",
                     message.role === "user"

@@ -312,3 +312,133 @@ export async function deleteComment(id: string): Promise<boolean> {
   // Note: Post's commentCount will need to be decremented separately if needed
   return !!deleted;
 }
+
+/**
+ * Search posts by location and filters (for AI chat)
+ */
+export async function searchPostsForAI(params: {
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // miles
+  kind?: "share" | "request" | "update" | "resource";
+  urgency?: "asap" | "today" | "this_week";
+  limit?: number;
+}): Promise<
+  Array<
+    PostWithAuthor & {
+      distance?: number;
+      deepLink: string;
+    }
+  >
+> {
+  const { latitude, longitude, radius = 5, kind, urgency, limit = 10 } = params;
+
+  console.log("🔍 searchPostsForAI called with:", { latitude, longitude, radius, kind, urgency, limit });
+
+  // First, check total posts in database
+  const totalPosts = await db.select().from(posts).limit(5);
+  console.log(`📊 Total posts in DB (sample): ${totalPosts.length}`, totalPosts.map(p => ({ kind: p.kind, urgency: p.urgency, hasCoords: !!p.locationCoords })));
+
+  // Build WHERE conditions
+  const conditions = [];
+
+  if (kind) {
+    conditions.push(eq(posts.kind, kind));
+    console.log(`  🔍 Filtering by kind: ${kind}`);
+  }
+
+  // Only filter by urgency if specified AND we want strict matching
+  // Since most posts have urgency=null, skip this filter to show more results
+  if (urgency && false) { // Disabled for now - most posts don't have urgency set
+    conditions.push(eq(posts.urgency, urgency));
+    console.log(`  🔍 Filtering by urgency: ${urgency}`);
+  } else if (urgency) {
+    console.log(`  ℹ️ Ignoring urgency filter (${urgency}) - showing all posts`);
+  }
+
+  // Hide expired posts
+  conditions.push(or(isNull(posts.expiresAt), gt(posts.expiresAt, new Date())));
+
+  // Exclude event posts (they're handled by search_events)
+  conditions.push(sql`${posts.kind} != 'event'`);
+
+  // Fetch posts with author details
+  console.log("📊 Query conditions:", conditions.length, conditions);
+
+  const rows = await db
+    .select({
+      post: posts,
+      userName: user.name,
+      userImage: user.image,
+      userId: user.id,
+      karma: userProfiles.karma,
+      role: userProfiles.role,
+    })
+    .from(posts)
+    .leftJoin(user, eq(posts.userId, user.id))
+    .leftJoin(userProfiles, eq(user.id, userProfiles.userId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(posts.createdAt))
+    .limit(100); // Fetch more for distance filtering
+
+  console.log(`📊 Raw query returned ${rows.length} rows`);
+
+  // Calculate distances if location provided
+  let results = rows.map((row) => {
+    const postCoords = row.post.locationCoords as
+      | { lat: number; lng: number }
+      | null;
+    let distance: number | undefined = undefined;
+
+    if (latitude && longitude && postCoords) {
+      const R = 3959; // Earth's radius in miles
+      const dLat = ((postCoords.lat - latitude) * Math.PI) / 180;
+      const dLon = ((postCoords.lng - longitude) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((latitude * Math.PI) / 180) *
+          Math.cos((postCoords.lat * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      distance = R * c;
+    }
+
+    return {
+      ...row.post,
+      author: {
+        id: row.userId || "",
+        name: row.userName || "Unknown User",
+        image: row.userImage,
+        karma: row.karma || 0,
+        role: row.role || "neighbor",
+      },
+      distance,
+      deepLink: `/community/posts/${row.post.id}`,
+    };
+  });
+
+  console.log(`📊 Before distance filter: ${results.length} results`);
+
+  // Filter by radius if location provided
+  // Keep posts without coordinates (they're still relevant locally)
+  if (latitude && longitude && radius) {
+    const withCoords = results.filter(r => r.distance !== undefined && r.distance <= radius);
+    const withoutCoords = results.filter(r => r.distance === undefined);
+    results = [...withCoords, ...withoutCoords]; // Show posts with coords first, then others
+    console.log(`📊 After distance filter (${radius}mi): ${withCoords.length} with coords, ${withoutCoords.length} without coords = ${results.length} total`);
+  }
+
+  // Sort by distance if location provided
+  if (latitude && longitude) {
+    results.sort((a, b) => {
+      if (a.distance === undefined) return 1;
+      if (b.distance === undefined) return -1;
+      return a.distance - b.distance;
+    });
+  }
+
+  const finalResults = results.slice(0, limit);
+  console.log(`✅ Returning ${finalResults.length} posts to AI`);
+  return finalResults;
+}
