@@ -8,7 +8,8 @@ import { DiscoveryFiltersProvider } from "./discovery-context";
 import { PostComposer } from "./components/composer";
 import { EventsSection } from "./components/events-section";
 import { PostFeed } from "./components/post-feed";
-import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin, Info } from "lucide-react";
+import { LocationDialog } from "./components/location-dialog";
+import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -39,19 +40,20 @@ function CommunityPageView({
     setActiveMode(activeMode === mode ? null : mode);
   };
 
-  const handleChangeLocation = () => {
-    const newLocation = prompt("Enter your location:", userLocation || "");
-    if (newLocation !== null && newLocation.trim()) {
-      setUserLocation(newLocation.trim());
-    }
+  const handleLocationChange = (newLocation: string) => {
+    setUserLocation(newLocation);
   };
 
   // Detect user location on mount
   useEffect(() => {
+    const controller = new AbortController();
+
     const detectLocation = async () => {
       // Try IP-based geolocation first (works on localhost)
       try {
-        const ipResponse = await fetch("https://ipapi.co/json/");
+        const ipResponse = await fetch("https://ipapi.co/json/", {
+          signal: controller.signal,
+        });
         const ipData = await ipResponse.json();
 
         if (ipData.city) {
@@ -59,7 +61,8 @@ function CommunityPageView({
           return;
         }
       } catch (error) {
-        // IP geolocation failed, continue to GPS
+        // IP geolocation failed or aborted, continue to GPS
+        if ((error as Error).name === "AbortError") return;
       }
 
       // Fall back to GPS geolocation
@@ -78,6 +81,7 @@ function CommunityPageView({
                 headers: {
                   "User-Agent": "TheFeed Community App",
                 },
+                signal: controller.signal,
               }
             );
 
@@ -99,7 +103,9 @@ function CommunityPageView({
             setUserLocation(location);
           } catch (error) {
             // Silent fail - just use default
-            setUserLocation("Set your location");
+            if ((error as Error).name !== "AbortError") {
+              setUserLocation("Set your location");
+            }
           }
         },
         () => {
@@ -114,6 +120,11 @@ function CommunityPageView({
     };
 
     detectLocation();
+
+    // Cleanup: abort fetch requests if component unmounts
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // Calculate stats
@@ -171,12 +182,10 @@ function CommunityPageView({
               <span className="font-medium text-foreground">
                 {userLocation || "Detecting location..."}
               </span>
-              <button
-                onClick={handleChangeLocation}
-                className="ml-1 text-xs text-primary hover:underline"
-              >
-                Change
-              </button>
+              <LocationDialog
+                currentLocation={userLocation}
+                onLocationChange={handleLocationChange}
+              />
             </div>
 
             {/* Friendly Greeting */}
