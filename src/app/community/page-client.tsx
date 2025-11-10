@@ -1,603 +1,361 @@
 "use client";
 
-import { useMemo, useState, type ComponentProps } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  MessageCircle,
-  HeartHandshake,
-  MapPin,
-  Sparkles,
-  Clock,
-  Navigation2,
-  ArrowRight,
-  ChefHat,
-  CalendarPlus,
-  Users,
-  Calendar,
-  CheckCircle,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import type { CommunityPageClientProps } from "./types";
+import { DiscoveryFiltersProvider } from "./discovery-context";
+import { PostComposer } from "./components/composer";
+import { EventsSection } from "./components/events-section";
+import { PostFeed } from "./components/post-feed";
+import { LocationDialog } from "./components/location-dialog";
+import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type FeedPost = {
-  id: string;
-  author: string;
-  role: "neighbor" | "guide" | "community";
-  mood: "hungry" | "full" | "update";
-  kind: "share" | "request" | "update" | "resource";
-  distance: string;
-  timeAgo: string;
-  body: string;
-  meta?: {
-    location?: string;
-    until?: string;
-    status?: "verified" | "community" | "needs-love";
-  };
-  tags?: string[];
-  replies?: Array<{
-    id: string;
-    author: string;
-    role: "neighbor" | "guide";
-    body: string;
-    timeAgo: string;
-    helpful?: number;
-  }>;
-};
-
-export type HotItem = {
-  id: string;
-  title: string;
-  host: string;
-  until: string;
-  distance: string;
-};
-
-export type GuideMoment = {
-  id: string;
-  guide: string;
-  tip: string;
-  linkLabel: string;
-  href: string;
-};
-
-export type VibeStat = {
-  id: string;
-  label: string;
-  value: string;
-  description?: string;
-};
-
-export type EventCardData = {
-  id: string;
-  title: string;
-  eventType: "potluck" | "volunteer";
-  hostName: string;
-  startTime: Date;
-  location: string;
-  rsvpCount: number;
-  capacity: number | null;
-  isVerified: boolean;
-};
-
-export type CommunityPageClientProps = {
-  posts: FeedPost[];
-  events: EventCardData[];
-  prompts: string[];
-  hotItems: HotItem[];
-  guideMoments: GuideMoment[];
-  vibeStats: VibeStat[];
-};
-
-type FeedFilter = "all" | "shares" | "requests" | "updates";
-
-const FILTERS: Array<{ value: FeedFilter; label: string }> = [
-  { value: "all", label: "Everything" },
-  { value: "shares", label: "People sharing" },
-  { value: "requests", label: "I\'m hungry" },
-  { value: "updates", label: "Guides & spots" },
-];
-
-const ROLE_BADGE: Record<FeedPost["role"], { label: string; tone: string }> = {
-  neighbor: { label: "Neighbor", tone: "bg-primary/10 text-primary" },
-  guide: { label: "Guide", tone: "bg-full-start/15 text-full-end" },
-  community: { label: "Community added", tone: "bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-200" },
-};
-
-type StatusKey = Exclude<NonNullable<FeedPost["meta"]>["status"], undefined>;
-
-const STATUS_BADGE: Record<StatusKey, { label: string; tone: string }> = {
-  verified: { label: "Verified", tone: "bg-status-open text-status-open-text" },
-  community: { label: "Awaiting neighbors", tone: "bg-secondary text-secondary-foreground" },
-  "needs-love": { label: "Needs love", tone: "bg-destructive/10 text-destructive" },
-};
-
-const kindToFilter: Record<FeedPost["kind"], FeedFilter> = {
-  share: "shares",
-  request: "requests",
-  update: "updates",
-  resource: "updates",
-};
-
-export function CommunityPageClient({
-  posts,
-  events,
-  prompts,
-  hotItems,
-  guideMoments,
-  vibeStats,
-}: CommunityPageClientProps) {
-  const router = useRouter();
-  const [mood, setMood] = useState<"hungry" | "full">("hungry");
-  const [composerValue, setComposerValue] = useState("");
-  const [filter, setFilter] = useState<FeedFilter>("all");
-  const [isPosting, setIsPosting] = useState(false);
-  const [showComposer, setShowComposer] = useState(false);
-
-  const visiblePosts = useMemo(() => {
-    if (filter === "all") return posts;
-    return posts.filter((post) => kindToFilter[post.kind] === filter);
-  }, [posts, filter]);
-
-  const aiPrompt =
-    mood === "hungry"
-      ? "I\'m hungry and need quick help finding nearby food tonight."
-      : "I\'m full and want to share leftovers or volunteer this evening.";
-
-  const formatEventDate = (date: Date) => {
-    const now = new Date();
-    const diffInHours = (date.getTime() - now.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return `Today at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-    } else if (diffInHours < 48) {
-      return `Tomorrow at ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
-    } else {
-      return date.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      });
-    }
-  };
-
-  const handlePromptClick = (prompt: string) => {
-    setComposerValue((prev) => (prev.length > 0 ? `${prev}\n${prompt}` : prompt));
-  };
-
-  const handlePost = async () => {
-    if (composerValue.trim().length === 0) return;
-
-    setIsPosting(true);
-    try {
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: composerValue.trim(),
-          mood,
-          kind: mood === "hungry" ? "request" : "share",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create post");
-      }
-
-      // Clear the composer
-      setComposerValue("");
-
-      // Refresh the page to show new post
-      router.refresh();
-    } catch (error) {
-      console.error("Error creating post:", error);
-      alert("Failed to create post. Please try again.");
-    } finally {
-      setIsPosting(false);
-    }
-  };
-
+/**
+ * Community Page Client Component
+ *
+ * Events-first design with smart filtering based on user's needs
+ */
+export function CommunityPageClient(props: CommunityPageClientProps) {
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-28 pt-6 md:pb-24 md:pt-10">
-      <section className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm md:p-7">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-secondary-foreground">
-              <Sparkles className="h-3.5 w-3.5" />
-              Midtown Sacramento • 2 mile radius
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                The community potluck is buzzing
-              </h1>
-              <p className="text-sm text-muted-foreground md:text-base">
-                8 neighbors are active right now. Post what you need or what you can share and everyone within 2 miles will see it instantly.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild variant="outline" className="rounded-full px-5">
-              <Link href="/community/events/new">
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Host Event
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="rounded-full px-5">
-              <Link href="/map">
-                <MapPin className="mr-2 h-4 w-4" />
-                Open food map
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="rounded-full bg-gradient-to-r from-primary-start to-primary-end px-5 text-primary-foreground shadow"
-            >
-              <Link href={`/chat?intent=${mood}`}>
-                <ChefHat className="mr-2 h-4 w-4" />
-                Ask the sous-chef
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowComposer(!showComposer)}
-            className="w-full rounded-full"
-          >
-            {showComposer ? "Hide composer" : "Post to the community"}
-          </Button>
-
-          {showComposer && (
-            <div className="mt-4 space-y-3 rounded-2xl border border-border bg-muted/40 p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMood("hungry")}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
-                    mood === "hungry"
-                      ? "bg-gradient-to-r from-hungry-start to-hungry-end text-white"
-                      : "bg-secondary text-secondary-foreground"
-                  )}
-                >
-                  I&apos;m hungry
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMood("full")}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
-                    mood === "full"
-                      ? "bg-gradient-to-r from-full-start to-full-end text-white"
-                      : "bg-secondary text-secondary-foreground"
-                  )}
-                >
-                  I&apos;m full
-                </button>
-              </div>
-
-              <textarea
-                id="community-composer"
-                rows={2}
-                value={composerValue}
-                onChange={(event) => setComposerValue(event.target.value)}
-                placeholder={
-                  mood === "hungry"
-                    ? "What are you looking for?"
-                    : "What are you sharing?"
-                }
-                className="w-full resize-none rounded-xl border border-border/60 bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              />
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={handlePost}
-                  size="sm"
-                  className="rounded-full bg-primary px-4 text-primary-foreground"
-                  disabled={composerValue.trim().length === 0 || isPosting}
-                >
-                  {isPosting ? "Posting..." : "Post"}
-                </Button>
-                <Button asChild variant="ghost" size="sm" className="rounded-full">
-                  <Link href={`/chat?prefill=${encodeURIComponent(aiPrompt)}`}>
-                    Ask sous-chef
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Upcoming Events Section */}
-      {events.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Calendar className="h-6 w-6" />
-              Upcoming Events
-            </h2>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/community/events/new">See all</Link>
-            </Button>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.slice(0, 6).map((event) => (
-              <Link
-                key={event.id}
-                href={`/community/events/${event.id}`}
-                className="group block"
-              >
-                <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-lg">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <Badge className={cn(
-                      "rounded-full text-xs font-semibold",
-                      event.eventType === "potluck"
-                        ? "bg-full-start/15 text-full-end border-full-end/30"
-                        : "bg-primary/15 text-primary border-primary/30"
-                    )}>
-                      {event.eventType === "potluck" ? "🎉 Potluck" : "🤝 Volunteer"}
-                    </Badge>
-                    {event.isVerified && (
-                      <Badge variant="default" className="rounded-full text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-lg text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {event.title}
-                  </h3>
-
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{formatEventDate(event.startTime)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {event.rsvpCount} attending
-                        {event.capacity && ` • ${event.capacity} max`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Hosted by {event.hostName}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-center gap-2">
-            {FILTERS.map((filterOption) => (
-              <Button
-                key={filterOption.value}
-                type="button"
-                variant={filter === filterOption.value ? "default" : "secondary"}
-                size="sm"
-                className={cn(
-                  "rounded-full px-4",
-                  filter === filterOption.value
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "bg-secondary text-secondary-foreground"
-                )}
-                onClick={() => setFilter(filterOption.value)}
-              >
-                {filterOption.label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="space-y-4">
-            {visiblePosts.map((post) => {
-              const askSousChefHref = `/chat?prefill=${encodeURIComponent(
-                `Help me respond to ${post.author}'s post in the community potluck.`
-              )}`;
-
-              return (
-                <article
-                  key={post.id}
-                  className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm"
-                >
-                <header className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-base font-semibold text-primary">
-                      {post.author.slice(0, 1)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">{post.author}</p>
-                        <Badge className={cn("rounded-full px-2.5 text-[0.65rem]", ROLE_BADGE[post.role].tone)}>
-                          {ROLE_BADGE[post.role].label}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{post.distance}</span>
-                        <span className="text-xs text-muted-foreground">• {post.timeAgo}</span>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">{post.body}</p>
-                      {post.tags ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {post.tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="rounded-full border-primary/20 bg-primary/5 text-primary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  {post.meta && (post.meta.location || post.meta.status || post.meta.until) ? (
-                    <div className="flex flex-col items-end gap-2 text-right text-xs text-muted-foreground">
-                      {post.meta.status ? (
-                        <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-[0.65rem] font-semibold uppercase", STATUS_BADGE[post.meta.status].tone)}>
-                          {post.meta.status === "verified" ? "✓" : post.meta.status === "needs-love" ? "!" : "•"}
-                          {STATUS_BADGE[post.meta.status].label}
-                        </span>
-                      ) : null}
-                      {post.meta.location ? (
-                        <span className="flex items-center gap-1 text-xs">
-                          <MapPin className="h-3 w-3" />
-                          {post.meta.location}
-                        </span>
-                      ) : null}
-                      {post.meta.until ? (
-                        <span className="flex items-center gap-1 text-xs">
-                          <Clock className="h-3 w-3" />
-                          {post.meta.until}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </header>
-
-                <footer className="mt-4 flex flex-wrap items-center gap-2">
-                  <Button variant="secondary" size="sm" className="rounded-full">
-                    <HeartHandshake className="mr-1.5 h-4 w-4" />
-                    I&apos;m on it
-                  </Button>
-                  <Button variant="ghost" size="sm" className="rounded-full">
-                    <MessageCircle className="mr-1.5 h-4 w-4" />
-                    Add a comment
-                  </Button>
-                  <Button asChild variant="ghost" size="sm" className="rounded-full">
-                    <Link href={askSousChefHref}>Ask sous-chef</Link>
-                  </Button>
-                </footer>
-
-                {post.replies && post.replies.length > 0 ? (
-                  <div className="mt-4 space-y-3 rounded-2xl bg-muted/40 p-4">
-                    {post.replies.map((reply) => (
-                      <div key={reply.id} className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-semibold text-foreground">{reply.author}</span>
-                          <span>• {reply.role === "guide" ? "Guide" : "Neighbor"}</span>
-                          <span>• {reply.timeAgo}</span>
-                          {typeof reply.helpful === "number" ? (
-                            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[0.65rem] text-primary">
-                              <Sparkles className="h-3 w-3" />
-                              {reply.helpful} found this helpful
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{reply.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <aside className="flex flex-col gap-5">
-          <div className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <FlameIcon className="h-5 w-5 text-accent-foreground" />
-              Tonight&apos;s hot dishes
-            </div>
-            <div className="mt-4 space-y-4">
-              {hotItems.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-border/60 bg-secondary/60 p-4 text-sm">
-                  <p className="font-semibold text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">Hosted by {item.host}</p>
-                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {item.until}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Navigation2 className="h-3 w-3" /> {item.distance}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <ChefHat className="h-5 w-5 text-primary" />
-              Guide tips
-            </div>
-            <div className="mt-4 space-y-4 text-sm text-muted-foreground">
-              {guideMoments.map((moment) => (
-                <div key={moment.id} className="space-y-2 rounded-2xl border border-border/60 bg-muted/30 p-4">
-                  <p className="font-semibold text-foreground">{moment.guide}</p>
-                  <p>{moment.tip}</p>
-                  <Button asChild variant="link" className="px-0 text-primary">
-                    <Link href={moment.href} className="inline-flex items-center gap-1">
-                      {moment.linkLabel}
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Vibe check
-            </div>
-            <div className="mt-4 grid gap-3">
-              {vibeStats.map((stat) => (
-                <div key={stat.id} className="rounded-2xl border border-dashed border-border/70 bg-muted/30 p-3 text-sm">
-                  <div className="text-2xl font-semibold text-primary">{stat.value}</div>
-                  <p className="text-sm font-medium text-foreground">{stat.label}</p>
-                  {stat.description ? (
-                    <p className="text-xs text-muted-foreground">{stat.description}</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-border/60 bg-card/95 p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">
-              Need a map view of these spots? Jump to the food map or ping the sous-chef.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button asChild size="sm" className="rounded-full">
-                <Link href="/map">
-                  <MapPin className="mr-1.5 h-4 w-4" />
-                  Map view
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className="rounded-full">
-                <Link href="/chat?prefill=Can%20you%20summarize%20today%27s%20community%20posts%20for%20me%3F">
-                  Ask AI for a recap
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </div>
+    <DiscoveryFiltersProvider>
+      <CommunityPageView {...props} />
+    </DiscoveryFiltersProvider>
   );
 }
 
-function FlameIcon(props: ComponentProps<typeof Sparkles>) {
-  return <Sparkles {...props} />;
+function CommunityPageView({
+  posts,
+  initialEvents,
+  hotItems,
+  guideMoments,
+  vibeStats,
+  user,
+}: CommunityPageClientProps) {
+  const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
+  const [userLocation, setUserLocation] = useState<string | null>(null);
+
+  const handleModeToggle = (mode: "hungry" | "full") => {
+    setActiveMode(activeMode === mode ? null : mode);
+  };
+
+  const handleLocationChange = (newLocation: string) => {
+    setUserLocation(newLocation);
+  };
+
+  // Detect user location on mount
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const detectLocation = async () => {
+      // Try IP-based geolocation first (works on localhost)
+      try {
+        const ipResponse = await fetch("https://ipapi.co/json/", {
+          signal: controller.signal,
+        });
+        const ipData = await ipResponse.json();
+
+        if (ipData.city) {
+          setUserLocation(ipData.city);
+          return;
+        }
+      } catch (error) {
+        // IP geolocation failed or aborted, continue to GPS
+        if ((error as Error).name === "AbortError") return;
+      }
+
+      // Fall back to GPS geolocation
+      if (!navigator.geolocation) {
+        setUserLocation("Set your location");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Use Nominatim (OpenStreetMap) for reverse geocoding
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=14`,
+              {
+                headers: {
+                  "User-Agent": "TheFeed Community App",
+                },
+                signal: controller.signal,
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Geocoding failed");
+            }
+
+            const data = await response.json();
+
+            // Extract neighborhood, suburb, or city
+            const location =
+              data.address?.neighbourhood ||
+              data.address?.suburb ||
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              "Your area";
+
+            setUserLocation(location);
+          } catch (error) {
+            // Silent fail - just use default
+            if ((error as Error).name !== "AbortError") {
+              setUserLocation("Set your location");
+            }
+          }
+        },
+        () => {
+          // User denied permission or geolocation failed (e.g., on localhost)
+          setUserLocation("Set your location");
+        },
+        {
+          timeout: 10000, // 10 second timeout
+          enableHighAccuracy: false, // Faster, less battery intensive
+        }
+      );
+    };
+
+    detectLocation();
+
+    // Cleanup: abort fetch requests if component unmounts
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  // Calculate stats
+  const sharesCount = posts.filter((p) => p.kind === "share").length;
+  const requestsCount = posts.filter((p) => p.kind === "request").length;
+  const eventsCount = initialEvents.length;
+
+  // Determine which events/posts to show based on mode
+  const eventMode = activeMode || undefined;
+  const postMode = activeMode === "hungry" ? "hungry" : activeMode === "full" ? "helper" : "browse";
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-4">
+        {/* Page Header with Mode Toggles */}
+        <div className="mb-4 flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-semibold text-foreground">Community</h2>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => handleModeToggle("hungry")}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-4 sm:text-base",
+                activeMode === "hungry"
+                  ? "border-hungry-end bg-gradient-to-r from-hungry-start to-hungry-end text-white shadow-md"
+                  : "border-border/60 bg-card hover:border-hungry-end/40 hover:bg-hungry-start/5"
+              )}
+            >
+              <UtensilsCrossed className="h-4 w-4" />
+              <span>I'm hungry</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleModeToggle("full")}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-4 sm:text-base",
+                activeMode === "full"
+                  ? "border-full-end bg-gradient-to-r from-full-start to-full-end text-white shadow-md"
+                  : "border-border/60 bg-card hover:border-full-end/40 hover:bg-full-start/5"
+              )}
+            >
+              <HandHeart className="h-4 w-4" />
+              <span>I'm Full</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Clean 2-Column: Location + Greeting | Urgency Card */}
+        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_340px]">
+          {/* Left: Location Bar + Friendly Greeting */}
+          <div className="flex flex-col items-center justify-center space-y-3 text-center">
+            {/* Location Badge */}
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5 text-sm">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="font-medium text-foreground">
+                {userLocation || "Detecting location..."}
+              </span>
+              <LocationDialog
+                currentLocation={userLocation}
+                onLocationChange={handleLocationChange}
+              />
+            </div>
+
+            {/* Friendly Greeting */}
+            <div>
+              <h3 className="font-serif text-2xl font-light text-foreground">
+                Hey {user?.name?.split(" ")[0] || "there"}
+                {activeMode === "hungry" && ", let's find you some food"}
+                {activeMode === "full" && ", ready to make a difference"}
+                {!activeMode && ", welcome back"}
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {!activeMode && "Select 'I'm hungry' or 'I'm Full' above to get started"}
+                {activeMode === "hungry" && "Browse food resources and events below, or ask neighbors for help"}
+                {activeMode === "full" && "Check out ways to volunteer and share with your community"}
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Urgency Card - Show on mobile too */}
+          <div>
+            {activeMode === "hungry" && (
+              <div className="rounded-xl border border-hungry-end/30 bg-gradient-to-br from-hungry-start/5 to-hungry-end/5 p-4">
+                <h3 className="font-semibold text-hungry-end">Need help now?</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  RSVP to food events below, or check the map for food banks open now.
+                </p>
+                <Button asChild size="sm" className="mt-3 w-full">
+                  <Link href="/map">Find food nearby</Link>
+                </Button>
+              </div>
+            )}
+
+            {activeMode === "full" && (
+              <div className="rounded-xl border border-full-end/30 bg-gradient-to-br from-full-start/5 to-full-end/5 p-4">
+                <h3 className="font-semibold text-full-end">Ready to help?</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  RSVP to volunteer events or host your own potluck to share food.
+                </p>
+                <Button asChild size="sm" className="mt-3 w-full">
+                  <Link href="/community/events/new">Create an event</Link>
+                </Button>
+              </div>
+            )}
+
+            {!activeMode && (
+              <div className="rounded-xl border border-border/60 bg-card p-4">
+                <h3 className="text-sm font-semibold text-muted-foreground">Today in your neighborhood</h3>
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-2">
+                  <div>
+                    <div className="text-2xl font-bold text-full-end">{sharesCount}</div>
+                    <div className="text-xs text-muted-foreground">Available shares</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-hungry-end">{requestsCount}</div>
+                    <div className="text-xs text-muted-foreground">Requests</div>
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-border/40 pt-3">
+                  <div className="text-2xl font-bold text-primary">{eventsCount}</div>
+                  <div className="text-xs text-muted-foreground">Upcoming events</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+          {/* LEFT: Events + Posts */}
+          <div className="flex flex-col gap-4">
+            {/* Events Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-foreground">
+                  {activeMode === "hungry" && "Food & resources near you"}
+                  {activeMode === "full" && "Ways to help"}
+                  {!activeMode && "Upcoming events"}
+                </h2>
+                {activeMode === "full" && (
+                  <Button asChild size="sm" className="rounded-full">
+                    <Link href="/community/events/new">
+                      <Plus className="mr-1.5 h-4 w-4" />
+                      Host an event
+                    </Link>
+                  </Button>
+                )}
+                {!activeMode && (
+                  <Button asChild variant="ghost" size="sm" className="rounded-full">
+                    <Link href="/community/events/calendar">View calendar</Link>
+                  </Button>
+                )}
+              </div>
+              <EventsSection initialEvents={initialEvents} mode={eventMode} />
+            </div>
+
+            {/* Composer (when mode is active) */}
+            {activeMode && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-muted-foreground">
+                  {activeMode === "hungry" ? "Ask neighbors for help" : "Offer to help neighbors"}
+                </h3>
+                <PostComposer
+                  defaultIntent={activeMode === "hungry" ? "need" : "share"}
+                  hideIntentToggle
+                />
+              </div>
+            )}
+
+            {/* Community Posts */}
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-foreground">Community chat</h2>
+              <PostFeed posts={posts} mode={postMode} />
+            </div>
+          </div>
+
+          {/* RIGHT: Mini Map + Stats + Hot Items */}
+          <div className="flex flex-col gap-4">
+            {/* Mini Map (TODO: implement) - Now at top */}
+            <div className="rounded-xl border border-border/60 bg-card p-4">
+              <h3 className="mb-3 text-sm font-semibold text-foreground">Nearby resources</h3>
+              <div className="flex aspect-video items-center justify-center rounded-lg bg-muted/30">
+                <p className="text-xs text-muted-foreground">Mini map loading...</p>
+              </div>
+              <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+                <Link href="/map">View full map</Link>
+              </Button>
+            </div>
+
+            {/* Compact stats card (only when no mode active) */}
+            {!activeMode && (
+              <div className="rounded-xl border border-border/60 bg-card p-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-xl font-bold text-full-end">{sharesCount}</div>
+                    <div className="text-xs text-muted-foreground">Shares</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-hungry-end">{requestsCount}</div>
+                    <div className="text-xs text-muted-foreground">Requests</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-primary">{eventsCount}</div>
+                    <div className="text-xs text-muted-foreground">Events</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Hot items */}
+            {hotItems.length > 0 && (
+              <div className="rounded-xl border border-border/60 bg-card p-4">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Tonight's hot dishes
+                </h3>
+                <div className="mt-3 space-y-2">
+                  {hotItems.slice(0, 3).map((item) => (
+                    <div key={item.id} className="text-sm">
+                      <p className="font-medium text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.host} • {item.until}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

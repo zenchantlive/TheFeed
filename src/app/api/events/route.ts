@@ -46,6 +46,25 @@ export async function GET(req: NextRequest) {
       | "cancelled"
       | null;
     const hostId = searchParams.get("hostId");
+    const startAfterParam = searchParams.get("startAfter");
+    const startBeforeParam = searchParams.get("startBefore");
+    const onlyWithCoords = searchParams.get("onlyWithCoords") === "true";
+
+    const startAfter =
+      startAfterParam && !Number.isNaN(Date.parse(startAfterParam))
+        ? new Date(startAfterParam)
+        : undefined;
+    const startBefore =
+      startBeforeParam && !Number.isNaN(Date.parse(startBeforeParam))
+        ? new Date(startBeforeParam)
+        : undefined;
+
+    if (startAfter && startBefore && startAfter > startBefore) {
+      return NextResponse.json(
+        { error: "Invalid time range: 'startAfter' must be before 'startBefore'." },
+        { status: 400 }
+      );
+    }
     const onlyUpcoming = searchParams.get("onlyUpcoming") !== "false"; // Default true
 
     // Fetch events
@@ -56,6 +75,9 @@ export async function GET(req: NextRequest) {
       status: status || undefined,
       hostId: hostId || undefined,
       onlyUpcoming,
+      startAfter,
+      startBefore,
+      onlyWithCoords,
     });
 
     return NextResponse.json(result, { status: 200 });

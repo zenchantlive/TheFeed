@@ -8,7 +8,7 @@ import Map, {
   GeolocateControl,
 } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MapPin, LocateFixed } from "lucide-react";
+import { MapPin, LocateFixed, Calendar } from "lucide-react";
 import type { Coordinates } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +35,17 @@ type MapViewProps = {
   userLocation: Coordinates | null;
   selectedFoodBankId: string | null;
   onSelectFoodBank: (id: string | null) => void;
+  events?: MapEventPin[];
+  selectedEventId?: string | null;
+  onSelectEvent?: (id: string | null) => void;
+};
+
+type MapEventPin = {
+  id: string;
+  title: string;
+  latitude: number;
+  longitude: number;
+  eventType: "potluck" | "volunteer";
 };
 
 const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
@@ -44,6 +55,9 @@ export function MapView({
   userLocation,
   selectedFoodBankId,
   onSelectFoodBank,
+  events = [],
+  selectedEventId = null,
+  onSelectEvent,
 }: MapViewProps) {
   const [viewState, setViewState] = useState<ViewState | null>(null);
 
@@ -93,6 +107,14 @@ export function MapView({
     [onSelectFoodBank, selectedFoodBankId]
   );
 
+  const handleEventMarkerClick = useCallback(
+    (id: string) => {
+      if (!onSelectEvent) return;
+      onSelectEvent(id === selectedEventId ? null : id);
+    },
+    [onSelectEvent, selectedEventId]
+  );
+
   if (!mapboxToken) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-border text-center text-sm text-muted-foreground">
@@ -135,6 +157,31 @@ export function MapView({
                 )}
               >
                 <MapPin className="h-4 w-4 text-white" />
+              </span>
+            </Marker>
+          ))}
+
+          {events.map((eventPin) => (
+            <Marker
+              key={`event-${eventPin.id}`}
+              latitude={eventPin.latitude}
+              longitude={eventPin.longitude}
+              anchor="bottom"
+              onClick={(evt) => {
+                evt.originalEvent.stopPropagation();
+                handleEventMarkerClick(eventPin.id);
+              }}
+            >
+              <span
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform",
+                  selectedEventId === eventPin.id ? "scale-110" : "scale-100",
+                  eventPin.eventType === "potluck"
+                    ? "bg-gradient-to-r from-full-start to-full-end"
+                    : "bg-gradient-to-r from-primary-start to-primary-end"
+                )}
+              >
+                <Calendar className="h-4 w-4 text-white" />
               </span>
             </Marker>
           ))}

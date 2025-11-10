@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageCircle, MapPin, Users, UserRound } from "lucide-react";
+import { MessageCircle, MapPin, Users, UserRound, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -26,6 +26,11 @@ const navItems: NavItem[] = [
     label: "Potluck",
     href: "/community",
     icon: Users,
+  },
+  {
+    label: "Calendar",
+    href: "/community/events/calendar",
+    icon: Calendar,
   },
   {
     label: "Pantry",

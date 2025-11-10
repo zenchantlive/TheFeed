@@ -1,0 +1,9 @@
+[rag_arguments]
+enable_rag=true
+
+
+[pr_code_suggestions]
+enable_chat_in_code_suggestions = true
+[pr_description] # /describe #
+publish_labels=true
+generate_ai_title=false

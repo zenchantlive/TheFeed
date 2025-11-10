@@ -1,16 +1,17 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  CommunityPageClient,
-  type FeedPost,
-  type GuideMoment,
-  type HotItem,
-  type VibeStat,
-  type EventCardData,
-} from "./page-client";
+import { CommunityPageClient } from "./page-client";
+import type {
+  FeedPost,
+  GuideMoment,
+  HotItem,
+  VibeStat,
+  EventCardData,
+} from "./types";
 import { getPosts } from "@/lib/post-queries";
 import { getEvents } from "@/lib/event-queries";
+import { addDays } from "date-fns";
 
 /**
  * Format time ago from a date
@@ -123,11 +124,16 @@ export default async function CommunityPage() {
   // Fetch real posts from database
   const { items: dbPosts } = await getPosts({ limit: 20 });
 
-  // Fetch upcoming events (only upcoming status)
+  const now = new Date();
+  const spotlightRangeEnd = addDays(now, 14);
+
+  // Fetch upcoming spotlight events within the next 2 weeks
   const { items: dbEvents } = await getEvents({
     limit: 6,
     status: "upcoming",
     onlyUpcoming: true,
+    startAfter: now,
+    startBefore: spotlightRangeEnd,
   });
 
   // Transform database posts to FeedPost format
@@ -171,11 +177,16 @@ export default async function CommunityPage() {
   return (
     <CommunityPageClient
       posts={posts}
-      events={events}
-      prompts={PROMPTS}
+      initialEvents={events}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
       vibeStats={VIBE_STATS}
+      user={{
+        id: session.user.id,
+        name: session.user.name,
+        image: session.user.image ?? null,
+        email: session.user.email,
+      }}
     />
   );
 }
