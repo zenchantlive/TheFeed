@@ -1,14 +1,14 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import {
-  CommunityPageClient,
-  type FeedPost,
-  type GuideMoment,
-  type HotItem,
-  type VibeStat,
-  type EventCardData,
-} from "./page-client";
+import { CommunityPageClient } from "./page-client";
+import type {
+  FeedPost,
+  GuideMoment,
+  HotItem,
+  VibeStat,
+  EventCardData,
+} from "./types";
 import { getPosts } from "@/lib/post-queries";
 import { getEvents } from "@/lib/event-queries";
 import { addDays } from "date-fns";
@@ -178,10 +178,15 @@ export default async function CommunityPage() {
     <CommunityPageClient
       posts={posts}
       initialEvents={events}
-      prompts={PROMPTS}
       hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
       vibeStats={VIBE_STATS}
+      user={{
+        id: session.user.id,
+        name: session.user.name,
+        image: session.user.image ?? null,
+        email: session.user.email,
+      }}
     />
   );
 }

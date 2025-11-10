@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useDiscoveryFilters } from "./discovery-context";
-import type { EventCardData } from "./page-client";
+import type { EventCardData } from "./types";
 import { addDays } from "date-fns";
 
 type EventApiItem = {
