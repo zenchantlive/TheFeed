@@ -25,12 +25,6 @@ export function ActionTiles({ onSelectAction }: ActionTilesProps) {
     }
 
     onSelectAction(postIntent);
-
-    // Scroll to composer
-    const composer = document.getElementById("post-composer");
-    if (composer) {
-      composer.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
   };
 
   return (
