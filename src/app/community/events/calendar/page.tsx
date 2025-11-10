@@ -22,38 +22,11 @@ import { cn } from "@/lib/utils";
 type EventTypeFilter = "all" | "potluck" | "volunteer";
 
 type PageProps = {
-  searchParams: Promise<{
+  searchParams: {
     month?: string;
     type?: EventTypeFilter;
-  }>;
+  };
 };
-
-type CalendarEvent = Awaited<
-  ReturnType<typeof getEventsWithinRange>
->[number];
-
-function parseMonthParam(monthParam?: string): Date {
-  if (!monthParam) {
-    return startOfMonth(new Date());
-  }
-
-  try {
-    // Regular expression to validate yyyy-MM format
-    if (!/^\d{4}-\d{2}$/.test(monthParam)) {
-      return startOfMonth(new Date());
-    }
-
-    const parsed = parse(monthParam, "yyyy-MM", new Date());
-
-    // Check for invalid dates (e.g., month "13") and parsing errors
-    if (isNaN(parsed.getTime()) || format(parsed, "yyyy-MM") !== monthParam) {
-      return startOfMonth(new Date());
-    }
-    return startOfMonth(parsed);
-  } catch {
-    return startOfMonth(new Date());
-  }
-}
 
 export default async function CalendarPage({ searchParams }: PageProps) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -61,7 +34,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const params = await searchParams;
+  const params = searchParams;
   const focusedMonth = parseMonthParam(params.month);
   const eventTypeFilter: EventTypeFilter =
     params.type === "potluck" || params.type === "volunteer"
