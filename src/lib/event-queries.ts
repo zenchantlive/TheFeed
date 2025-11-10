@@ -144,8 +144,19 @@ export async function getEvents({
   }
 
   // Only show upcoming events (startTime >= now)
+  // Validate and normalize time filters
+  if (startAfter && startBefore && startAfter > startBefore) {
+    throw new Error("Invalid time range: 'startAfter' must be before 'startBefore'.");
+  }
+
+  // Only show upcoming events (startTime >= now) unless custom range narrows differently
   if (onlyUpcoming) {
-    conditions.push(gte(events.startTime, new Date()));
+    const now = new Date();
+    // If startBefore is provided but in the past, the intersection would be empty; surface clearer error
+    if (startBefore && startBefore < now && !startAfter) {
+      throw new Error("Invalid filter: 'onlyUpcoming' with past 'startBefore' yields no results.");
+    }
+    conditions.push(gte(events.startTime, now));
   }
 
   if (startAfter) {
