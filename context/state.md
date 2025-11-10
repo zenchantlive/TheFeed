@@ -51,7 +51,11 @@ This refactor builds on prior social + events infrastructure (PR #15, PR #16) an
     - "Hey Jordan, let's find you some food" (hungry mode)
     - "Hey Jordan, ready to make a difference" (full mode)
     - "Hey Jordan, welcome back" (neutral)
-  - Client-side geolocation detection for location display (placeholder ready)
+  - Smart location detection with multiple fallbacks:
+    - IP-based geolocation (works on localhost)
+    - GPS with reverse geocoding via Nominatim
+    - Custom LocationDialog component for manual entry
+    - AbortController prevents memory leaks on unmount
   - Mode-specific helper text changes based on active state
 
 **Mode Architecture:**
@@ -85,19 +89,30 @@ This refactor builds on prior social + events infrastructure (PR #15, PR #16) an
   - "Ready to help?" (full mode) - links to create event
   - "Today in your neighborhood" stats (neutral mode)
 
+### Recently Completed (January 2025) ✅
+
+- [COMPLETED] Location functionality:
+  - ✅ Connected IP-based geolocation (works on localhost)
+  - ✅ GPS fallback with reverse geocoding via Nominatim
+  - ✅ Custom LocationDialog for manual location change
+  - ✅ AbortController cleanup prevents memory leaks
+  - Deferred: localStorage persistence (not critical)
+
+- [COMPLETED] Mobile responsiveness:
+  - ✅ Urgency cards now visible on all screen sizes
+  - ✅ Responsive header (stacks on mobile)
+  - ✅ Flexible mode buttons (equal width on mobile)
+  - ✅ Centered greeting works well on small screens
+
+- [COMPLETED] Code quality improvements (addressing review):
+  - ✅ AbortController for all fetch requests
+  - ✅ Custom modal instead of browser prompt()
+  - Deferred: Toast notifications (requires new dependency)
+  - Deferred: localStorage hydration (adds complexity)
+
 ### In Progress / Next UI Refinements ⏳
 
 These are planned follow-ups:
-
-- [ ] Location functionality:
-  - Connect geolocation to reverse geocoding API
-  - Implement "Change location" functionality
-  - Store user location preferences
-
-- [ ] Mobile responsiveness:
-  - Ensure urgency cards display properly on mobile (currently `hidden lg:block`)
-  - Test centered greeting layout on small screens
-  - Optimize page header for mobile devices
 
 - [ ] Mini-map implementation:
   - Replace "Mini map loading..." placeholder with actual Mapbox mini-map

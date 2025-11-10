@@ -107,6 +107,7 @@ src/app/community/
     │   └── utils/
     │       ├── sorting.ts     # Mode-based sorting
     │       └── filtering.ts   # Filter logic
+    ├── location-dialog.tsx     # Custom modal for location change
     ├── mode-toggle/            # (Not currently used)
     └── sidebar/
         └── index.tsx          # Stats, mini-map, context helpers
@@ -166,7 +167,12 @@ The page is designed to get people to food resources FAST while maintaining comm
   - Session user data passed from server (`page.tsx`) to client (`page-client.tsx`)
   - User prop includes: id, name, image, email
   - First name extraction for friendly greetings
-  - Client-side geolocation detection (placeholder for future functionality)
+  - Smart location detection:
+    - IP-based geolocation (ipapi.co) - works on localhost
+    - GPS fallback with Nominatim reverse geocoding
+    - Custom LocationDialog component for manual entry
+    - AbortController cleanup prevents memory leaks
+    - Graceful error handling with sensible defaults
 
 - **Mode Behaviors:**
   - **"I'm hungry" mode:**
