@@ -125,68 +125,92 @@ src/app/community/
 
 The page is designed to get people to food resources FAST while maintaining community engagement.
 
-**Key Behaviors:**
+**Layout Structure (Updated January 2025):**
 
-1. **Simple Mode Toggle (No Sticky Header)**
-   - Two buttons at top: "I'm hungry" and "I'm Full"
+1. **Page Header**
+   - "Community" title on left
+   - Mode toggles on right: "I'm hungry" and "I'm Full"
    - Clicking toggles mode (click again to deactivate)
-   - NO redundant sticky header - removed for cleaner UX
+   - Clean single-line header with border-bottom
 
-2. **TheFeed Branding**
-   - Located below mode buttons
-   - Shows: "TheFeed" title + "Connecting neighbors with food resources and community support"
+2. **Welcome Section (2-column grid)**
+   - **LEFT: Centered Location + Greeting**
+     - Location badge: Shows detected location with "Change" button
+     - Personalized greeting with user's first name
+     - Serif font for warm, friendly tone
+     - Mode-specific messages:
+       - Hungry: "Hey Jordan, let's find you some food"
+       - Full: "Hey Jordan, ready to make a difference"
+       - Neutral: "Hey Jordan, welcome back"
+     - Helper text changes based on active mode
 
-3. **Events-First Layout**
+   - **RIGHT: Urgency Cards (340px fixed width)**
+     - "Need help now?" (hungry mode) - links to /map
+     - "Ready to help?" (full mode) - links to create event
+     - "Today in your neighborhood" stats (neutral mode)
+
+3. **Main Content (2-column grid)**
    - **LEFT COLUMN (Main Content):**
      - Events section (PRIMARY, full-width)
      - Composer (appears when mode active, NO redundant mood selectors)
      - Community posts (ALWAYS visible, never hidden)
 
-   - **RIGHT COLUMN (Sidebar):**
-     - "Today in your neighborhood" stats card
+   - **RIGHT COLUMN (Sidebar - 340px):**
      - Mini-map (shows nearby resources) - TODO: needs implementation
-     - Context-aware helper cards (change based on active mode)
+     - Compact stats card (only when no mode active)
      - "Tonight's hot dishes" (useful real-time info)
 
-4. **Mode Behaviors:**
-   - **"I'm hungry" mode:**
-     - Events filter to show food/potluck events
-     - Header: "Food & resources near you"
-     - Posts prioritize shares/resources
-     - Sidebar shows: "Need help now?" helper with map link
-     - Composer appears for asking neighbors
+**Key Features:**
 
-   - **"I'm Full" mode:**
-     - Events filter to show volunteer opportunities
-     - Header: "Ways to help" + "Host an event" button
-     - Posts prioritize requests
-     - Sidebar shows: "Ready to help?" helper with create event link
-     - Composer appears for offering help
+- **User Personalization:**
+  - Session user data passed from server (`page.tsx`) to client (`page-client.tsx`)
+  - User prop includes: id, name, image, email
+  - First name extraction for friendly greetings
+  - Client-side geolocation detection (placeholder for future functionality)
 
-   - **No mode (default):**
-     - Shows ALL events
-     - Shows ALL posts (neutral ordering)
-     - Header: "Upcoming events"
+- **Mode Behaviors:**
+  - **"I'm hungry" mode:**
+    - Events filter to show food/potluck events
+    - Header: "Food & resources near you"
+    - Posts prioritize shares/resources
+    - Greeting: "Hey [Name], let's find you some food"
+    - Urgency card: "Need help now?" → links to /map
+    - Composer appears for asking neighbors
 
-5. **Event Cards with Quick Actions**
-   - Each event has overlay buttons:
-     - **Map pin icon** → Links to `/map?event={id}` for location
-     - **RSVP button** → Links to `/community/events/{id}` for quick RSVP
-   - 2-column grid on desktop
+  - **"I'm Full" mode:**
+    - Events filter to show volunteer opportunities
+    - Header: "Ways to help" + "Host an event" button
+    - Posts prioritize requests
+    - Greeting: "Hey [Name], ready to make a difference"
+    - Urgency card: "Ready to help?" → links to create event
+    - Composer appears for offering help
 
-6. **Posts: Always Visible, Smart Filtering**
-   - Posts NEVER disappear based on mode
-   - Mode affects sorting priority, NOT visibility
-   - Filter pills still available for additional refinement
-   - Uses PostFeed component with mode prop for intelligent sorting
+  - **No mode (default):**
+    - Shows ALL events
+    - Shows ALL posts (neutral ordering)
+    - Header: "Upcoming events"
+    - Greeting: "Hey [Name], welcome back"
+    - Stats card: "Today in your neighborhood" with counts
 
-7. **Composer Intelligence**
-   - Only shows when mode is active (hungry/full)
-   - NO redundant mood selectors inside (set by mode button above)
-   - `hideIntentToggle` prop removes internal toggle
-   - Heading changes based on mode:
-     - Hungry: "Ask neighbors for help"
-     - Full: "Offer to help neighbors"
+- **Event Cards with Quick Actions:**
+  - Each event has overlay buttons:
+    - **Map pin icon** → Links to `/map?event={id}` for location
+    - **RSVP button** → Links to `/community/events/{id}` for quick RSVP
+  - 2-column grid on desktop
+
+- **Posts: Always Visible, Smart Filtering:**
+  - Posts NEVER disappear based on mode
+  - Mode affects sorting priority, NOT visibility
+  - Filter pills still available for additional refinement
+  - Uses PostFeed component with mode prop for intelligent sorting
+
+- **Composer Intelligence:**
+  - Only shows when mode is active (hungry/full)
+  - NO redundant mood selectors inside (set by mode button above)
+  - `hideIntentToggle` prop removes internal toggle
+  - Heading changes based on mode:
+    - Hungry: "Ask neighbors for help"
+    - Full: "Offer to help neighbors"
 
 **DO NOT:**
 - Hide posts or events based on mode

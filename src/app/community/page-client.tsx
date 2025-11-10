@@ -39,20 +39,81 @@ function CommunityPageView({
     setActiveMode(activeMode === mode ? null : mode);
   };
 
+  const handleChangeLocation = () => {
+    const newLocation = prompt("Enter your location:", userLocation || "");
+    if (newLocation !== null && newLocation.trim()) {
+      setUserLocation(newLocation.trim());
+    }
+  };
+
   // Detect user location on mount
   useEffect(() => {
-    if (navigator.geolocation) {
+    const detectLocation = async () => {
+      // Try IP-based geolocation first (works on localhost)
+      try {
+        const ipResponse = await fetch("https://ipapi.co/json/");
+        const ipData = await ipResponse.json();
+
+        if (ipData.city) {
+          setUserLocation(ipData.city);
+          return;
+        }
+      } catch (error) {
+        // IP geolocation failed, continue to GPS
+      }
+
+      // Fall back to GPS geolocation
+      if (!navigator.geolocation) {
+        setUserLocation("Set your location");
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          // Reverse geocode to get readable location
-          // For now, just use a placeholder - we can enhance this later
-          setUserLocation("Your neighborhood");
+          try {
+            // Use Nominatim (OpenStreetMap) for reverse geocoding
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=14`,
+              {
+                headers: {
+                  "User-Agent": "TheFeed Community App",
+                },
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Geocoding failed");
+            }
+
+            const data = await response.json();
+
+            // Extract neighborhood, suburb, or city
+            const location =
+              data.address?.neighbourhood ||
+              data.address?.suburb ||
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              "Your area";
+
+            setUserLocation(location);
+          } catch (error) {
+            // Silent fail - just use default
+            setUserLocation("Set your location");
+          }
         },
         () => {
-          setUserLocation("Location unavailable");
+          // User denied permission or geolocation failed (e.g., on localhost)
+          setUserLocation("Set your location");
+        },
+        {
+          timeout: 10000, // 10 second timeout
+          enableHighAccuracy: false, // Faster, less battery intensive
         }
       );
-    }
+    };
+
+    detectLocation();
   }, []);
 
   // Calculate stats
@@ -68,14 +129,14 @@ function CommunityPageView({
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-4">
         {/* Page Header with Mode Toggles */}
-        <div className="mb-4 flex items-center justify-between border-b border-border/40 pb-4">
+        <div className="mb-4 flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold text-foreground">Community</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => handleModeToggle("hungry")}
               className={cn(
-                "flex items-center gap-2 rounded-xl border-2 px-4 py-2 font-medium transition-all",
+                "flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-4 sm:text-base",
                 activeMode === "hungry"
                   ? "border-hungry-end bg-gradient-to-r from-hungry-start to-hungry-end text-white shadow-md"
                   : "border-border/60 bg-card hover:border-hungry-end/40 hover:bg-hungry-start/5"
@@ -88,7 +149,7 @@ function CommunityPageView({
               type="button"
               onClick={() => handleModeToggle("full")}
               className={cn(
-                "flex items-center gap-2 rounded-xl border-2 px-4 py-2 font-medium transition-all",
+                "flex flex-1 items-center justify-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-medium transition-all sm:flex-none sm:px-4 sm:text-base",
                 activeMode === "full"
                   ? "border-full-end bg-gradient-to-r from-full-start to-full-end text-white shadow-md"
                   : "border-border/60 bg-card hover:border-full-end/40 hover:bg-full-start/5"
@@ -110,7 +171,10 @@ function CommunityPageView({
               <span className="font-medium text-foreground">
                 {userLocation || "Detecting location..."}
               </span>
-              <button className="ml-1 text-xs text-primary hover:underline">
+              <button
+                onClick={handleChangeLocation}
+                className="ml-1 text-xs text-primary hover:underline"
+              >
                 Change
               </button>
             </div>
@@ -131,7 +195,7 @@ function CommunityPageView({
             </div>
           </div>
 
-          {/* Right: Urgency Card */}
+          {/* Right: Urgency Card - Show on mobile too */}
           <div>
             {activeMode === "hungry" && (
               <div className="rounded-xl border border-hungry-end/30 bg-gradient-to-br from-hungry-start/5 to-hungry-end/5 p-4">
@@ -160,7 +224,7 @@ function CommunityPageView({
             {!activeMode && (
               <div className="rounded-xl border border-border/60 bg-card p-4">
                 <h3 className="text-sm font-semibold text-muted-foreground">Today in your neighborhood</h3>
-                <div className="mt-2 grid grid-cols-2 gap-3">
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-2">
                   <div>
                     <div className="text-2xl font-bold text-full-end">{sharesCount}</div>
                     <div className="text-xs text-muted-foreground">Available shares</div>
