@@ -72,11 +72,10 @@ function useMapEvents({
   dateRangeFilter: "week" | "month";
 }) {
   const [events, setEvents] = useState<MapEventPin[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
-    let isMounted = true;
 
     async function fetchEvents() {
       setIsLoading(true);
@@ -104,7 +103,6 @@ function useMapEvents({
           throw new Error("Failed to load events");
         }
         const data = await response.json();
-        if (!isMounted) return;
         if (Array.isArray(data?.items)) {
           const mapped = (data.items as EventApiResponseItem[])
             .map((item) => {
@@ -128,22 +126,18 @@ function useMapEvents({
           setEvents([]);
         }
       } catch (error) {
-        if (controller.signal.aborted) return;
-        console.error("Failed to fetch events for map:", error);
-        if (isMounted) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Failed to fetch events for map:", error);
           setEvents([]);
         }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     }
 
     fetchEvents();
 
     return () => {
-      isMounted = false;
       controller.abort();
     };
   }, [eventTypeFilter, dateRangeFilter]);
