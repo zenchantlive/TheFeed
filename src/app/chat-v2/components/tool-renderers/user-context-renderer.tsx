@@ -33,7 +33,7 @@ export function UserContextRenderer() {
                   className="text-sm text-muted-foreground flex items-center gap-2"
                 >
                   <span>📍</span>
-                  <span>Saved location</span>
+                  <span>{loc.label || "Saved location"}</span>
                 </li>
               ))}
             </ul>
