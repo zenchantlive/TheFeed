@@ -26,6 +26,13 @@ You are expected to:
 - Maps: Mapbox GL JS (`react-map-gl`)
 - AI: Vercel AI SDK 5 + OpenRouter (`openai/gpt-4.1-mini` default)
 
+### AI Chat Status (January 2025)
+
+- `src/lib/ai-tools.ts` exports `sousChefTools` (7 tools) used by `/api/chat/route.ts`, `scripts/dev-terminal-chat.ts`, and `scripts/test-chat-tools.ts`.
+- `src/app/chat/page.tsx` was redesigned; it now streams via `useChat` with `{ userId, location, radiusMiles }` in the POST body.
+- `scripts/dev-terminal-chat.ts` provides a REPL for debugging; Anthropic models (e.g., `claude-sonnet-4.5`) make the correct tool calls. OpenRouter GPT models often stop after `get_user_context` despite the prompt “tool playbook.”
+- Known regression: the web UI intermittently renders blank assistant bubbles and logs `Maximum update depth exceeded`. The terminal harness works; the React stack seems to replace the same assistant message repeatedly when the provider drops the stream.
+
 ## Essential Commands
 
 ```bash
@@ -302,3 +309,9 @@ This file is your authoritative onboarding for how to think about and extend The
 - Hierarchy over hiding.
 - Strict typing.
 - Minimal surprises for users.
+
+### USER RULES (DO NOT DELETE)
+
+- Always run `pnpm install`/`pnpm add`/`pnpm dev` from **Windows PowerShell**, never from WSL, so that optional native dependencies (Next SWC, lightningcss, etc.) are installed for Windows only.
+- Pin icon-library versions in `package.json` instead of using wide `^` ranges; that avoids picking up broken builds automatically.
+- When upgrading `lucide-react`, test the dev server immediately and keep `.next` clean so regressions surface quickly.

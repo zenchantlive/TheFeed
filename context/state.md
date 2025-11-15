@@ -20,6 +20,21 @@ We have completed a major refactor and optimization of the Community page, trans
 
 This refactor builds on prior social + events infrastructure (PR #15, PR #16) and prepares for further discovery and calendar tooling.
 
+### AI Sous-Chef Status (January 2025)
+
+- `sousChefTools` replaces the inline functions in `/api/chat/route.ts`, and the same tool set powers the new `scripts/dev-terminal-chat.ts` REPL plus `scripts/test-chat-tools.ts`.
+- Chat UI (`src/app/chat/page.tsx`) was overhauled: always-on transcript, suggested prompts, location banner, tool-status chips, and request bodies now include `{ userId, location, radiusMiles }` via a memoized ref.
+- **Verified working**:
+  - Terminal harness + Anthropic models exercise `search_posts`/`search_events` and return realistic data (with Supabase warnings only).
+  - Deep-link intent loop is partially mitigated: we guard query params with `searchParamsKey` + `hasFiredIntentRef`.
+- **Still broken**:
+  - UI frequently renders blank assistant bubbles and eventually throws `Maximum update depth exceeded`; `useChat` keeps replaying the same assistant message when the provider never finishes streaming.
+  - OpenRouter GPT models often stop after `get_user_context` despite the “tool playbook” instructions.
+- **Next steps**:
+  - Instrument `useChat` with `onFinish`/`onError` to log stream lifecycles.
+  - Capture API responses to confirm whether the assistant chunk is empty or not emitted.
+  - Investigate whether `convertToModelMessages` is being called with duplicate messages (possible race between optimistic append and stream replacements).
+
 ### Completed: Community Page Refactor & Layout Optimization ✅
 
 **Component Architecture (November 2025):**

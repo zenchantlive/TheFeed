@@ -5,7 +5,7 @@ import { UtensilsCrossed } from "lucide-react";
 
 export function SiteHeader() {
   return (
-    <header className="border-b">
+    <header className="border-b" data-site-header>
       <div className="container mx-auto flex items-center justify-between px-4 py-4">
         <h1 className="text-2xl font-bold">
           <Link

@@ -47,6 +47,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
       role="navigation"
       aria-label="Primary"
+      data-bottom-nav
     >
       <div className="mx-auto flex max-w-lg items-center justify-between px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         {navItems.map((item) => {

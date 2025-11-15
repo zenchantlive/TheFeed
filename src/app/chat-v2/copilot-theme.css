@@ -1,0 +1,421 @@
+/**
+ * CopilotKit Theme - TheFeed Bulletin Board Style
+ * Warm, friendly, neighborly - NOT surgical or harsh
+ *
+ * Design principles from bulletin-theme.ts:
+ * - Soft, warm colors (amber, cream, soft grays)
+ * - Subtle shadows (2px 4px 8px)
+ * - Rounded corners (lg, xl)
+ * - Card-based, not stark bubbles
+ * - Dark mode = slate-800, not pure black
+ */
+
+/* ============================================
+   FULL CHAT CONTAINER
+   ============================================ */
+
+/* Chat window background - warm, not stark */
+[class*="copilotKitWindow"],
+[class*="CopilotChat"],
+.copilot-chat-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: hsl(var(--background)) !important;
+  border: none !important;
+}
+
+/* ============================================
+   MESSAGES AREA - Centered, Warm
+   ============================================ */
+
+/* Messages scrolling area */
+[class*="copilotKitMessages"],
+[class*="messagesContainer"],
+div[role="log"] {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 1.5rem !important;
+  background: transparent !important;
+}
+
+/* Center content like the community feed */
+[class*="copilotKitMessages"] > div,
+[class*="messagesContainer"] > div {
+  max-width: 680px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  [class*="copilotKitMessages"],
+  [class*="messagesContainer"] {
+    padding: 2rem !important;
+  }
+}
+
+/* ============================================
+   MESSAGE CARDS - Bulletin Board Style
+   ============================================ */
+
+/* Message wrapper */
+[class*="message"],
+[role="article"] {
+  margin-bottom: 1.25rem !important;
+  width: 100% !important;
+}
+
+/* Message card - styled like bulletin board cards */
+[class*="messageContent"],
+[class*="content"],
+[class*="message"] > div {
+  border-radius: 0.75rem !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.6 !important;
+  max-width: 85% !important;
+  word-wrap: break-word !important;
+
+  /* Bulletin board shadow - soft, not harsh */
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid !important;
+  transition: all 200ms ease !important;
+}
+
+/* Dark mode shadows */
+.dark [class*="messageContent"],
+.dark [class*="content"] {
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* USER MESSAGES - Warm cream/amber like sticky notes */
+[data-role="user"] [class*="messageContent"],
+[data-role="user"] [class*="content"],
+[class*="user"] {
+  /* Light: warm cream like sticky note */
+  background: hsl(45 80% 96% / 0.95) !important;
+  border-color: hsl(45 60% 85% / 0.4) !important;
+  color: hsl(var(--foreground)) !important;
+
+  /* Align right */
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+.dark [data-role="user"] [class*="messageContent"],
+.dark [data-role="user"] [class*="content"] {
+  /* Dark: soft slate, not pure black */
+  background: hsl(215 25% 20% / 0.95) !important;
+  border-color: hsl(215 20% 30% / 0.4) !important;
+}
+
+/* ASSISTANT MESSAGES - Soft white/cream like cards */
+[data-role="assistant"] [class*="messageContent"],
+[data-role="assistant"] [class*="content"],
+[class*="assistant"] {
+  /* Light: soft white with warmth */
+  background: hsl(0 0% 100% / 0.95) !important;
+  border-color: hsl(220 20% 90% / 0.5) !important;
+  color: hsl(var(--foreground)) !important;
+
+  /* Align left */
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+.dark [data-role="assistant"] [class*="messageContent"],
+.dark [data-role="assistant"] [class*="content"] {
+  /* Dark: warm slate card */
+  background: hsl(215 25% 18% / 0.95) !important;
+  border-color: hsl(215 20% 28% / 0.5) !important;
+}
+
+/* Hover effect - subtle lift like bulletin cards */
+[class*="messageContent"]:hover,
+[class*="content"]:hover {
+  box-shadow: 3px 6px 12px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+.dark [class*="messageContent"]:hover,
+.dark [class*="content"]:hover {
+  box-shadow: 3px 6px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (min-width: 768px) {
+  [class*="messageContent"],
+  [class*="content"] {
+    padding: 1.25rem 1.5rem !important;
+    max-width: 75% !important;
+  }
+}
+
+/* ============================================
+   INPUT AREA - Warm, Friendly
+   ============================================ */
+
+/* Input container - soft background, not harsh */
+[class*="copilotKitInput"],
+[class*="inputContainer"],
+form[class*="chat"] {
+  position: sticky !important;
+  bottom: 0 !important;
+
+  /* Light: soft cream background */
+  background: hsl(45 30% 98%) !important;
+  border-top: 1px solid hsl(45 20% 88%) !important;
+
+  padding: 1rem !important;
+  backdrop-filter: blur(8px) !important;
+  z-index: 10 !important;
+}
+
+.dark [class*="copilotKitInput"],
+.dark [class*="inputContainer"],
+.dark form[class*="chat"] {
+  /* Dark: warm slate, not pure black */
+  background: hsl(215 25% 16%) !important;
+  border-top: 1px solid hsl(215 20% 26%) !important;
+}
+
+/* Input wrapper - centered */
+[class*="inputWrapper"],
+[class*="copilotKitInput"] > div:first-child,
+[class*="inputContainer"] > div {
+  max-width: 680px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  gap: 0.75rem !important;
+  align-items: flex-end !important;
+  width: 100% !important;
+}
+
+/* Textarea - card style, not harsh box */
+[class*="copilotKitInput"] textarea,
+[class*="copilotKitInput"] input[type="text"],
+textarea,
+input[type="text"] {
+  flex: 1 !important;
+
+  /* Light: white card */
+  background: white !important;
+  border: 1px solid hsl(220 20% 88%) !important;
+
+  border-radius: 1rem !important;
+  padding: 0.875rem 1.125rem !important;
+  font-size: 0.9375rem !important;
+  color: hsl(var(--foreground)) !important;
+  resize: none !important;
+  min-height: 48px !important;
+  max-height: 120px !important;
+  transition: all 150ms ease !important;
+  font-family: inherit !important;
+  line-height: 1.5 !important;
+
+  /* Soft shadow like cards */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+
+.dark [class*="copilotKitInput"] textarea,
+.dark [class*="copilotKitInput"] input[type="text"],
+.dark textarea,
+.dark input[type="text"] {
+  /* Dark: slate card */
+  background: hsl(215 25% 20%) !important;
+  border-color: hsl(215 20% 30%) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Focus - warm ring, not harsh blue */
+[class*="copilotKitInput"] textarea:focus,
+[class*="copilotKitInput"] input:focus,
+textarea:focus,
+input:focus {
+  outline: none !important;
+
+  /* Warm amber ring */
+  border-color: hsl(45 70% 60%) !important;
+  box-shadow: 0 0 0 3px hsl(45 70% 60% / 0.1),
+              0 2px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark [class*="copilotKitInput"] textarea:focus,
+.dark [class*="copilotKitInput"] input:focus,
+.dark textarea:focus,
+.dark input:focus {
+  border-color: hsl(45 60% 55%) !important;
+  box-shadow: 0 0 0 3px hsl(45 60% 55% / 0.15),
+              0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Placeholder - soft, not harsh gray */
+::placeholder {
+  color: hsl(220 10% 55%) !important;
+  opacity: 1 !important;
+}
+
+.dark ::placeholder {
+  color: hsl(215 15% 60%) !important;
+}
+
+@media (min-width: 768px) {
+  [class*="copilotKitInput"],
+  [class*="inputContainer"] {
+    padding: 1.5rem 2rem !important;
+  }
+}
+
+/* ============================================
+   SEND BUTTON - Warm Primary Color
+   ============================================ */
+
+/* All send buttons */
+[class*="copilotKitInput"] button,
+[class*="inputContainer"] button,
+button[type="submit"],
+button[aria-label*="Send"],
+button[class*="send"] {
+  /* Use app's primary color */
+  background: hsl(var(--primary)) !important;
+  color: white !important;
+
+  border: none !important;
+  border-radius: 50% !important;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  min-height: 48px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 150ms ease !important;
+  flex-shrink: 0 !important;
+
+  /* Soft shadow */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Button icons and text - ALWAYS WHITE */
+[class*="copilotKitInput"] button *,
+[class*="inputContainer"] button *,
+button[type="submit"] *,
+button[aria-label*="Send"] *,
+button[class*="send"] * {
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+/* SVG sizing */
+[class*="copilotKitInput"] button svg,
+button[type="submit"] svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Hover - subtle lift */
+[class*="copilotKitInput"] button:hover,
+button[type="submit"]:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+}
+
+.dark [class*="copilotKitInput"] button,
+.dark button[type="submit"] {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark [class*="copilotKitInput"] button:hover,
+.dark button[type="submit"]:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Active */
+[class*="copilotKitInput"] button:active,
+button[type="submit"]:active {
+  transform: scale(0.96) !important;
+}
+
+/* Disabled */
+[class*="copilotKitInput"] button:disabled,
+button[type="submit"]:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* ============================================
+   SCROLLBAR - Subtle
+   ============================================ */
+
+[class*="copilotKitMessages"]::-webkit-scrollbar,
+div[role="log"]::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+[class*="copilotKitMessages"]::-webkit-scrollbar-track,
+div[role="log"]::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+[class*="copilotKitMessages"]::-webkit-scrollbar-thumb,
+div[role="log"]::-webkit-scrollbar-thumb {
+  background: hsl(220 15% 85%) !important;
+  border-radius: 4px !important;
+}
+
+.dark [class*="copilotKitMessages"]::-webkit-scrollbar-thumb,
+.dark div[role="log"]::-webkit-scrollbar-thumb {
+  background: hsl(215 20% 35%) !important;
+}
+
+[class*="copilotKitMessages"]::-webkit-scrollbar-thumb:hover,
+div[role="log"]::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 15% 75%) !important;
+}
+
+.dark [class*="copilotKitMessages"]::-webkit-scrollbar-thumb:hover,
+.dark div[role="log"]::-webkit-scrollbar-thumb:hover {
+  background: hsl(215 20% 45%) !important;
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Focus visible - warm amber ring */
+*:focus-visible {
+  outline: 2px solid hsl(45 70% 55%) !important;
+  outline-offset: 2px !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+
+@media (max-width: 640px) {
+  [class*="copilotKitMessages"],
+  [class*="messagesContainer"] {
+    padding: 1rem !important;
+  }
+
+  [class*="copilotKitInput"],
+  [class*="inputContainer"] {
+    padding: 0.875rem !important;
+  }
+
+  [class*="messageContent"],
+  [class*="content"] {
+    max-width: 92% !important;
+    padding: 0.875rem 1rem !important;
+  }
+}
