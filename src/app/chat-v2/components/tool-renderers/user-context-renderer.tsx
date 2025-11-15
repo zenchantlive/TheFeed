@@ -1,12 +1,13 @@
 "use client";
 
 import { useCopilotAction } from "@copilotkit/react-core";
+import type { CopilotRenderProps, UserContextResult } from "./types";
 
 export function UserContextRenderer() {
   useCopilotAction({
     name: "get_user_context",
     available: "disabled",
-    render: ({ status, args, result }) => {
+    render: ({ status, result }: CopilotRenderProps<UserContextResult>) => {
       if (status === "inProgress" || status === "executing") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -26,13 +27,13 @@ export function UserContextRenderer() {
               Your saved locations:
             </p>
             <ul className="space-y-1">
-              {result.savedLocations.map((loc: any) => (
+              {result.savedLocations.map((loc) => (
                 <li
                   key={loc.id}
                   className="text-sm text-muted-foreground flex items-center gap-2"
                 >
                   <span>📍</span>
-                  <span>{loc.label || "Saved location"}</span>
+                  <span>Saved location</span>
                 </li>
               ))}
             </ul>
@@ -40,7 +41,7 @@ export function UserContextRenderer() {
         );
       }
 
-      return null;
+      return <></>;
     },
   });
 

@@ -2,10 +2,11 @@
 
 import { useCopilotAction } from "@copilotkit/react-core";
 import { EventCard } from "../event-card";
+import type { CopilotRenderProps, SearchEventResult } from "./types";
 
-interface SearchEventsRendererProps {
+type SearchEventsRendererProps = {
   userLocation: { lat: number; lng: number } | null;
-}
+};
 
 export function SearchEventsRenderer({
   userLocation,
@@ -13,7 +14,7 @@ export function SearchEventsRenderer({
   useCopilotAction({
     name: "search_events",
     available: "disabled",
-    render: ({ status, args, result }) => {
+    render: ({ status, result }: CopilotRenderProps<SearchEventResult[]>) => {
       if (status === "inProgress") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -36,7 +37,7 @@ export function SearchEventsRenderer({
             <p className="text-sm font-medium text-foreground mb-3">
               Found {result.length} event{result.length !== 1 ? "s" : ""}:
             </p>
-            {result.map((event: any) => (
+            {result.map((event) => (
               <EventCard
                 key={event.id}
                 event={event}
@@ -47,7 +48,7 @@ export function SearchEventsRenderer({
         );
       }
 
-      return null;
+      return <></>;
     },
   });
 

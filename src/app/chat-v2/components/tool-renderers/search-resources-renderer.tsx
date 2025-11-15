@@ -2,10 +2,11 @@
 
 import { useCopilotAction } from "@copilotkit/react-core";
 import { ResourceCard } from "../resource-card";
+import type { CopilotRenderProps, SearchResourceResult } from "./types";
 
-interface SearchResourcesRendererProps {
+type SearchResourcesRendererProps = {
   userLocation: { lat: number; lng: number } | null;
-}
+};
 
 export function SearchResourcesRenderer({
   userLocation,
@@ -13,7 +14,7 @@ export function SearchResourcesRenderer({
   useCopilotAction({
     name: "search_resources",
     available: "disabled", // Only for rendering, tool is defined in backend
-    render: ({ status, args, result }) => {
+    render: ({ status, result }: CopilotRenderProps<SearchResourceResult[]>) => {
       if (status === "inProgress") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -37,7 +38,7 @@ export function SearchResourcesRenderer({
               Found {result.length} resource{result.length !== 1 ? "s" : ""}{" "}
               near you:
             </p>
-            {result.map((resource: any) => (
+            {result.map((resource) => (
               <ResourceCard
                 key={resource.id}
                 resource={resource}
@@ -48,7 +49,7 @@ export function SearchResourcesRenderer({
         );
       }
 
-      return null;
+      return <></>;
     },
   });
 

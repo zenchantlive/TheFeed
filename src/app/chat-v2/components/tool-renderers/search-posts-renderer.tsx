@@ -2,12 +2,13 @@
 
 import { useCopilotAction } from "@copilotkit/react-core";
 import { PostPreview } from "../post-preview";
+import type { CopilotRenderProps, SearchPostResult } from "./types";
 
 export function SearchPostsRenderer() {
   useCopilotAction({
     name: "search_posts",
     available: "disabled",
-    render: ({ status, args, result }) => {
+    render: ({ status, result }: CopilotRenderProps<SearchPostResult[]>) => {
       if (status === "inProgress") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -30,14 +31,14 @@ export function SearchPostsRenderer() {
             <p className="text-sm font-medium text-foreground mb-3">
               Found {result.length} post{result.length !== 1 ? "s" : ""}:
             </p>
-            {result.map((post: any) => (
+            {result.map((post) => (
               <PostPreview key={post.id} post={post} />
             ))}
           </div>
         );
       }
 
-      return null;
+      return <></>;
     },
   });
 

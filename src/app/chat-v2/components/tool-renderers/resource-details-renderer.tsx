@@ -2,10 +2,15 @@
 
 import { useCopilotAction } from "@copilotkit/react-core";
 import { ResourceCard } from "../resource-card";
+import type {
+  CopilotRenderProps,
+  ResourceDetailsResponse,
+  ResourceDetailsResult,
+} from "./types";
 
-interface ResourceDetailsRendererProps {
+type ResourceDetailsRendererProps = {
   userLocation: { lat: number; lng: number } | null;
-}
+};
 
 export function ResourceDetailsRenderer({
   userLocation,
@@ -13,7 +18,10 @@ export function ResourceDetailsRenderer({
   useCopilotAction({
     name: "get_resource_by_id",
     available: "disabled",
-    render: ({ status, args, result }) => {
+    render: ({
+      status,
+      result,
+    }: CopilotRenderProps<ResourceDetailsResponse>) => {
       if (status === "inProgress" || status === "executing") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -22,11 +30,19 @@ export function ResourceDetailsRenderer({
         );
       }
 
-      if (status === "complete" && result && !result.error) {
-        return <ResourceCard resource={result} userLocation={userLocation} />;
+      if (status === "complete" && result && !("error" in result)) {
+        const resource: ResourceDetailsResult & {
+          distanceMiles: number | null;
+          isOpen: boolean;
+        } = {
+          ...result,
+          distanceMiles: null,
+          isOpen: false,
+        };
+        return <ResourceCard resource={resource} userLocation={userLocation} />;
       }
 
-      return null;
+      return <></>;
     },
   });
 

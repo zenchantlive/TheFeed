@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { sousChefTools } from "@/lib/ai-tools";
 import { buildSousChefSystemPrompt, locationSchema } from "@/lib/prompts/chat-system";
+import { validateSession } from "@/lib/auth-middleware";
 
 const DEFAULT_RADIUS_MILES = 10;
 
@@ -101,8 +102,17 @@ export async function POST(req: Request) {
   }
 
   const payload: ChatRequest = parsed.data;
-  const session = await auth.api.getSession({ headers: req.headers });
-  const effectiveUserId = payload.userId ?? session?.user?.id ?? null;
+
+  // Validate session server-side instead of trusting client headers
+  const sessionData = await validateSession(req);
+  if (!sessionData) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
+  }
+
+  const effectiveUserId = sessionData.userId;
   const effectiveRadius = payload.radiusMiles ?? DEFAULT_RADIUS_MILES;
 
   const normalizedMessages: UIMessage[] = payload.messages.map((message) => ({
