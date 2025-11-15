@@ -38,10 +38,10 @@ export async function validateSession(
  * Middleware wrapper for API routes that require authentication.
  * Returns 401 if user is not authenticated.
  */
-export async function withAuth(
-  req: NextRequest,
+export async function withAuth<T extends NextRequest | Request>(
+  req: T,
   handler: (
-    req: NextRequest,
+    req: T,
     context: ValidatedSession
   ) => Promise<Response>
 ): Promise<Response> {
