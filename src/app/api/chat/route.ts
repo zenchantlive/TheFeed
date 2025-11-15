@@ -1,158 +1,139 @@
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
-import type { Tool } from "ai";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { searchFoodBanks, getFoodBankById } from "@/lib/food-bank-queries";
-import { formatHoursForDisplay, isCurrentlyOpen } from "@/lib/geolocation";
-import type { HoursType } from "@/lib/schema";
+import { auth } from "@/lib/auth";
+import { sousChefTools } from "@/lib/ai-tools";
+import { buildSousChefSystemPrompt, locationSchema } from "@/lib/prompts/chat-system";
+import { validateSession } from "@/lib/auth-middleware";
 
-const systemPrompt = `You are the AI sous-chef for TheFeed, a neighborhood potluck app connecting people with food banks, community leftovers, and volunteer opportunities.
+const DEFAULT_RADIUS_MILES = 10;
 
-Your role:
-- Help users find nearby food banks
-- Answer questions about hours, services, and directions
-- Be empathetic, encouraging, playful, and respectful
-- Keep responses concise (2-3 sentences unless more detail is requested)
-- Suggest when it makes sense to hop to the community feed, food map, or profile pantry to keep the experience connected
+const messagePartSchema = z
+  .object({
+    type: z.string(),
+  })
+  .catchall(z.unknown());
 
-Available functions:
-- search_food_banks: Find food banks by location and filters
-- get_directions: Provide a directions link for a food bank
-- check_hours: Check if a food bank is currently open
-
-Guidelines:
-- Prioritize locations that are open now when possible
-- If the user says "I'm hungry", immediately look for nearby open locations
-- Never assume details about the user's situation; always respond with dignity
-- Offer next steps or resources after giving an answer
-- If the best next step lives in another tab, mention it (e.g., "Check the Potluck tab" or "Open the Food Map")`;
-
-const searchFoodBanksSchema = z.object({
-  latitude: z.number(),
-  longitude: z.number(),
-  maxDistance: z.number().default(10),
-  openNow: z.boolean().optional(),
-  services: z.array(z.string()).optional(),
-  limit: z.number().optional(),
-});
-
-type SearchFoodBanksInput = z.infer<typeof searchFoodBanksSchema>;
-
-const directionsSchema = z.object({
-  foodBankId: z.string(),
-});
-
-type DirectionsInput = z.infer<typeof directionsSchema>;
-
-const checkHoursSchema = z.object({
-  foodBankId: z.string(),
-  day: z
-    .string()
-    .optional()
-    .describe("English weekday name, defaults to today in the user's locale"),
-});
-
-type CheckHoursInput = z.infer<typeof checkHoursSchema>;
-
-const tools: Record<string, Tool> = {
-  search_food_banks: {
-    description: "Search for food banks near a location",
-    inputSchema: searchFoodBanksSchema,
-    execute: async (input: SearchFoodBanksInput) => {
-      const { latitude, longitude, maxDistance, openNow, services, limit } =
-        input;
-
-      const results = await searchFoodBanks({
-        userLocation: { lat: latitude, lng: longitude },
-        maxDistance,
-        openNow,
-        services,
-        limit,
-      });
-
-      return results.map((bank) => ({
-        id: bank.id,
-        name: bank.name,
-        address: `${bank.address}, ${bank.city}, ${bank.state} ${bank.zipCode}`,
-        latitude: bank.latitude,
-        longitude: bank.longitude,
-        distance: Number.isFinite(bank.distance)
-          ? Number(bank.distance.toFixed(2))
-          : null,
-        isOpen: bank.isOpen,
-        phone: bank.phone,
-        website: bank.website,
-        services: bank.services,
-        hours: bank.hours,
-      }));
-    },
-  },
-  get_directions: {
-    description: "Provide a directions link for a food bank",
-    inputSchema: directionsSchema,
-    execute: async ({ foodBankId }: DirectionsInput) => {
-      const bank = await getFoodBankById(foodBankId);
-      if (!bank) {
-        return { error: "Food bank not found." };
-      }
-
-      const destination = encodeURIComponent(
-        `${bank.name}, ${bank.address}, ${bank.city}, ${bank.state} ${bank.zipCode}`
-      );
-
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-
-      return {
-        id: bank.id,
-        name: bank.name,
-        address: `${bank.address}, ${bank.city}, ${bank.state} ${bank.zipCode}`,
-        mapsUrl,
-        phone: bank.phone,
-        website: bank.website,
-        latitude: bank.latitude,
-        longitude: bank.longitude,
-      };
-    },
-  },
-  check_hours: {
-    description: "Check whether a food bank is open on a given day",
-    inputSchema: checkHoursSchema,
-    execute: async ({ foodBankId, day }: CheckHoursInput) => {
-      const bank = await getFoodBankById(foodBankId);
-      if (!bank) {
-        return { error: "Food bank not found." };
-      }
-
-      const hours = bank.hours as HoursType | null | undefined;
-      const targetDay =
-        day ??
-        new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-        });
-      const dayHours = hours ? hours[targetDay] : undefined;
-
-      return {
-        id: bank.id,
-        name: bank.name,
-        day: targetDay,
-        isOpenNow: hours ? isCurrentlyOpen(hours) : false,
-        open: dayHours?.open ?? null,
-        close: dayHours?.close ?? null,
-        closed: dayHours?.closed ?? false,
-        displayHours: formatHoursForDisplay(dayHours),
-      };
-    },
-  },
+type RawMessageForNormalization = {
+  parts?: z.infer<typeof messagePartSchema>[] | undefined;
+  content?: string | z.infer<typeof messagePartSchema>[] | undefined;
+  text?: string | undefined;
 };
 
+function normalizeMessageParts(
+  value: RawMessageForNormalization
+): z.infer<typeof messagePartSchema>[] {
+  if (Array.isArray(value.parts)) {
+    return value.parts;
+  }
+
+  if (Array.isArray(value.content)) {
+    return value.content;
+  }
+
+  const fallbackText =
+    typeof value.content === "string"
+      ? value.content
+      : typeof value.text === "string"
+      ? value.text
+      : undefined;
+
+  if (typeof fallbackText === "string") {
+    const trimmed = fallbackText.trim();
+    if (trimmed.length > 0) {
+      return [{ type: "text", text: trimmed }];
+    }
+  }
+
+  return [];
+}
+
+const messageSchema = z
+  .object({
+    id: z.string(),
+    role: z.enum(["system", "user", "assistant"]),
+    metadata: z.unknown().optional(),
+    parts: z.array(messagePartSchema).optional(),
+    content: z
+      .union([z.string(), z.array(messagePartSchema)])
+      .optional(),
+    text: z.string().optional(),
+  })
+  .transform((value) => ({
+    ...value,
+    parts: normalizeMessageParts(value),
+  }));
+
+const chatRequestSchema = z.object({
+  messages: z.array(messageSchema),
+  location: locationSchema(z).optional(),
+  radiusMiles: z.number().min(0.1).max(100).optional(),
+  userId: z.string().optional(),
+});
+
+type ChatRequest = z.infer<typeof chatRequestSchema>;
+
+/**
+ * Next.js POST handler for /api/chat. Streams model output using the shared sousChefTools set.
+ */
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  let body: unknown;
+
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body. Expecting application/json." },
+      { status: 400 }
+    );
+  }
+
+  const parsed = chatRequestSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Invalid request body.",
+        details: parsed.error.format(),
+      },
+      { status: 400 }
+    );
+  }
+
+  const payload: ChatRequest = parsed.data;
+
+  // Validate session server-side instead of trusting client headers
+  const sessionData = await validateSession(req);
+  if (!sessionData) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
+  }
+
+  const effectiveUserId = sessionData.userId;
+  const effectiveRadius = payload.radiusMiles ?? DEFAULT_RADIUS_MILES;
+
+  const normalizedMessages: UIMessage[] = payload.messages.map((message) => ({
+    id: message.id,
+    role: message.role,
+    metadata: message.metadata,
+    parts: message.parts as UIMessage["parts"],
+  }));
+
+  const systemPrompt = buildSousChefSystemPrompt({
+    location: payload.location,
+    radiusMiles: effectiveRadius,
+    userId: effectiveUserId,
+  });
 
   const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini"),
+    model: openrouter(process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-4.5"),
     system: systemPrompt,
-    messages: convertToModelMessages(messages),
-    tools,
+    messages: convertToModelMessages(normalizedMessages),
+    tools: sousChefTools,
+    toolChoice: "auto",
   });
 
   return (

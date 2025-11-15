@@ -20,7 +20,15 @@
       "Bash(pnpm list:*)",
       "Bash(pnpm install:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(pnpm-lock.yaml.restored)",
+      "Bash(mv:*)",
+      "mcp__copilotkit-mcp__search-docs",
+      "WebFetch(domain:docs.copilotkit.ai)",
+      "mcp__copilotkit-mcp__search-code",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm exec mcp__copilotkit-mcp__search-docs:*)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "additionalDirectories": [
       "C:\\c\\Projects\\nextjs-better-auth-postgresql-starter-kit"

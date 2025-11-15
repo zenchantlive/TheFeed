@@ -18,14 +18,18 @@ import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { parseMonthParam } from "./utils";
+import type { Event } from "@/lib/schema";
 
 type EventTypeFilter = "all" | "potluck" | "volunteer";
 
+type CalendarEvent = Event;
+
 type PageProps = {
-  searchParams: {
+  searchParams: Promise<{
     month?: string;
     type?: EventTypeFilter;
-  };
+  }>;
 };
 
 export default async function CalendarPage({ searchParams }: PageProps) {
@@ -34,7 +38,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
     redirect("/");
   }
 
-  const params = searchParams;
+  const params = await searchParams;
   const focusedMonth = parseMonthParam(params.month);
   const eventTypeFilter: EventTypeFilter =
     params.type === "potluck" || params.type === "volunteer"

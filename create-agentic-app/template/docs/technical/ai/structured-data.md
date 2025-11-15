@@ -29,7 +29,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 const { object } = await generateObject({
-  model: "openai/gpt-4.1",
+  model: "anthropic/claude-sonnet-4.5",
   schema: z.object({
     recipe: z.object({
       name: z.string(),
@@ -124,7 +124,7 @@ import { streamObject } from "ai";
 import { z } from "zod";
 
 const { elementStream } = streamObject({
-  model: openai("gpt-4.1"),
+  model: ANTHROPIC ("claude-sonnet-4.5")
   output: "array",
   schema: z.object({
     name: z.string(),
@@ -153,7 +153,7 @@ and provide a list of possible values in the `enum` parameter.
 import { generateObject } from "ai";
 
 const { object } = await generateObject({
-  model: "openai/gpt-4.1",
+  model: "anthropic/claude-sonnet-4.5",
   output: "enum",
   enum: ["action", "comedy", "drama", "horror", "sci-fi"],
   prompt:
@@ -190,7 +190,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 const { object } = await generateObject({
-  model: "openai/gpt-4.1",
+  model: "anthropic/claude-sonnet-4.5"
   schemaName: "Recipe",
   schemaDescription: "A recipe for a dish.",
   schema: z.object({

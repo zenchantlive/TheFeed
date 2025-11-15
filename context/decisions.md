@@ -88,6 +88,10 @@ Last updated: 2025-11-07
 - **2025-01-11** — **GitHub Project (TheFeed Roadmap) for Kanban tracking**
   - Rationale: Centralize issues with Backlog/Up Next status for quick onboarding.
 
+- **2025-01-12** — **Terminal + CLI harness for sous-chef debugging**
+  - Rationale: UI streaming is flaky; a REPL (`scripts/dev-terminal-chat.ts`) and smoke test (`scripts/test-chat-tools.ts`) let us exercise tools directly and inspect tool-call payloads.
+  - Outcome: Anthropic models behave well; OpenRouter GPT models still bail after `get_user_context`. Blank messages persist in the React UI despite these diagnostics.
+
 - **2025-11-07** — **6-phase incremental rollout (not big-bang launch)**
   - Rationale: Test each feature independently; gather feedback early; avoid technical debt from hasty implementation.
   - Phases: Infrastructure → UI → Engagement → Social → Location → Real-time.
