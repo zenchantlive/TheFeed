@@ -145,11 +145,3 @@
     @apply bg-background text-foreground;
   }
 }
-:root {
-  /* SiteHeader: py-4 (32px) + content + border (1px). Let's call it 73px. */
-  --header-height: 73px;
-  
-  /* BottomNav: py-3 (24px) + icon (20px) + text + safe-area. 
-     Let's use a reliable 70px as the base. */
-  --bottom-nav-height: 70px;
-}

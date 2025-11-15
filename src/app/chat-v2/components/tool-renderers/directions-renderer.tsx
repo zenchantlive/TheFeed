@@ -1,12 +1,13 @@
 "use client";
 
 import { useCopilotAction } from "@copilotkit/react-core";
+import type { CopilotRenderProps, DirectionsResult } from "./types";
 
 export function DirectionsRenderer() {
   useCopilotAction({
     name: "get_directions",
     available: "disabled",
-    render: ({ status, args, result }) => {
+    render: ({ status, result }: CopilotRenderProps<DirectionsResult>) => {
       if (status === "inProgress" || status === "executing") {
         return (
           <div className="text-sm text-muted-foreground">
@@ -40,7 +41,7 @@ export function DirectionsRenderer() {
         );
       }
 
-      return null;
+      return <></>;
     },
   });
 
