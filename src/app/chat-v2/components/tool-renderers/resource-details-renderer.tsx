@@ -5,7 +5,7 @@ import { ResourceCard } from "../resource-card";
 import type {
   CopilotRenderProps,
   ResourceDetailsResponse,
-  ResourceDetailsResult,
+  SearchResourceResult,
 } from "./types";
 
 type ResourceDetailsRendererProps = {
@@ -31,10 +31,7 @@ export function ResourceDetailsRenderer({
       }
 
       if (status === "complete" && result && !("error" in result)) {
-        const resource: ResourceDetailsResult & {
-          distanceMiles: number | null;
-          isOpen: boolean;
-        } = {
+        const resource: SearchResourceResult = {
           ...result,
           distanceMiles: null,
           isOpen: false,

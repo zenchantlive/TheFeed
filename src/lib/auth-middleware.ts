@@ -15,23 +15,17 @@ type ValidatedSession = {
 export async function validateSession(
   req: NextRequest | Request
 ): Promise<ValidatedSession | null> {
-  try {
-    // Get session from request headers using Better Auth
-    const session = await auth.api.getSession({ headers: req.headers });
+  const session = await auth.api.getSession({ headers: req.headers });
 
-    if (!session?.user?.id) {
-      return null;
-    }
-
-    const validSession = session as NonNullable<AuthSession>;
-    return {
-      userId: validSession.user.id,
-      session: validSession,
-    };
-  } catch (error) {
-    console.error("Session validation error:", error);
+  if (!session?.user?.id) {
     return null;
   }
+
+  const validSession = session as NonNullable<AuthSession>;
+  return {
+    userId: validSession.user.id,
+    session: validSession,
+  };
 }
 
 /**
