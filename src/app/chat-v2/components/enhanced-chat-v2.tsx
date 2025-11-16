@@ -253,8 +253,8 @@ export function EnhancedChatV2({
 
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6",
-          hasChatHistory ? "space-y-4" : "flex items-center justify-center"
+          "flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6",
+          hasChatHistory ? "space-y-3 sm:space-y-4" : "flex items-center justify-center"
         )}
       >
         {hasChatHistory ? (
@@ -344,22 +344,22 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     : "Share your location for hyper-local help";
 
   return (
-    <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
+    <div className="shrink-0 border-b border-white/10 px-3 pb-3 pt-3 sm:px-6 sm:pb-4 sm:pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.6rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
             Neighborhood resource network
           </p>
-          <h1 className="mt-1.5 text-xl font-semibold text-foreground dark:text-white">
+          <h1 className="mt-1 sm:mt-1.5 text-lg sm:text-xl font-semibold text-foreground dark:text-white truncate">
             Sous-chef AI
           </h1>
-          <p className="text-xs text-muted-foreground dark:text-white/70">{subtitle}</p>
+          <p className="text-[0.7rem] sm:text-xs text-muted-foreground dark:text-white/70 truncate">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.65rem] font-semibold text-emerald-700 dark:bg-emerald-400/25 dark:text-emerald-50">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <span className="rounded-full bg-emerald-400/15 px-2 sm:px-2.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-semibold text-emerald-700 dark:bg-emerald-400/25 dark:text-emerald-50">
             Online
           </span>
-          <Avatar className="h-9 w-9 border border-border/60 bg-background/40 dark:border-white/15">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border/60 bg-background/40 dark:border-white/15">
             <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "You"} />
             <AvatarFallback>{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
           </Avatar>

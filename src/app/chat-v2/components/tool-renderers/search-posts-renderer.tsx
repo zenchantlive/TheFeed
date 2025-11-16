@@ -27,13 +27,15 @@ export function SearchPostsRenderer() {
 
       if (status === "complete" && result && Array.isArray(result)) {
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground mb-3">
+          <div className="space-y-2 w-full max-w-full">
+            <p className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">
               Found {result.length} post{result.length !== 1 ? "s" : ""}:
             </p>
-            {result.map((post) => (
-              <PostPreview key={post.id} post={post} />
-            ))}
+            <div className="grid grid-cols-1 gap-2 sm:gap-3">
+              {result.map((post) => (
+                <PostPreview key={post.id} post={post} />
+              ))}
+            </div>
           </div>
         );
       }

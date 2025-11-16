@@ -33,18 +33,20 @@ export function SearchResourcesRenderer({
 
       if (status === "complete" && result && Array.isArray(result)) {
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground mb-3">
+          <div className="space-y-2 w-full max-w-full">
+            <p className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">
               Found {result.length} resource{result.length !== 1 ? "s" : ""}{" "}
               near you:
             </p>
-            {result.map((resource) => (
-              <ResourceCard
-                key={resource.id}
-                resource={resource}
-                userLocation={userLocation}
-              />
-            ))}
+            <div className="grid grid-cols-1 gap-2 sm:gap-3">
+              {result.map((resource) => (
+                <ResourceCard
+                  key={resource.id}
+                  resource={resource}
+                  userLocation={userLocation}
+                />
+              ))}
+            </div>
           </div>
         );
       }

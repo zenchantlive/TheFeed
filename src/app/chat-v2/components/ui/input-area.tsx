@@ -155,12 +155,12 @@ export function InputField({
         disabled={disabled}
         maxLength={maxLength}
         className={cn(
-          "w-full resize-none rounded-2xl focus:ring-2 focus:ring-primary/20",
-          "px-5 py-3 text-sm leading-relaxed",
+          "w-full resize-none rounded-xl sm:rounded-2xl focus:ring-2 focus:ring-primary/20",
+          "px-3 py-2.5 sm:px-5 sm:py-3 text-sm leading-relaxed",
           "transition-all duration-300 ease-in-out",
           "focus:outline-none focus:shadow-lg focus:shadow-primary/10",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "pr-16",
+          "pr-14 sm:pr-16",
           showCharCount && "pb-8",
           appearanceClasses[appearance],
           appearance === "glass" && "rounded-full backdrop-blur",
@@ -168,8 +168,8 @@ export function InputField({
           className
         )}
         style={{
-          minHeight: appearance === "glass" ? "56px" : "48px",
-          maxHeight: "140px",
+          minHeight: appearance === "glass" ? "48px" : "44px",
+          maxHeight: "120px",
           lineHeight: "1.5",
         }}
         {...props}
@@ -307,7 +307,7 @@ export function InputArea({
 
   return (
     <div className={cn(containerClasses, className)} {...props}>
-      <div className="mx-auto flex w-full max-w-2xl items-end gap-2">
+      <div className="mx-auto flex w-full max-w-full sm:max-w-2xl items-end gap-1.5 sm:gap-2">
         {onVoiceInput && (
           <Button
             type="button"
@@ -316,7 +316,7 @@ export function InputArea({
             onClick={handleVoiceInput}
             disabled={disabled}
             className={cn(
-              "flex-shrink-0 h-10 w-10",
+              "flex-shrink-0 h-11 w-11 sm:h-10 sm:w-10 touch-manipulation",
               variant === "floating" &&
                 "rounded-full border-white/30 bg-white/10 text-white hover:bg-white/15",
               variant !== "floating" && "rounded-full",
@@ -338,7 +338,7 @@ export function InputArea({
           disabled={disabled}
           placeholder={placeholder}
           appearance={variant === "floating" ? "glass" : "surface"}
-          className="flex-1"
+          className="flex-1 min-w-0"
         />
       </div>
     </div>

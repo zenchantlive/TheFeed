@@ -87,7 +87,7 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-[85%] mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        "flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[65%] mb-3 sm:mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
         currentRole.container,
         className
       )}
@@ -97,7 +97,7 @@ export function MessageBubble({
       {/* Avatar */}
       {role === "assistant" && (
         <Avatar className={cn(
-          "w-8 h-8 flex-shrink-0",
+          "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0",
           currentRole.avatar
         )}>
           <AvatarImage src={avatar} alt="Assistant" />
@@ -117,7 +117,7 @@ export function MessageBubble({
       )}>
         <div className="relative">
           <div className={cn(
-            "rounded-2xl px-4 py-3",
+            "rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-3",
             "shadow-sm border",
             "transition-all duration-200 ease-in-out",
             "backdrop-blur-sm",
@@ -165,7 +165,7 @@ export function MessageBubble({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 hover:bg-muted"
+                      className="h-8 w-8 sm:h-7 sm:w-7 hover:bg-muted touch-manipulation"
                       onClick={handleCopy}
                     >
                       {copied ? (
@@ -198,7 +198,7 @@ export function MessageBubble({
       {/* User avatar (if needed) */}
       {role === "user" && (
         <Avatar className={cn(
-          "w-8 h-8 flex-shrink-0",
+          "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0",
           currentRole.avatar
         )}>
           <AvatarImage src={avatar} alt="You" />

@@ -62,10 +62,10 @@ export function TypingIndicator({
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       className={cn(
-        "flex items-center justify-center gap-2 py-3 px-4",
-        "text-sm text-muted-foreground",
+        "flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-3 px-3 sm:px-4",
+        "text-xs sm:text-sm text-muted-foreground",
         "animate-in fade-in duration-300",
         className
       )}
@@ -77,7 +77,7 @@ export function TypingIndicator({
           <div
             key={index}
             className={cn(
-              "w-2 h-2 rounded-full",
+              "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full",
               "bg-muted-foreground",
               "transition-all duration-300 ease-in-out",
               dotIndex === index && "scale-125 opacity-75",
@@ -91,7 +91,7 @@ export function TypingIndicator({
       </div>
 
       {/* Message text */}
-      <span className="select-none">
+      <span className="select-none text-xs sm:text-sm">
         {displayMessage}
       </span>
 
@@ -100,7 +100,7 @@ export function TypingIndicator({
         <button
           onClick={() => setIsVisible(false)}
           className={cn(
-            "ml-2 p-1 rounded-full hover:bg-muted/50",
+            "ml-1.5 sm:ml-2 p-1 rounded-full hover:bg-muted/50 touch-manipulation",
             "transition-colors duration-200",
             "text-xs opacity-60 hover:opacity-100"
           )}
