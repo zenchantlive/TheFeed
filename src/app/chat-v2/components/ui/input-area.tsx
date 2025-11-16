@@ -135,9 +135,10 @@ export function InputField({
       "border-2 border-border focus:border-primary"
     ),
     glass: cn(
-      "bg-white/5 text-white placeholder:text-white/60",
-      "border border-white/20 focus:border-white/60",
-      "shadow-[0_10px_40px_rgba(15,23,42,0.35)]"
+      // Transparent background for parent glassmorphism
+      "bg-transparent text-white placeholder:text-white/50",
+      "border-0 focus:border-0",
+      "ring-0 focus:ring-0"
     ),
   };
 
@@ -155,21 +156,20 @@ export function InputField({
         disabled={disabled}
         maxLength={maxLength}
         className={cn(
-          "w-full resize-none rounded-2xl sm:rounded-3xl focus:ring-2 focus:ring-primary/20",
-          "px-4 py-2.5 sm:px-5 sm:py-3 text-sm leading-relaxed",
-          "transition-all duration-300 ease-in-out",
-          "focus:outline-none focus:shadow-lg focus:shadow-primary/10",
+          "w-full resize-none focus:outline-none",
+          "px-4 py-2.5 sm:px-5 sm:py-3 text-sm sm:text-base leading-relaxed",
+          "transition-all duration-200 ease-out",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "pr-14 sm:pr-16",
           showCharCount && "pb-8",
           appearanceClasses[appearance],
-          appearance === "glass" && "rounded-full backdrop-blur",
-          sharedStyle,
+          appearance === "glass" ? "rounded-full" : "rounded-2xl sm:rounded-3xl focus:ring-2 focus:ring-primary/20 focus:shadow-lg focus:shadow-primary/10",
+          appearance === "surface" && sharedStyle,
           className
         )}
         style={{
-          minHeight: appearance === "glass" ? "56px" : "48px",
-          maxHeight: "140px",
+          minHeight: appearance === "glass" ? "44px" : "48px",
+          maxHeight: "120px",
           lineHeight: "1.5",
         }}
         aria-label="Message input"
@@ -195,14 +195,14 @@ export function InputField({
           size="icon"
           onClick={onSendMessage}
           className={cn(
-            "absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-11 w-11 sm:h-10 sm:w-10",
-            "transition-all duration-200 ease-in-out",
+            "absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-9 w-9 sm:h-10 sm:w-10",
+            "transition-all duration-200 ease-out",
             "shadow-md hover:shadow-lg hover:scale-105 active:scale-95",
             "rounded-full",
-            "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
+            "focus-visible:ring-2 focus-visible:ring-offset-2",
             appearance === "glass"
-              ? "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
-              : "bg-primary text-primary-foreground hover:bg-primary/90"
+              ? "bg-white/90 text-violet-600 hover:bg-white focus-visible:ring-white/30 focus-visible:ring-offset-transparent"
+              : "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/40"
           )}
           aria-label="Send message"
         >
@@ -299,17 +299,51 @@ export function InputArea({
 
   const styles = getChatStyles();
 
-  const containerClasses =
-    variant === "floating"
-      ? cn(
-          "p-4 sm:p-5 rounded-[32px] border border-white/10",
-          "bg-gradient-to-br from-slate-900/60 via-slate-900/40 to-slate-900/80",
-          "backdrop-blur-2xl shadow-[0_25px_80px_rgba(15,23,42,0.55)]"
-        )
-      : cn("p-4 border-t", styles.inputContainer);
+  // For floating variant, no wrapper needed (parent handles glassmorphism)
+  // For surface variant, use normal container
+  if (variant === "floating") {
+    return (
+      <div className={cn("flex w-full items-end gap-2", className)} {...props}>
+        {onVoiceInput && (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={handleVoiceInput}
+            disabled={disabled}
+            className={cn(
+              "flex-shrink-0 h-10 w-10 rounded-full",
+              "transition-all duration-200 hover:scale-105 active:scale-95",
+              "text-white/70 hover:text-white hover:bg-white/10",
+              "focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-0",
+              isListening && "animate-pulse bg-red-500/20 text-red-400"
+            )}
+            aria-label={isListening ? "Recording voice input" : "Start voice input"}
+          >
+            {isListening ? (
+              <Mic className="w-4 h-4" />
+            ) : (
+              <MicOff className="w-4 h-4" />
+            )}
+          </Button>
+        )}
 
+        <InputField
+          value={inputValue}
+          onChange={setInputValue}
+          onSendMessage={handleSendMessage}
+          disabled={disabled}
+          placeholder={placeholder}
+          appearance="glass"
+          className="flex-1"
+        />
+      </div>
+    );
+  }
+
+  // Surface variant (original behavior)
   return (
-    <div className={cn(containerClasses, className)} {...props}>
+    <div className={cn("p-4 border-t", styles.inputContainer, className)} {...props}>
       <div className="mx-auto flex w-full max-w-2xl items-end gap-2">
         {onVoiceInput && (
           <Button
@@ -321,10 +355,8 @@ export function InputArea({
             className={cn(
               "flex-shrink-0 h-11 w-11 sm:h-10 sm:w-10",
               "transition-all duration-200 hover:scale-105 active:scale-95",
+              "rounded-full hover:border-primary/40",
               "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
-              variant === "floating" &&
-                "rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/40",
-              variant !== "floating" && "rounded-full hover:border-primary/40",
               isListening && "animate-pulse bg-red-500/20 text-red-700 border-red-400/40"
             )}
             aria-label={isListening ? "Recording voice input" : "Start voice input"}
@@ -343,7 +375,7 @@ export function InputArea({
           onSendMessage={handleSendMessage}
           disabled={disabled}
           placeholder={placeholder}
-          appearance={variant === "floating" ? "glass" : "surface"}
+          appearance="surface"
           className="flex-1"
         />
       </div>

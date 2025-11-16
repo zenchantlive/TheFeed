@@ -2,17 +2,11 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { 
-  Clock, 
-  MapPin, 
-  Calendar, 
-  ShoppingCart, 
-  Soup, 
-  Home, 
-  Users, 
-  Lightbulb,
-  Sparkles
+import {
+  MapPin,
+  Calendar,
+  PackageOpen,
+  HandHeart
 } from "lucide-react";
 
 interface SmartPromptProps {
@@ -33,9 +27,9 @@ interface SmartPromptsProps {
 }
 
 /**
- * Enhanced Smart Prompt Component
- * 
- * A single smart prompt button with contextual styling and animations
+ * Glassmorphism Smart Prompt Component
+ *
+ * A single smart prompt button with glassmorphism styling
  */
 function SmartPrompt({
   text,
@@ -46,11 +40,11 @@ function SmartPrompt({
   className,
 }: SmartPromptProps) {
   const accents: Record<SmartPromptProps["category"], string> = {
-    time: "text-amber-300 group-hover:text-amber-400",
-    location: "text-sky-300 group-hover:text-sky-400",
-    need: "text-rose-300 group-hover:text-rose-400",
-    community: "text-emerald-300 group-hover:text-emerald-400",
-    general: "text-primary group-hover:text-primary/90",
+    time: "text-amber-300/90 group-hover:text-amber-200",
+    location: "text-sky-300/90 group-hover:text-sky-200",
+    need: "text-rose-300/90 group-hover:text-rose-200",
+    community: "text-emerald-300/90 group-hover:text-emerald-200",
+    general: "text-violet-300/90 group-hover:text-violet-200",
   };
 
   return (
@@ -59,16 +53,26 @@ function SmartPrompt({
       onClick={() => onClick(text)}
       disabled={disabled}
       className={cn(
-        "group inline-flex items-center gap-1.5 sm:gap-2 rounded-full border border-border/40 bg-card/80 px-3 py-1.5 sm:px-4 sm:py-2 text-[0.7rem] sm:text-xs font-medium text-foreground transition-all duration-200",
-        "hover:border-primary/50 hover:bg-primary/10 hover:scale-[1.02] hover:shadow-md",
+        // Glassmorphism base styles
+        "group inline-flex items-center justify-center gap-2 sm:gap-2.5",
+        "rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5",
+        "text-sm sm:text-base font-medium text-white/90",
+        // Glass effect
+        "bg-white/5 backdrop-blur-[15px]",
+        "border border-white/10",
+        "shadow-[0_4px_30px_rgba(0,0,0,0.1)]",
+        // Hover and interaction states
+        "transition-all duration-200 ease-out",
+        "hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)]",
         "active:scale-[0.98]",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1",
-        "max-w-full", // Prevent overflow on small screens
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
     >
-      <span className={cn("text-xs sm:text-sm shrink-0 transition-colors duration-200", accents[category])}>{icon}</span>
+      <span className={cn("text-lg sm:text-xl shrink-0 transition-colors duration-200", accents[category])}>
+        {icon}
+      </span>
       <span className="truncate">{text}</span>
     </button>
   );
@@ -80,170 +84,34 @@ function SmartPrompt({
  * Context-aware prompt suggestions that adapt based on time, location,
  * and user behavior patterns
  */
-export function EnhancedSmartPrompts({ 
-  coords,
-  locationLabel,
+export function EnhancedSmartPrompts({
   hasMessages = false,
   onSelectPrompt,
-  className 
+  className
 }: SmartPromptsProps) {
-  // Get current time context
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentDay = now.getDay();
-  const isWeekend = currentDay === 0 || currentDay === 6;
-  
-  // Determine time of day
-  const getTimeOfDay = (): "morning" | "afternoon" | "evening" | "night" => {
-    if (currentHour >= 5 && currentHour < 12) return "morning";
-    if (currentHour >= 12 && currentHour < 17) return "afternoon";
-    if (currentHour >= 17 && currentHour < 21) return "evening";
-    return "night";
-  };
-
-  const timeOfDay = getTimeOfDay();
-
-  // Generate context-aware prompts
-  const generatePrompts = (): Array<{
-    text: string;
-    category: SmartPromptProps["category"];
-    icon: React.ReactNode;
-  }> => {
-    const baseLocation = locationLabel || "your area";
-    const locationContext = coords ? ` near ${baseLocation}` : "";
-
-    // Time-based prompts
-    const timePrompts = {
-      morning: [
-        {
-          text: `Find breakfast options${locationContext}`,
-          category: "time" as const,
-          icon: <Sparkles className="w-3 h-3" />
-        },
-        {
-          text: `Get food pantries open this morning${locationContext}`,
-          category: "time" as const,
-          icon: <Clock className="w-3 h-3" />
-        }
-      ],
-      afternoon: [
-        {
-          text: `Find lunch or meal programs${locationContext}`,
-          category: "time" as const,
-          icon: <Soup className="w-3 h-3" />
-        },
-        {
-          text: `Locate food banks with afternoon hours${locationContext}`,
-          category: "time" as const,
-          icon: <Clock className="w-3 h-3" />
-        }
-      ],
-      evening: [
-        {
-          text: `Find dinner or evening meal services${locationContext}`,
-          category: "time" as const,
-          icon: <Home className="w-3 h-3" />
-        },
-        {
-          text: `Community meals happening tonight${locationContext}`,
-          category: "community" as const,
-          icon: <Users className="w-3 h-3" />
-        }
-      ],
-      night: [
-        {
-          text: `Emergency food assistance nearby${locationContext}`,
-          category: "need" as const,
-          icon: <Lightbulb className="w-3 h-3" />
-        },
-        {
-          text: `24-hour food resources${locationContext}`,
-          category: "need" as const,
-          icon: <Clock className="w-3 h-3" />
-        }
-      ]
-    };
-
-    // Weekend-specific prompts
-    const weekendPrompts = isWeekend ? [
-      {
-        text: `Weekend food distribution events${locationContext}`,
-        category: "community" as const,
-        icon: <Calendar className="w-3 h-3" />
-      },
-      {
-        text: `Volunteer opportunities today${locationContext}`,
-        category: "community" as const,
-        icon: <Users className="w-3 h-3" />
-      }
-    ] : [];
-
-    // Location-based prompts
-    const locationPrompts = coords ? [
-      {
-        text: `Food resources within 5 miles${locationContext}`,
-        category: "location" as const,
-        icon: <MapPin className="w-3 h-3" />
-      }
-    ] : [
-      {
-        text: `Find food resources in your area`,
-        category: "location" as const,
-        icon: <MapPin className="w-3 h-3" />
-      }
-    ];
-
-    // Need-based prompts
-    const needPrompts = [
-      {
-        text: `I need food assistance`,
-        category: "need" as const,
-        icon: <ShoppingCart className="w-3 h-3" />
-      },
-      {
-        text: `Find free meal programs`,
-        category: "need" as const,
-        icon: <Soup className="w-3 h-3" />
-      }
-    ];
-
-    // General prompts
-    const generalPrompts = [
-      {
-        text: `What food resources are available?`,
-        category: "general" as const,
-        icon: <Lightbulb className="w-3 h-3" />
-      },
-      {
-        text: `Help someone in need`,
-        category: "community" as const,
-        icon: <Users className="w-3 h-3" />
-      }
-    ];
-
-    // Select prompts based on context
-    const selectedTimePrompts = timePrompts[timeOfDay];
-    const allPrompts = [
-      ...selectedTimePrompts,
-      ...weekendPrompts,
-      ...locationPrompts.slice(0, 1), // Only one location prompt
-      ...needPrompts.slice(0, 1), // Only one need prompt
-      ...generalPrompts.slice(0, 1) // Only one general prompt
-    ];
-
-    // Deterministically select top 4 (avoid hydration mismatch)
-    // Use a consistent selection based on time of day to avoid Math.random()
-    const hour = new Date().getHours();
-    const startIndex = hour % Math.max(1, allPrompts.length - 3);
-    return allPrompts.slice(startIndex, startIndex + 4);
-  };
-
-  const [prompts, setPrompts] = React.useState(() => generatePrompts());
-
-  // Regenerate prompts when context changes
-  React.useEffect(() => {
-    setPrompts(generatePrompts());
-  }, [coords, locationLabel, timeOfDay, isWeekend]);
+  // Core action prompts - intelligent shortcuts to app features
+  const prompts = React.useMemo(() => [
+    {
+      text: "Find potlucks near me",
+      category: "community" as const,
+      icon: <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+    },
+    {
+      text: "Show food on the map",
+      category: "location" as const,
+      icon: <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+    },
+    {
+      text: "Browse the community pantry",
+      category: "general" as const,
+      icon: <PackageOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+    },
+    {
+      text: "How can I volunteer?",
+      category: "community" as const,
+      icon: <HandHeart className="w-4 h-4 sm:w-5 sm:h-5" />
+    }
+  ], []);
 
   if (hasMessages || prompts.length === 0) {
     return null;
@@ -252,78 +120,20 @@ export function EnhancedSmartPrompts({
   return (
     <div
       className={cn(
-        "animate-in fade-in duration-300 rounded-2xl sm:rounded-3xl border border-border/40 bg-card/90 backdrop-blur-sm p-3 sm:p-4 shadow-[0_8px_20px_rgba(6,8,20,0.1)] sm:shadow-[0_12px_30px_rgba(6,8,20,0.12)] transition-all duration-200 hover:shadow-[0_16px_40px_rgba(6,8,20,0.15)] hover:border-border/60",
+        "animate-in fade-in duration-500 w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4",
         className
       )}
     >
-      <div className="mb-2 sm:mb-2.5 flex items-center gap-1.5 sm:gap-2 text-[0.6rem] sm:text-[0.65rem] font-semibold uppercase tracking-[0.3em] sm:tracking-[0.35em] text-muted-foreground">
-        <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary animate-pulse" />
-        <span>Quick starts</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5 sm:gap-2">
-        {prompts.map((prompt, index) => (
-          <SmartPrompt
-            key={index}
-            text={prompt.text}
-            category={prompt.category}
-            icon={prompt.icon}
-            onClick={onSelectPrompt}
-          />
-        ))}
-      </div>
-      <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center justify-between gap-2 text-[0.55rem] sm:text-[0.6rem] uppercase tracking-[0.2em] sm:tracking-[0.25em] text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-          <span>{timeOfDay} · {isWeekend ? "Weekend" : "Weekday"}</span>
-        </div>
-        {coords && (
-          <div className="flex items-center gap-1">
-            <MapPin className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-            <span>Nearby</span>
-          </div>
-        )}
-      </div>
+      {prompts.map((prompt, index) => (
+        <SmartPrompt
+          key={index}
+          text={prompt.text}
+          category={prompt.category}
+          icon={prompt.icon}
+          onClick={onSelectPrompt}
+        />
+      ))}
     </div>
   );
 }
 
-interface QuickActionProps {
-  text: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-  variant?: "default" | "outline" | "secondary";
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}
-
-export function QuickAction({ 
-  text, 
-  icon, 
-  onClick, 
-  variant = "outline",
-  size = "sm",
-  className 
-}: QuickActionProps) {
-  const sizeClasses = {
-    sm: "h-8 px-2 text-xs",
-    md: "h-9 px-3 text-sm",
-    lg: "h-10 px-4 text-base"
-  };
-
-  return (
-    <Button
-      variant={variant}
-      size="sm"
-      onClick={onClick}
-      className={cn(
-        "gap-1.5 transition-all duration-200 ease-in-out",
-        "hover:scale-105 hover:shadow-md",
-        sizeClasses[size],
-        className
-      )}
-    >
-      {icon}
-      <span>{text}</span>
-    </Button>
-  );
-}
