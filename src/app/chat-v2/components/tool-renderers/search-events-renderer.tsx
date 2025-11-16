@@ -52,6 +52,24 @@ function EventGrid({
   events: SearchEventResult[];
   userLocation: { lat: number; lng: number } | null;
 }) {
+  // This component can be replaced by a generic PaginatedGrid.
+  // The implementation would be moved to a shared component file,
+  // and this file would use it like:
+  /*
+  return (
+    <PaginatedGrid
+      items={events}
+      itemNoun="event"
+      renderItem={(event) => (
+        <EventCard
+          key={event.id}
+          event={event}
+          userLocation={userLocation}
+        />
+      )}
+    />
+  );
+  */
   const [isExpanded, setIsExpanded] = useState(false);
   const hasMore = events.length > 2;
   const displayedEvents = isExpanded ? events : events.slice(0, 2);
