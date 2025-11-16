@@ -17,8 +17,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   const mainClassName = cn(
-    "flex-1 pb-28",
-    isChatV2 && "flex min-h-0 flex-1 overflow-hidden pb-0"
+    "flex-1",
+    isChatV2 ? "flex min-h-0 overflow-hidden pb-0" : "pb-28"
   );
 
   return (
