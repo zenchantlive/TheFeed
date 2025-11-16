@@ -124,12 +124,6 @@ const contextualTypingMessages = [
   "🤝 Looking for neighbors who can help...",
 ];
 
-interface InsightCard {
-  title: string;
-  value: string;
-  description: string;
-}
-
 export function EnhancedChatV2({
   coords,
   locationLabel,
@@ -224,40 +218,6 @@ export function EnhancedChatV2({
       }));
   }, [messages, timestamps, streamingAssistantId]);
 
-  const lastUserPrompt = React.useMemo(() => {
-    const latest = [...messages]
-      .reverse()
-      .find((message) => message.role === "user" && typeof message.content === "string");
-
-    return typeof latest?.content === "string" ? latest.content : null;
-  }, [messages]);
-
-  const insightCards = React.useMemo<InsightCard[]>(() => {
-    return [
-      {
-        title: "Tonight's ideas",
-        value: isLoading ? "Drafting reply..." : hasChatHistory ? "Ready for seconds" : "Waiting on you",
-        description: hasChatHistory
-          ? "I'll keep building on your latest chat."
-          : "Ask for a meal plan or local resource to begin.",
-      },
-      {
-        title: "Use up these ingredients",
-        value: formatPromptPreview(lastUserPrompt) || "Tell me what's in your kitchen",
-        description: lastUserPrompt
-          ? "Pulled from your most recent message."
-          : "Mention a few ingredients to get recipe ideas.",
-      },
-      {
-        title: "Neighborhood focus",
-        value: locationLabel || (coords ? "Current location" : "Share your area"),
-        description: coords
-          ? "Tuned to spots within ~15 miles."
-          : "Using your saved defaults until you share.",
-      },
-    ];
-  }, [coords, hasChatHistory, isLoading, lastUserPrompt, locationLabel]);
-
   const handleSendMessage = async (rawValue: string) => {
     const text = rawValue.trim();
     if (!text) return;
@@ -278,7 +238,7 @@ export function EnhancedChatV2({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-1 min-h-0 flex-col overflow-hidden bg-[#2d2d34] text-foreground">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#2d2d34] text-foreground">
       <div
         className="pointer-events-none absolute inset-0 -z-10 opacity-100"
         aria-hidden
@@ -289,59 +249,53 @@ export function EnhancedChatV2({
       />
       <ToolRenderers userLocation={coords || null} />
 
-      <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-4 py-4 sm:px-6 lg:px-10 xl:mx-auto xl:max-w-5xl">
-        <section className="relative flex h-full flex-1 min-h-0 flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[#1f1f27] shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
-          <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      <ChatHeroHeader user={user} locationLabel={locationLabel} />
 
-          <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-            <div
-              className={cn(
-                "flex-1 overflow-y-auto px-4 py-6 sm:px-8",
-                hasChatHistory ? "space-y-4" : "flex items-center justify-center"
-              )}
-            >
-              {hasChatHistory ? (
-                <>
-                  {formattedMessages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      role={message.role}
-                      content={message.content}
-                      timestamp={message.timestamp}
-                      isStreaming={message.isStreaming}
-                    />
-                  ))}
-                  {isLoading && (
-                    <TypingIndicator
-                      message={typingMessage}
-                      className="animate-in fade-in duration-300"
-                    />
-                  )}
-                </>
-              ) : (
-                <EmptyState>
-                  <EnhancedSmartPrompts
-                    coords={coords || null}
-                    locationLabel={locationLabel}
-                    hasMessages={hasChatHistory}
-                    onSelectPrompt={handlePromptSelection}
-                    className="mt-8"
-                  />
-                </EmptyState>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <ComposerDock
-              isDesktop={isDesktopLayout}
-              onSendMessage={handleSendMessage}
-              onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
-              prefillPrompt={prefillPrompt}
-              onPrefillConsumed={() => setPrefillPrompt(null)}
+      <div
+        className={cn(
+          "flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6",
+          hasChatHistory ? "space-y-4" : "flex items-center justify-center"
+        )}
+      >
+        {hasChatHistory ? (
+          <>
+            {formattedMessages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                role={message.role}
+                content={message.content}
+                timestamp={message.timestamp}
+                isStreaming={message.isStreaming}
+              />
+            ))}
+            {isLoading && (
+              <TypingIndicator
+                message={typingMessage}
+                className="animate-in fade-in duration-300"
+              />
+            )}
+          </>
+        ) : (
+          <EmptyState>
+            <EnhancedSmartPrompts
+              coords={coords || null}
+              locationLabel={locationLabel}
+              hasMessages={hasChatHistory}
+              onSelectPrompt={handlePromptSelection}
+              className="mt-8"
             />
-          </div>
-        </section>
+          </EmptyState>
+        )}
+        <div ref={messagesEndRef} />
       </div>
+
+      <ComposerDock
+        isDesktop={isDesktopLayout}
+        onSendMessage={handleSendMessage}
+        onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
+        prefillPrompt={prefillPrompt}
+        onPrefillConsumed={() => setPrefillPrompt(null)}
+      />
     </div>
   );
 }
@@ -390,7 +344,7 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     : "Share your location for hyper-local help";
 
   return (
-    <div className="border-b border-border/40 px-4 pb-3 pt-4 sm:px-8">
+    <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
@@ -431,53 +385,17 @@ function ComposerDock({
   onPrefillConsumed,
 }: ComposerDockProps) {
   return (
-    <div className="shrink-0 px-4 pb-6 pt-2 sm:px-8">
-      <div className="rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-3 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-        <InputArea
-          variant={isDesktop ? "floating" : "surface"}
-          onSendMessage={onSendMessage}
-          onVoiceInput={onVoiceInput}
-          placeholder="Ask Sous-chef about meals, resources, or ways to share..."
-          prefillValue={prefillPrompt}
-          onPrefillConsumed={onPrefillConsumed}
-        />
-      </div>
+    <div className="shrink-0 border-t border-white/10 bg-[#2d2d34] px-4 py-4 sm:px-6">
+      <InputArea
+        variant={isDesktop ? "floating" : "surface"}
+        onSendMessage={onSendMessage}
+        onVoiceInput={onVoiceInput}
+        placeholder="Ask Sous-chef about meals, resources, or ways to share..."
+        prefillValue={prefillPrompt}
+        onPrefillConsumed={onPrefillConsumed}
+      />
     </div>
   );
-}
-
-interface InsightsRailProps {
-  insights: InsightCard[];
-}
-
-function InsightsRail({ insights }: InsightsRailProps) {
-  return (
-    <aside className="hidden lg:flex flex-col gap-4 rounded-[32px] border border-border/50 bg-card/90 p-5 shadow-[0_25px_70px_rgba(5,9,20,0.2)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
-      {insights.map((card) => (
-        <div
-          key={card.title}
-          className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-4 shadow-inner"
-        >
-          <span className="absolute inset-y-4 right-4 w-1 rounded-full bg-primary/70" />
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-            {card.title}
-          </p>
-          <p className="mt-3 text-2xl font-semibold leading-snug text-foreground">
-            {card.value}
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
-        </div>
-      ))}
-    </aside>
-  );
-}
-
-function formatPromptPreview(prompt: string | null): string | null {
-  if (!prompt) return null;
-  if (prompt.length <= 42) {
-    return prompt;
-  }
-  return `${prompt.slice(0, 39)}...`;
 }
 
 function getInitials(name: string) {
