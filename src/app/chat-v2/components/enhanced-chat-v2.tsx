@@ -385,7 +385,7 @@ function ComposerDock({
   onPrefillConsumed,
 }: ComposerDockProps) {
   return (
-    <div className="shrink-0 border-t border-white/10 bg-[#2d2d34] px-4 py-4 sm:px-6">
+    <div className="shrink-0 border-t border-border/10 bg-[#2d2d34] px-4 py-4 sm:px-6">
       <InputArea
         variant={isDesktop ? "floating" : "surface"}
         onSendMessage={onSendMessage}
