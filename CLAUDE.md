@@ -19,12 +19,14 @@ You are expected to:
 
 ## Tech Stack
 
-- Framework: Next.js 15 (App Router), React 19, TypeScript
-- Database: PostgreSQL (Supabase) with Drizzle ORM
-- Auth: Better Auth with Google OAuth
-- UI: shadcn/ui + Tailwind CSS 4, dark mode via theme provider
-- Maps: Mapbox GL JS (`react-map-gl`)
-- AI: Vercel AI SDK 5 + OpenRouter (`openai/gpt-4.1-mini` default)
+- **Framework**: Next.js 15 (App Router), React 19, TypeScript
+- **Database**: PostgreSQL (Supabase) with Drizzle ORM
+- **Auth**: Better Auth v1.3.34 with Google OAuth
+- **UI**: shadcn/ui + Tailwind CSS 4, dark mode via next-themes
+- **Fonts**: Geist Sans & Geist Mono
+- **Maps**: Mapbox GL JS v3.1 (`react-map-gl`)
+- **AI**: Vercel AI SDK v5 + OpenRouter (`openai/gpt-4.1-mini` default)
+- **CopilotKit**: v1.10.6 for enhanced AI chat experience
 
 ### AI Chat Status (CopilotKit v2)
 
@@ -48,48 +50,209 @@ pnpm lint
 pnpm typecheck
 
 # Database
-pnpm run db:generate
-pnpm run db:migrate
-pnpm run db:push
-pnpm run db:studio
-pnpm run db:reset
+pnpm run db:generate   # Generate migrations when schema changes
+pnpm run db:migrate    # Apply migrations
+pnpm run db:push       # Push schema directly (development)
+pnpm run db:studio     # Open Drizzle Studio UI
+pnpm run db:dev        # Alias for db:push
+pnpm run db:reset      # Drop and recreate schema (DANGEROUS)
 
-# Seeding
-pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts
+# Seeding & Scripts
+pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts        # Seed Bay Area food banks
+pnpm exec tsx --env-file=.env scripts/dev-terminal-chat.ts      # Test chat tools in terminal
+pnpm exec tsx --env-file=.env scripts/test-chat-tools.ts        # Unit test for AI tools
+pnpm exec tsx --env-file=.env scripts/test-copilotkit-backend.ts # Test CopilotKit backend
 ```
 
 Use pnpm exclusively.
 
+## Environment Variables
+
+Required environment variables (copy from `.env.example` if it exists):
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `POSTGRES_URL` | Supabase/PostgreSQL connection string (with `sslmode=require`) | `postgresql://user:pass@host.supabase.co:5432/postgres?sslmode=require` |
+| `BETTER_AUTH_SECRET` | 32+ character random string for auth encryption | `openssl rand -hex 32` |
+| `BETTER_AUTH_URL` | Full URL of your app | `http://localhost:3000` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | From Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | From Google Cloud Console |
+| `NEXT_PUBLIC_APP_URL` | Public-facing app URL | `http://localhost:3000` |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Mapbox public access token | `pk.ey...` |
+| `OPENROUTER_API_KEY` | OpenRouter API key for AI chat | From openrouter.ai |
+| `OPENROUTER_MODEL` | Model override (optional) | `openai/gpt-4.1-mini` (default) |
+| `POLAR_WEBHOOK_SECRET` | Polar billing webhook secret (optional) | Only if using Polar |
+
+**Security Notes:**
+- Never commit `.env` file
+- All `NEXT_PUBLIC_*` variables are exposed to the browser
+- Auth secrets must be cryptographically random
+
 ## Architecture & Key Files
+
+### App Layout & Shell
+
+- `src/app/layout.tsx`: Root layout with ThemeProvider, Geist fonts, and AppShell wrapper
+- `src/components/layout/app-shell.tsx`: Main app container with responsive navigation
+  - Desktop: Site header + content area
+  - Mobile: Bottom navigation bar
+  - Handles auth-gated routes
+- `src/components/site-header.tsx`: Top navigation bar with logo, nav links, theme toggle, user profile
+- `src/components/navigation/BottomNav.tsx`: Mobile bottom navigation (Map, Chat, Community, Profile)
+- `src/components/theme-provider.tsx`: next-themes wrapper for dark mode support
 
 ### Map System
 
-- `src/app/map/page.tsx`: Server component, loads data.
-- `src/app/map/pageClient.tsx`: Client filters, search, geolocation.
-- `src/components/map/MapView.tsx`: Mapbox view.
-- `src/components/map/MapSearchBar.tsx`, `LocationPopup.tsx`: Search and detail UI.
+- `src/app/map/page.tsx`: Server component, loads food bank data from database
+- `src/app/map/pageClient.tsx`: Client-side map orchestrator with filters, search, geolocation
+- `src/components/map/MapView.tsx`: Mapbox GL view component with markers and popups
+- `src/components/map/MapSearchBar.tsx`: Search interface for locations
+- `src/components/map/LocationPopup.tsx`: Detail popup for food banks with hours, services, directions
 
 ### AI Chat System
 
-- `src/app/chat-v2/page.tsx` + `page-client.tsx`: CopilotKit entry point (preferred going forward).
+**Primary (CopilotKit v2 - Active):**
+- `src/app/chat-v2/page.tsx` + `page-client.tsx`: CopilotKit entry point with full-page layout
+  - Uses `<CopilotKit runtimeUrl="/api/copilotkit">` provider
+  - Injects user + location context via `useCopilotReadable`
+  - Full viewport height chain established for proper layout
 - `src/app/chat-v2/components/`:
-  - `enhanced-chat-v2.tsx`: Shell w/ smart prompts, typing indicator, tool renderers, and message list.
-  - `tool-renderers/`: Declarative renderers driven by `useCopilotAction`.
-  - `voice-input.tsx`, `actions/smart-prompts.tsx`, `components/ui/*`: Theming + layout pieces shared across chat.
-- `/api/copilotkit` (in `src/app/api/copilotkit/route.ts`) passes CopilotKit requests through `sousChefTools`.
-- `scripts/dev-terminal-chat.ts` + `scripts/test-chat-tools.ts` exercise the same tool stack headlessly.
-- Legacy `/chat` (`src/app/chat/page.tsx`) still exists for regression testing but should not be extended without a plan to merge into `/chat-v2`.
+  - `enhanced-chat-v2.tsx`: Main chat shell with smart prompts, typing indicator, tool renderers, message list
+  - `tool-renderers/`: Type-safe renderers for each tool (NO `dangerouslySetInnerHTML`)
+    - `search-resources-renderer.tsx`
+    - `search-events-renderer.tsx`
+    - `search-posts-renderer.tsx`
+    - `get-directions-renderer.tsx`
+    - `resource-detail-renderer.tsx`
+    - `user-context-renderer.tsx`
+    - `log-chat-renderer.tsx`
+  - `voice-input.tsx`: Voice input component
+  - `actions/smart-prompts.tsx`: Context-aware prompt suggestions
+  - `components/ui/*`: Styled chat UI components
 
-Use `openrouter()` provider; do NOT call OpenAI directly.
+**Backend:**
+- `src/app/api/copilotkit/route.ts`: CopilotKit runtime endpoint
+- `src/lib/ai-tools.ts`: Shared tool definitions exported as `sousChefTools`
+  - `getUserContextTool`: Get user profile and saved locations
+  - `searchResourcesTool`: Search food banks by location
+  - `getResourceByIdTool`: Get detailed food bank info
+  - `searchPostsTool`: Search community posts
+  - `searchEventsTool`: Search events
+  - `getDirectionsTool`: Generate directions
+  - `logChatTool`: Log chat interactions
+
+**Testing:**
+- `scripts/dev-terminal-chat.ts`: Interactive terminal chat for testing tools
+- `scripts/test-chat-tools.ts`: Automated tool tests
+- `scripts/test-copilotkit-backend.ts`: CopilotKit backend tests
+
+**Legacy (Deprecated):**
+- `src/app/chat/page.tsx`: Original streaming chat with `useChat` hook
+  - Known issue: Blank assistant bubble when provider drops stream
+  - Do NOT extend; migrate features to `/chat-v2` instead
+
+**IMPORTANT:** Always use `openrouter()` provider; do NOT call OpenAI directly.
 
 ### Database Schema
 
-- `src/lib/schema.ts`: Single source of truth.
-- Includes:
-  - Auth tables.
-  - `foodBanks`, `savedLocations`, `chatMessages`.
-  - Community tables: `posts`, `comments`, `userProfiles`, `follows`, `helpfulMarks`.
-  - Event hosting tables: `events`, `eventRsvps`, `signUpSlots`, `signUpClaims`, `eventRecurrence`, `eventAttendance`.
+**File:** `src/lib/schema.ts` (Single source of truth)
+
+**Auth Tables (Better Auth):**
+- `user`: Core user data (id, name, email, image, timestamps)
+- `session`: Active sessions with expiry, tokens, device info
+- `account`: OAuth provider accounts (Google)
+- `verification`: Email/phone verification tokens
+
+**Core Data:**
+- `foodBanks`: Food assistance locations with hours, services, coordinates
+- `savedLocations`: User's saved/favorited food banks
+- `chatMessages`: AI chat conversation history
+
+**Community Tables:**
+- `posts`: Community posts (offers, requests, events) with location, intent, kind
+- `comments`: Threaded comments on posts
+- `userProfiles`: Extended user info (bio, karma, joined date)
+- `follows`: User-to-user follow relationships
+- `helpfulMarks`: Upvote/helpful marks on posts
+
+**Event Hosting Tables:**
+- `events`: Event details (type, location, capacity, recurrence)
+- `eventRsvps`: User RSVPs to events
+- `signUpSlots`: Volunteer/contribution slots for events
+- `signUpClaims`: User claims on signup slots
+- `eventRecurrence`: Recurring event patterns
+- `eventAttendance`: Actual attendance tracking
+
+**Configuration:**
+- Drizzle config: `drizzle.config.ts`
+- Uses PostgreSQL dialect
+- Migrations stored in `/drizzle`
+
+### Lib Utilities
+
+**Core Files:**
+- `src/lib/db.ts`: Drizzle database client singleton
+- `src/lib/utils.ts`: Tailwind `cn()` class merger utility
+- `src/lib/auth.ts`: Better Auth server configuration
+- `src/lib/auth-client.ts`: Better Auth client instance
+- `src/lib/auth-middleware.ts`: Auth middleware for protected routes
+
+**Query Modules:**
+- `src/lib/food-bank-queries.ts`: Food bank search and retrieval
+  - `searchFoodBanks()`: Location-based search with radius
+  - `getFoodBankById()`: Get single food bank details
+- `src/lib/post-queries.ts`: Community post operations
+  - Post creation, updates, filtering
+  - Comment handling
+  - Helpful marks (karma)
+- `src/lib/event-queries.ts`: Event management
+  - Event creation with wizard support
+  - RSVP handling
+  - Signup sheet operations
+  - Calendar queries with filters
+  - Attendance tracking
+- `src/lib/geolocation.ts`: Geolocation utilities
+  - Distance calculations
+  - Coordinate validation
+  - Geocoding helpers
+
+### API Routes
+
+**Complete route structure:**
+
+```
+src/app/api/
+├── auth/
+│   └── [...all]/route.ts              # Better Auth catch-all handler
+├── chat/
+│   └── route.ts                       # Legacy streaming chat endpoint (deprecated)
+├── copilotkit/
+│   └── route.ts                       # CopilotKit runtime (active)
+├── diagnostics/
+│   └── route.ts                       # System diagnostics endpoint
+├── events/
+│   ├── route.ts                       # List/create events
+│   ├── calendar/route.ts              # Calendar view with filters
+│   └── [id]/
+│       ├── route.ts                   # Get/update/delete event
+│       ├── rsvp/route.ts              # RSVP to event
+│       └── slots/
+│           ├── route.ts               # Get signup slots
+│           └── [slotId]/
+│               └── claim/route.ts     # Claim a signup slot
+├── locations/
+│   └── route.ts                       # Food bank locations search
+└── posts/
+    ├── route.ts                       # List/create posts
+    └── [id]/
+        ├── route.ts                   # Get/update/delete post
+        ├── comments/route.ts          # Post comments (missing from docs)
+        └── helpful/route.ts           # Mark post as helpful (missing from docs)
+```
+
+**Additional routes not yet implemented but referenced:**
+- `/api/users/[id]/follow` (user follow/unfollow)
+- `/api/users/[id]/profile` (user profile updates)
 
 ### Community Social System (Important)
 
@@ -102,13 +265,24 @@ src/app/community/
 ├── types.ts                    # Shared types (FeedPost, EventCardData, etc.)
 ├── discovery-context.tsx       # Event filter state management
 ├── use-discovery-events.ts     # Event data fetching hook
+├── styles/
+│   └── bulletin-theme.ts       # Community theme constants
 └── components/
+    ├── action-tiles/
+    │   ├── index.tsx          # Action tile grid container
+    │   ├── action-tile.tsx    # Individual tile component
+    │   └── actions.ts         # Tile action definitions
+    ├── active-members/
+    │   └── index.tsx          # Active members widget
     ├── composer/
     │   ├── index.tsx          # Post composer (supports hideIntentToggle)
     │   └── use-composer.ts    # Submission logic
     ├── events-section/
     │   ├── index.tsx          # Event cards with quick actions
     │   └── event-filters.tsx  # Filter controls
+    ├── location-dialog.tsx    # Location selection dialog
+    ├── mode-toggle/
+    │   └── index.tsx          # Mode toggle component (not currently used)
     ├── post-feed/
     │   ├── index.tsx          # Feed container
     │   ├── post-card.tsx      # Individual post
@@ -116,17 +290,16 @@ src/app/community/
     │   └── utils/
     │       ├── sorting.ts     # Mode-based sorting
     │       └── filtering.ts   # Filter logic
-    ├── mode-toggle/            # (Not currently used)
-    └── sidebar/
-        └── index.tsx          # Stats, mini-map, context helpers
+    ├── sidebar/
+    │   ├── index.tsx          # Main sidebar orchestrator
+    │   ├── guide-tips-widget.tsx   # Getting started tips
+    │   ├── hot-items-widget.tsx    # Trending items widget
+    │   ├── map-cta-widget.tsx      # Map call-to-action
+    │   └── vibe-check-widget.tsx   # Community vibe widget
+    └── welcome-banner/
+        ├── index.tsx          # Welcome hero section
+        └── quotes.ts          # Inspirational quotes
 ```
-
-**API Routes:**
-  - `/api/posts`, `/api/posts/[id]`
-  - `/api/posts/[id]/comments`
-  - `/api/posts/[id]/helpful`
-  - `/api/users/[id]/follow`
-  - `/api/users/[id]/profile`
 
 #### Current Community Page Architecture (Events-First UX)
 
@@ -235,24 +408,117 @@ The page is designed to get people to food resources FAST while maintaining comm
 
 ### Event Hosting & Discovery System
 
-- Backend tables, event wizard, RSVP flows, and sign-up sheet display are all implemented (see `context/state.md` for schema recap).
-- `/community/events/calendar` is the canonical discovery surface: auth-guarded, supports `month=` + `type=` filters, and links back to event detail + creation.
-- Events still create `kind="event"` posts so they show up in the Community feed.
+**Pages:**
+- `src/app/community/events/new/page.tsx`: Event creation wizard
+- `src/app/community/events/[id]/page.tsx`: Event detail page with RSVP and signup sheet
+- `src/app/community/events/calendar/page.tsx`: Calendar discovery view
+  - Auth-guarded
+  - Supports `month=YYYY-MM` and `type=` query parameters
+  - Links to event detail and creation
+
+**Components:**
+- `src/components/events/event-creation-wizard.tsx`: Multi-step event creation flow
+- `src/components/events/event-basic-info-step.tsx`: Title, description, type
+- `src/components/events/event-datetime-step.tsx`: Date/time selection
+- `src/components/events/event-location-step.tsx`: Location input
+- `src/components/events/event-capacity-step.tsx`: Capacity and visibility
+- `src/components/events/event-signup-sheet-step.tsx`: Volunteer slots configuration
+- `src/components/events/event-detail-content.tsx`: Event detail page content
+- `src/components/events/event-card.tsx`: Event card component
+
+**Key Features:**
+- Backend tables fully implemented (events, eventRsvps, signUpSlots, etc.)
+- RSVP flows with capacity management
+- Signup sheet system for volunteer coordination
+- Events create `kind="event"` posts to appear in Community feed
+- Support for recurring events (eventRecurrence table)
+- Attendance tracking (eventAttendance table)
+
+### Other Key Components
+
+**Auth Components:**
+- `src/components/auth/user-profile.tsx`: User profile dropdown/display
+- `src/components/auth/sign-in-button.tsx`: Google OAuth sign-in
+- `src/components/auth/sign-out-button.tsx`: Sign-out button
+
+**FoodShare Branded Components:**
+- `src/components/foodshare/location-card.tsx`: Food bank location card
+- `src/components/foodshare/status-badge.tsx`: Open/closed status indicator
+- `src/components/foodshare/big-action-button.tsx`: Prominent CTA button
+
+**Profile Components:**
+- `src/components/profile/SavedLocationsList.tsx`: User's saved locations list
+- `src/app/profile/page.tsx`: User profile page
+
+**UI Components (shadcn/ui):**
+Located in `src/components/ui/`:
+- Standard: `button`, `input`, `textarea`, `card`, `dialog`, `dropdown-menu`, `popover`, `tooltip`, `checkbox`, `radio-group`, `label`, `separator`, `badge`, `avatar`, `alert`, `calendar`
+- Custom: `mode-toggle` (dark mode toggle), `github-stars` (repo stars display)
+
+### Page Routes
+
+**Public Routes:**
+- `/` - Landing/home page
+- `/map` - Food bank discovery map
+- `/chat` - Legacy AI chat (deprecated)
+- `/chat-v2` - Active CopilotKit AI chat
+
+**Auth-Protected Routes:**
+- `/dashboard` - User dashboard
+- `/profile` - User profile and settings
+- `/community` - Community feed (events + posts)
+- `/community/events/new` - Create new event
+- `/community/events/[id]` - Event detail with RSVP
+- `/community/events/calendar` - Event calendar discovery
+
+## Recent Changes & Migration Notes
+
+**January 2025 Updates:**
+- **Chat System Refactor (PR #22, #24):**
+  - Migrated primary chat to CopilotKit v2 at `/chat-v2`
+  - Fixed full-page layout with proper viewport height chain
+  - Extracted shared AI tools to `src/lib/ai-tools.ts`
+  - Added type-safe tool renderers (no `dangerouslySetInnerHTML`)
+  - Legacy `/chat` deprecated but kept for reference
+
+- **Community Page Architecture:**
+  - Refactored from 762-line monolith to modular component structure
+  - Implemented events-first UX with mode toggles ("I'm hungry" / "I'm Full")
+  - Added welcome banner, action tiles, sidebar widgets
+  - Smart post filtering based on mode (priority, not hiding)
+
+- **Event System (Phase 3E):**
+  - Full event hosting and discovery
+  - Calendar view with month/type filters
+  - RSVP and signup sheet functionality
+  - Recurring events support
+
+**Migration Checklist:**
+- ✅ Better Auth v1.3.34 (stable)
+- ✅ CopilotKit v1.10.6 for chat
+- ✅ Tailwind CSS 4
+- ✅ Next.js 15 + React 19
+- ⚠️ Migrate all chat features from `/chat` to `/chat-v2`
 
 ## Context Files
 
-Always consult and update:
+Always consult and update relevant context files in `/context/`:
 
-- `foodshare/context/state.md`
-  - Current sprint, completed work, next steps.
-- `foodshare/context/info.md`
-  - Vision, roadmap, high-level architecture.
-- `foodshare/context/decisions.md`
-  - Architecture decisions and rationales.
-- `foodshare/context/insights.md`
-  - UX/product learnings.
+- `context/state.md` - Current sprint, completed work, next steps
+- `context/info.md` - Vision, roadmap, high-level architecture
+- `context/decisions.md` - Architecture decisions and rationales
+- `context/insights.md` - UX/product learnings
+- `context/schema.md` - Database schema overview
+- `context/events-plan.md` - Event system implementation plan
+- `context/copilotkit-migration-plan.md` - CopilotKit migration details
+- `context/chat-v2-typescript-fixes.md` - TypeScript fixes for chat v2
+- `context/lucide-react-troubleshooting.md` - Icon library troubleshooting
 
-When you change architecture, critical flows, or semantics for posts/events, update these files.
+**When to update:**
+- When changing architecture, critical flows, or semantics for posts/events
+- When making significant UI/UX changes
+- When completing major features or phases
+- When making important technical decisions
 
 ## Styling & UX Guidelines
 
@@ -285,28 +551,89 @@ When working in this repo:
 5. Update context files when:
    - Changing routes, major components, or introducing new modes/behaviors.
 
-## Known Completed vs Pending (High Level)
+## Development Best Practices
 
-- Completed:
-  - Core map & chat.
-  - Phase 1 community social (posts, comments, follows, karma).
-  - Phase 3A/3B event backend + creation + detail UI.
-  - Initial mode-based community layout refactor (this document + state.md describe it).
+### Code Quality
+- **ALWAYS run before commit:**
+  ```bash
+  pnpm typecheck && pnpm lint
+  ```
+- **No `any` types:** Use strict TypeScript, prefer proper type definitions
+- **Use shared types:** Import from `src/lib/schema.ts` and component type files
+- **Component modularity:** Keep components under 300 lines; extract to subcomponents
 
-- Pending / Future:
-  - Deeper discovery (map overlays, integrating calendar entry points everywhere).
-  - Full signup sheet UI (Phase 3C).
-  - Host tools, check-ins, safety flows (Phase 3E).
-  - Recurring event UX (Phase 3F).
-  - Additional visual polish passes on community UI.
+### Git Workflow
+1. Create feature branches: `git checkout -b feat/your-feature`
+2. Run quality checks before committing
+3. Write clear, descriptive commit messages
+4. Reference GitHub issues in PRs
+5. Keep commits atomic and focused
 
-This file is your authoritative onboarding for how to think about and extend TheFeed. Always align changes with the principles:
+### Common Pitfalls & Solutions
 
-- Dignity.
-- Clarity.
-- Hierarchy over hiding.
-- Strict typing.
-- Minimal surprises for users.
+**Problem:** Blank assistant bubble in chat
+- **Solution:** Use `/chat-v2` with CopilotKit instead of legacy `/chat`
+
+**Problem:** Icon library breaking after upgrade
+- **Solution:** Pin `lucide-react` version, test dev server immediately, clear `.next`
+- **Reference:** `context/lucide-react-troubleshooting.md`
+
+**Problem:** Next.js/Tailwind native dependencies failing
+- **Solution:** Run `pnpm install` from Windows PowerShell (not WSL) per USER RULES
+
+**Problem:** Type errors in event/post queries
+- **Solution:** Check `src/lib/schema.ts` for latest types, use Drizzle's inferred types
+
+**Problem:** Auth middleware blocking routes
+- **Solution:** Check `src/lib/auth-middleware.ts`, ensure route is in public list
+
+### Performance Considerations
+- Use Server Components by default (`src/app/**/page.tsx`)
+- Client Components only when needed (hooks, interactivity)
+- Optimize images with Next.js `<Image>` component
+- Lazy load heavy components (map, chat) when appropriate
+- Database queries: Always use indexed columns (lat/lng, userId, eventId)
+
+## Known Completed vs Pending
+
+**✅ Completed:**
+- Core map discovery with Mapbox GL
+- AI chat with CopilotKit v2 and tool renderers
+- Better Auth with Google OAuth
+- Phase 1 community social (posts, comments, follows, karma)
+- Phase 3A/3B event backend + creation + detail UI
+- Event calendar discovery with filters
+- Mode-based community layout refactor
+- RSVP and signup sheet functionality
+- Full-page chat layout fixes
+
+**🚧 In Progress:**
+- Migrate remaining features from `/chat` to `/chat-v2`
+- User profile management enhancements
+- Follow/unfollow API routes
+
+**📋 Pending / Future:**
+- Deeper discovery (map overlays, calendar entry points everywhere)
+- Enhanced signup sheet UI (Phase 3C)
+- Host tools and event management dashboard
+- Check-ins and safety flows (Phase 3E)
+- Recurring event UX improvements (Phase 3F)
+- Visual polish passes on community UI
+- Mobile app (React Native)
+- Push notifications
+- Real-time updates (WebSockets)
+
+## Core Principles
+
+This file is your authoritative onboarding for how to think about and extend TheFeed. Always align changes with these principles:
+
+- **Dignity:** Treat users experiencing food insecurity with respect and privacy
+- **Clarity:** Clear information hierarchy, no jargon, accessible language
+- **Hierarchy over hiding:** Use smart filtering/prioritization, don't hide content
+- **Strict typing:** TypeScript all the way, no `any`
+- **Minimal surprises:** Consistent UX patterns, predictable behavior
+- **Speed matters:** Fast food discovery can be life-changing
+- **Community first:** Enable neighbor-to-neighbor support and trust-building
 
 ### USER RULES (DO NOT DELETE)
 

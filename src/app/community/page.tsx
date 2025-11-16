@@ -148,9 +148,10 @@ export default async function CommunityPage() {
       role,
       mood,
       kind,
-      distance: "N/A", // TODO: Calculate distance from user location
+      distance: "N/A", // Will be calculated on client when user location is available
       timeAgo: formatTimeAgo(post.createdAt),
       body: post.content,
+      locationCoords: post.locationCoords || undefined,
       meta: {
         location: post.location || undefined,
         until: post.expiresAt ? formatUntil(post.expiresAt) : undefined,
