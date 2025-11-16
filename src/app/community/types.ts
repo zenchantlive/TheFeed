@@ -15,6 +15,7 @@ export type FeedPost = {
   distance: string;
   timeAgo: string;
   body: string;
+  locationCoords?: { lat: number; lng: number };
   meta?: {
     location?: string;
     until?: string;
