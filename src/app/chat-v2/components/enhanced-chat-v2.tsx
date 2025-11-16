@@ -125,12 +125,6 @@ const contextualTypingMessages = [
   "🤝 Looking for neighbors who can help...",
 ];
 
-interface InsightCard {
-  title: string;
-  value: string;
-  description: string;
-}
-
 export function EnhancedChatV2({
   coords,
   locationLabel,
@@ -225,40 +219,6 @@ export function EnhancedChatV2({
       }));
   }, [messages, timestamps, streamingAssistantId]);
 
-  const lastUserPrompt = React.useMemo(() => {
-    const latest = [...messages]
-      .reverse()
-      .find((message) => message.role === "user" && typeof message.content === "string");
-
-    return typeof latest?.content === "string" ? latest.content : null;
-  }, [messages]);
-
-  const insightCards = React.useMemo<InsightCard[]>(() => {
-    return [
-      {
-        title: "Tonight's ideas",
-        value: isLoading ? "Drafting reply..." : hasChatHistory ? "Ready for seconds" : "Waiting on you",
-        description: hasChatHistory
-          ? "I'll keep building on your latest chat."
-          : "Ask for a meal plan or local resource to begin.",
-      },
-      {
-        title: "Use up these ingredients",
-        value: formatPromptPreview(lastUserPrompt) || "Tell me what's in your kitchen",
-        description: lastUserPrompt
-          ? "Pulled from your most recent message."
-          : "Mention a few ingredients to get recipe ideas.",
-      },
-      {
-        title: "Neighborhood focus",
-        value: locationLabel || (coords ? "Current location" : "Share your area"),
-        description: coords
-          ? "Tuned to spots within ~15 miles."
-          : "Using your saved defaults until you share.",
-      },
-    ];
-  }, [coords, hasChatHistory, isLoading, lastUserPrompt, locationLabel]);
-
   const handleSendMessage = async (rawValue: string) => {
     const text = rawValue.trim();
     if (!text) return;
@@ -279,7 +239,7 @@ export function EnhancedChatV2({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-1 min-h-0 flex-col overflow-hidden bg-[#2d2d34] text-foreground">
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#2d2d34] text-foreground">
       <div
         className="pointer-events-none absolute inset-0 -z-10 opacity-100"
         aria-hidden
@@ -341,9 +301,18 @@ export function EnhancedChatV2({
               prefillPrompt={prefillPrompt}
               onPrefillConsumed={() => setPrefillPrompt(null)}
             />
-          </div>
-        </section>
+          </EmptyState>
+        )}
+        <div ref={messagesEndRef} />
       </div>
+
+      <ComposerDock
+        isDesktop={isDesktopLayout}
+        onSendMessage={handleSendMessage}
+        onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
+        prefillPrompt={prefillPrompt}
+        onPrefillConsumed={() => setPrefillPrompt(null)}
+      />
     </div>
   );
 }
@@ -392,7 +361,7 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     : "Share your location for hyper-local help";
 
   return (
-    <div className="border-b border-border/40 px-4 pb-3 pt-4 sm:px-8">
+    <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
@@ -446,40 +415,6 @@ function ComposerDock({
       </div>
     </div>
   );
-}
-
-interface InsightsRailProps {
-  insights: InsightCard[];
-}
-
-function InsightsRail({ insights }: InsightsRailProps) {
-  return (
-    <aside className="hidden lg:flex flex-col gap-4 rounded-[32px] border border-border/50 bg-card/90 p-5 shadow-[0_25px_70px_rgba(5,9,20,0.2)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
-      {insights.map((card) => (
-        <div
-          key={card.title}
-          className="relative overflow-hidden rounded-3xl border border-border/40 bg-card/95 p-4 shadow-inner"
-        >
-          <span className="absolute inset-y-4 right-4 w-1 rounded-full bg-primary/70" />
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
-            {card.title}
-          </p>
-          <p className="mt-3 text-2xl font-semibold leading-snug text-foreground">
-            {card.value}
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
-        </div>
-      ))}
-    </aside>
-  );
-}
-
-function formatPromptPreview(prompt: string | null): string | null {
-  if (!prompt) return null;
-  if (prompt.length <= 42) {
-    return prompt;
-  }
-  return `${prompt.slice(0, 39)}...`;
 }
 
 function getInitials(name: string) {
