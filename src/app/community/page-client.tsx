@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { CommunityPageClientProps } from "./types";
@@ -10,7 +10,7 @@ import { EventsSection } from "./components/events-section";
 import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
 import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, calculateDistance, formatDistance } from "@/lib/utils";
 
 /**
  * Community Page Client Component
@@ -35,6 +35,7 @@ function CommunityPageView({
 }: CommunityPageClientProps) {
   const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
   const [userLocation, setUserLocation] = useState<string | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleModeToggle = (mode: "hungry" | "full") => {
     setActiveMode(activeMode === mode ? null : mode);
@@ -73,6 +74,12 @@ function CommunityPageView({
 
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          // Store user coordinates
+          setUserCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+
           try {
             // Use Nominatim (OpenStreetMap) for reverse geocoding
             const response = await fetch(
@@ -127,9 +134,34 @@ function CommunityPageView({
     };
   }, []);
 
+  // Calculate distances for posts when user coordinates are available
+  const postsWithDistances = useMemo(() => {
+    if (!userCoords) {
+      return posts;
+    }
+
+    return posts.map((post) => {
+      // If post has coordinates, calculate distance
+      if (post.locationCoords) {
+        const distance = calculateDistance(
+          userCoords.lat,
+          userCoords.lng,
+          post.locationCoords.lat,
+          post.locationCoords.lng
+        );
+        return {
+          ...post,
+          distance: formatDistance(distance),
+        };
+      }
+      // Return post as-is if no coordinates
+      return post;
+    });
+  }, [posts, userCoords]);
+
   // Calculate stats
-  const sharesCount = posts.filter((p) => p.kind === "share").length;
-  const requestsCount = posts.filter((p) => p.kind === "request").length;
+  const sharesCount = postsWithDistances.filter((p) => p.kind === "share").length;
+  const requestsCount = postsWithDistances.filter((p) => p.kind === "request").length;
   const eventsCount = initialEvents.length;
 
   // Determine which events/posts to show based on mode
@@ -297,7 +329,7 @@ function CommunityPageView({
             {/* Community Posts */}
             <div className="space-y-2">
               <h2 className="text-lg font-bold text-foreground">Community chat</h2>
-              <PostFeed posts={posts} mode={postMode} />
+              <PostFeed posts={postsWithDistances} mode={postMode} />
             </div>
           </div>
 
