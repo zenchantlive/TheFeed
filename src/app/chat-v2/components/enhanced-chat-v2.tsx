@@ -250,16 +250,16 @@ export function EnhancedChatV2({
       />
       <ToolRenderers userLocation={coords || null} />
 
-      <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-4 py-4 sm:px-6 lg:px-10 xl:mx-auto xl:max-w-5xl">
-        <section className="relative flex h-full flex-1 min-h-0 flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[#1f1f27] shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
+      <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:px-10 xl:mx-auto xl:max-w-6xl 2xl:max-w-7xl">
+        <section className="relative flex h-full flex-1 min-h-0 flex-col overflow-hidden rounded-[24px] sm:rounded-[30px] border border-white/10 bg-[#1f1f27] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
           <ChatHeroHeader user={user} locationLabel={locationLabel} />
 
           <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
             <div
               className={cn(
-                "flex-1 overflow-y-auto px-4 py-6 sm:px-8",
-                hasChatHistory ? "space-y-4" : "flex items-center justify-center",
-                "mx-auto w-full max-w-[900px]"
+                "flex-1 overflow-y-auto scrollbar-thin px-3 py-4 sm:px-6 sm:py-6 md:px-8",
+                hasChatHistory ? "space-y-3 sm:space-y-4" : "flex items-center justify-center",
+                "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
               )}
             >
               {hasChatHistory ? (
@@ -279,6 +279,7 @@ export function EnhancedChatV2({
                       className="animate-in fade-in duration-300"
                     />
                   )}
+                  <div ref={messagesEndRef} />
                 </>
               ) : (
                 <EmptyState>
@@ -287,11 +288,10 @@ export function EnhancedChatV2({
                     locationLabel={locationLabel}
                     hasMessages={hasChatHistory}
                     onSelectPrompt={handlePromptSelection}
-                    className="mt-8"
+                    className="mt-6 sm:mt-8"
                   />
                 </EmptyState>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <ComposerDock
@@ -301,18 +301,9 @@ export function EnhancedChatV2({
               prefillPrompt={prefillPrompt}
               onPrefillConsumed={() => setPrefillPrompt(null)}
             />
-          </EmptyState>
-        )}
-        <div ref={messagesEndRef} />
+          </div>
+        </section>
       </div>
-
-      <ComposerDock
-        isDesktop={isDesktopLayout}
-        onSendMessage={handleSendMessage}
-        onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
-        prefillPrompt={prefillPrompt}
-        onPrefillConsumed={() => setPrefillPrompt(null)}
-      />
     </div>
   );
 }
@@ -361,24 +352,24 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     : "Share your location for hyper-local help";
 
   return (
-    <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
+    <div className="shrink-0 border-b border-white/10 px-3 pb-2.5 pt-3 sm:px-4 sm:pb-3 sm:pt-4 md:px-6 landscape:py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
             Neighborhood resource network
           </p>
-          <h1 className="mt-1.5 text-xl font-semibold text-foreground dark:text-white">
+          <h1 className="mt-1 sm:mt-1.5 text-lg sm:text-xl font-semibold text-foreground dark:text-white">
             Sous-chef AI
           </h1>
-          <p className="text-xs text-muted-foreground dark:text-white/70">{subtitle}</p>
+          <p className="text-[0.7rem] sm:text-xs text-muted-foreground dark:text-white/70 truncate">{subtitle}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.65rem] font-semibold text-emerald-700 dark:bg-emerald-400/25 dark:text-emerald-50">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <span className="hidden xs:inline-flex rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-semibold text-emerald-700 dark:bg-emerald-400/25 dark:text-emerald-50 transition-all duration-200 hover:bg-emerald-400/25 dark:hover:bg-emerald-400/35">
             Online
           </span>
-          <Avatar className="h-9 w-9 border border-border/60 bg-background/40 dark:border-white/15">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border/60 bg-background/40 dark:border-white/15 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
             <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "You"} />
-            <AvatarFallback>{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
+            <AvatarFallback className="text-xs sm:text-sm">{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
           </Avatar>
         </div>
       </div>
@@ -402,8 +393,8 @@ function ComposerDock({
   onPrefillConsumed,
 }: ComposerDockProps) {
   return (
-    <div className="shrink-0 px-4 pb-6 pt-2 sm:px-8 mx-auto w-full max-w-[900px]">
-      <div className="rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-3 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+    <div className="shrink-0 px-3 pb-4 pt-2 sm:px-4 sm:pb-6 md:px-8 mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]">
+      <div className="rounded-[16px] sm:rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-2 sm:p-3 shadow-[0_15px_40px_rgba(0,0,0,0.35)] sm:shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/20">
         <InputArea
           variant={isDesktop ? "floating" : "surface"}
           onSendMessage={onSendMessage}

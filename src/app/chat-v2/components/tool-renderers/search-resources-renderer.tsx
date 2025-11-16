@@ -57,13 +57,13 @@ function ResourceGrid({
   const displayedResources = isExpanded ? resources : resources.slice(0, 2);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <p className="text-sm font-medium text-foreground">
         Found {resources.length} resource{resources.length !== 1 ? "s" : ""}{" "}
         near you:
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
         {displayedResources.map((resource) => (
           <ResourceCard
             key={resource.id}
@@ -79,7 +79,7 @@ function ResourceGrid({
             variant="outline"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2"
+            className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
           >
             {isExpanded ? (
               <>

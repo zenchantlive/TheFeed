@@ -155,12 +155,12 @@ export function InputField({
         disabled={disabled}
         maxLength={maxLength}
         className={cn(
-          "w-full resize-none rounded-2xl focus:ring-2 focus:ring-primary/20",
-          "px-5 py-3 text-sm leading-relaxed",
+          "w-full resize-none rounded-2xl sm:rounded-3xl focus:ring-2 focus:ring-primary/20",
+          "px-4 py-2.5 sm:px-5 sm:py-3 text-sm leading-relaxed",
           "transition-all duration-300 ease-in-out",
           "focus:outline-none focus:shadow-lg focus:shadow-primary/10",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "pr-16",
+          "pr-14 sm:pr-16",
           showCharCount && "pb-8",
           appearanceClasses[appearance],
           appearance === "glass" && "rounded-full backdrop-blur",
@@ -172,13 +172,14 @@ export function InputField({
           maxHeight: "140px",
           lineHeight: "1.5",
         }}
+        aria-label="Message input"
         {...props}
       />
 
       {showCharCount && (
         <div
           className={cn(
-            "absolute bottom-2 left-5 text-xs transition-colors duration-200",
+            "absolute bottom-2 left-4 sm:left-5 text-[0.65rem] sm:text-xs transition-colors duration-200",
             isNearLimit
               ? "text-orange-600 dark:text-orange-400 font-medium"
               : "text-muted-foreground"
@@ -194,14 +195,16 @@ export function InputField({
           size="icon"
           onClick={onSendMessage}
           className={cn(
-            "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10",
+            "absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-11 w-11 sm:h-10 sm:w-10",
             "transition-all duration-200 ease-in-out",
-            "shadow-md hover:shadow-lg hover:scale-105",
+            "shadow-md hover:shadow-lg hover:scale-105 active:scale-95",
             "rounded-full",
+            "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
             appearance === "glass"
               ? "bg-emerald-400 text-emerald-950 hover:bg-emerald-300"
               : "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
+          aria-label="Send message"
         >
           <Send className="w-4 h-4" />
         </Button>
@@ -316,12 +319,15 @@ export function InputArea({
             onClick={handleVoiceInput}
             disabled={disabled}
             className={cn(
-              "flex-shrink-0 h-10 w-10",
+              "flex-shrink-0 h-11 w-11 sm:h-10 sm:w-10",
+              "transition-all duration-200 hover:scale-105 active:scale-95",
+              "focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
               variant === "floating" &&
-                "rounded-full border-white/30 bg-white/10 text-white hover:bg-white/15",
-              variant !== "floating" && "rounded-full",
-              isListening && "animate-pulse bg-red-500/20 text-red-700"
+                "rounded-full border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/40",
+              variant !== "floating" && "rounded-full hover:border-primary/40",
+              isListening && "animate-pulse bg-red-500/20 text-red-700 border-red-400/40"
             )}
+            aria-label={isListening ? "Recording voice input" : "Start voice input"}
           >
             {isListening ? (
               <Mic className="w-4 h-4" />
