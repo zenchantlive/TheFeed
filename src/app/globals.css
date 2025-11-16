@@ -147,7 +147,7 @@
   }
 
   body {
-    @apply min-h-full;
+    @apply h-full;
   }
 
   body {
