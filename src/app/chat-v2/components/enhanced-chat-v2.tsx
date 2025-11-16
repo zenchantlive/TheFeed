@@ -240,55 +240,59 @@ export function EnhancedChatV2({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#1f1f27] text-foreground">
+    <div className="min-h-screen bg-[#1f1f27] text-foreground">
       {/* Aurora gradient background for glassmorphism effect */}
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-100 aurora-background" aria-hidden />
       <ToolRenderers userLocation={coords || null} />
 
-      {/* Full viewport layout - no padding wrapper, no rounded card */}
-      <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      {/* Fixed header at top */}
+      <div className="fixed top-0 left-0 right-0 z-20 bg-[#1f1f27]/95 backdrop-blur-sm border-b border-white/10">
+        <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      </div>
 
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-        <div
-          className={cn(
-            "flex-1 overflow-y-auto scrollbar-thin px-3 py-4 sm:px-6 sm:py-6 md:px-8",
-            hasChatHistory ? "space-y-3 sm:space-y-4" : "flex items-center justify-center",
-            "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
-          )}
-        >
-          {hasChatHistory ? (
-            <>
-              {formattedMessages.map((message) => (
-                <MessageBubble
-                  key={message.id}
-                  role={message.role}
-                  content={message.content}
-                  timestamp={message.timestamp}
-                  isStreaming={message.isStreaming}
-                  isStructuredContent={message.hasGenerativeContent}
-                />
-              ))}
-              {isLoading && (
-                <TypingIndicator
-                  message={typingMessage}
-                  className="animate-in fade-in duration-300"
-                />
-              )}
-              <div ref={messagesEndRef} />
-            </>
-          ) : (
-            <EmptyState>
-              <EnhancedSmartPrompts
-                coords={coords || null}
-                locationLabel={locationLabel}
-                hasMessages={hasChatHistory}
-                onSelectPrompt={handlePromptSelection}
-                className="mt-6 sm:mt-8"
+      {/* Messages - naturally flowing content with padding for fixed header/composer */}
+      <div
+        className={cn(
+          "pt-[100px] pb-[180px] px-3 sm:px-6 md:px-8",
+          hasChatHistory ? "space-y-3 sm:space-y-4" : "flex min-h-[calc(100vh-100px)] items-center justify-center",
+          "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
+        )}
+      >
+        {hasChatHistory ? (
+          <>
+            {formattedMessages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                role={message.role}
+                content={message.content}
+                timestamp={message.timestamp}
+                isStreaming={message.isStreaming}
+                isStructuredContent={message.hasGenerativeContent}
               />
-            </EmptyState>
-          )}
-        </div>
+            ))}
+            {isLoading && (
+              <TypingIndicator
+                message={typingMessage}
+                className="animate-in fade-in duration-300"
+              />
+            )}
+            <div ref={messagesEndRef} />
+          </>
+        ) : (
+          <EmptyState>
+            <EnhancedSmartPrompts
+              coords={coords || null}
+              locationLabel={locationLabel}
+              hasMessages={hasChatHistory}
+              onSelectPrompt={handlePromptSelection}
+              className="mt-6 sm:mt-8"
+            />
+          </EmptyState>
+        )}
+      </div>
 
+      {/* Fixed composer at bottom - pb-20 accounts for mobile bottom nav */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-[#1f1f27] via-[#1f1f27]/95 to-transparent pt-4 pb-20 sm:pb-4">
         <ComposerDock
           onSendMessage={handleSendMessage}
           onVoiceInput={(transcript) => setPrefillPrompt(transcript)}

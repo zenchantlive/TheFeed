@@ -41,7 +41,7 @@ export default function ChatV2Layout({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-[#1f1f27] text-foreground"
+      className="w-full bg-[#1f1f27] text-foreground"
       style={
         bottomNavHeight
           ? { paddingBottom: `${bottomNavHeight}px` }
