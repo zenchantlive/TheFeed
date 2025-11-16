@@ -1,24 +1,20 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-01-09
+Last updated: 2025-11-15
 
-## Current Focus: Community Page Layout Optimization & Personalization (Phase 3E UI Updates)
+## Current Focus: AI Sous-Chef v2 (CopilotKit) + Community Event Discovery
 
-Branch: `phase-3e-ui-updates`
+Branch: `pr-22` (merged locally for polish)
 
 ### Overview
 
-We have completed a major refactor and optimization of the Community page, transitioning from a 762-line monolithic component to a clean, modular architecture with improved layout and personalization:
+PR #22 introduced the first end-to-end CopilotKit-powered chat experience (`/chat-v2`) plus the calendar view for community events. We now have:
 
-**Key Achievements:**
-- Refactored from monolith to modular component structure (~220 line main orchestrator)
-- Optimized top section layout with page header + 2-column grid
-- Added user personalization (greetings, location detection)
-- Eliminated awkward spacing and whitespace issues
-- Created centered, friendly welcome experience with serif typography
-- Mode toggles moved to page header for cleaner hierarchy
-- Clean separation: location/greeting on left, urgency cards on right
+- A new `EnhancedChatV2` client that streams through CopilotKit, injects user/location context, and renders generative UI blocks for every backend tool (`search_resources`, `search_events`, `search_posts`, `get_directions`, `get_resource_by_id`, `get_user_context`, `log_chat`).
+- Dedicated tool renderer components that hydrate our shadcn cards (ResourceCard, EventCard, PostPreview) directly from CopilotKit `useCopilotAction` hooks.
+- Voice input, smart prompt actions, and a refreshed chat shell that mirrors the Community aesthetic.
+- `/community/events/calendar` which surfaces potlucks & volunteer shifts on a scrollable, filterable calendar, rounding out discovery alongside the feed.
 
-This refactor builds on prior social + events infrastructure (PR #15, PR #16) and prepares for further discovery and calendar tooling.
+We are stabilizing TypeScript + runtime issues uncovered during the migration (copilot render props, auth middleware typing, and the lingering blank bubble bug).
 
 ### AI Sous-Chef Status (January 2025)
 
@@ -31,9 +27,38 @@ This refactor builds on prior social + events infrastructure (PR #15, PR #16) an
   - UI frequently renders blank assistant bubbles and eventually throws `Maximum update depth exceeded`; `useChat` keeps replaying the same assistant message when the provider never finishes streaming.
   - OpenRouter GPT models often stop after `get_user_context` despite the “tool playbook” instructions.
 - **Next steps**:
-  - Instrument `useChat` with `onFinish`/`onError` to log stream lifecycles.
-  - Capture API responses to confirm whether the assistant chunk is empty or not emitted.
-  - Investigate whether `convertToModelMessages` is being called with duplicate messages (possible race between optimistic append and stream replacements).
+- Instrument `useChat` with `onFinish`/`onError` to log stream lifecycles.
+- Capture API responses to confirm whether the assistant chunk is empty or not emitted.
+- Investigate whether `convertToModelMessages` is being called with duplicate messages (possible race between optimistic append and stream replacements).
+
+### AI Sous-Chef v2 Snapshot (CopilotKit)
+
+- `/chat-v2` is a fully client-side experience that mounts inside `<CopilotKit runtimeUrl="/api/copilotkit">`.
+- `page-client.tsx` injects two readable contexts (user profile + geolocation) so tools always know the caller.
+- `EnhancedChatV2` stitches together:
+  - Smart prompts, streaming indicator, typing indicator, and voice capture.
+  - `ToolRenderers` that subscribe to CopilotKit action states and render cards inline (no `dangerouslySetInnerHTML` path).
+  - "Search intent" deeplinks via `?intent=hungry|full` (auto-apply soon).
+- Type safety: `src/app/chat-v2/components/tool-renderers/types.ts` holds shared result types, and every renderer consumes `CopilotRenderProps` instead of raw `any`.
+- Outstanding bugs:
+  - CopilotKit render callbacks still expect non-null React elements (return fragments, never `null`).
+  - Web UI blank-bubble race persists; need to coordinate with CopilotKit streaming vs `useChat`.
+  - Need to remove the temporary console logging for `intent` handling once auto-send ships.
+
+### Tool Renderer Inventory
+- `search_resources` → Resource cards (distance + open state) with CTA buttons.
+- `get_resource_by_id` → Detailed ResourceCard for follow-up drills.
+- `search_events` → EventCard list with RSVP button + location heuristics.
+- `search_posts` → PostPreview list for neighbor offers/requests.
+- `search_events`/`search_resources` know about the user's coordinates (`coords` prop).
+- `get_directions` → Map CTA linking to Google Maps.
+- `get_user_context` → Saved location list pulled from Supabase (Better Auth session enforced by `auth-middleware.ts`).
+
+### Community Event Discovery Snapshot
+- `/community/events/calendar` renders a 7x6 grid (Sun-first), supports `month=YYYY-MM` and `type=all|potluck|volunteer` query params, and links to event detail + host-new-event flows.
+- `src/app/community/events/calendar/utils.ts` handles `parseMonthParam` + guardrails.
+- Calendar is authenticated (redirects home if session missing).
+- Events still populate `events-section` + feed cards; calendar is now the canonical "overview" view.
 
 ### Completed: Community Page Refactor & Layout Optimization ✅
 
@@ -123,6 +148,13 @@ These are planned follow-ups:
   - Further differentiate Events vs. Posts vs. sidebar via subtle color/shadow
   - Verify dark mode contrast for all new UI elements
   - Test serif font rendering across browsers
+
+### AI Sous-Chef / CopilotKit Next Steps
+- [ ] Wire the new `/chat-v2` UI into primary nav and gate `/chat` behind an A/B toggle.
+- [ ] Replace placeholder intent logging with an auto-composed message using CopilotKit's `useCopilotChat` once available.
+- [ ] Investigate streaming duplication w/ CopilotKit team; capture panic logs referenced in dev server output.
+- [ ] Extend renderer types to cover resource availability metadata (open hours) vs text fallback.
+- [ ] Harden `auth-middleware.ts` usage across `/api/...` routes so CopilotKit endpoints never rely on ad-hoc header parsing.
 
 ### Prior Phases (Context)
 

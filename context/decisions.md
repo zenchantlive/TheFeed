@@ -14,6 +14,10 @@ Last updated: 2025-11-07
   - Rationale: More consistent than offset-based for real-time feeds; handles concurrent inserts gracefully; better UX for infinite scroll.
   - Implementation: Use (createdAt, id) composite cursor.
 
+- **2025-11-15** — **Better Auth middleware helper**
+  - Rationale: CopilotKit + new calendar routes call APIs frequently; we need a single helper to validate sessions via Better Auth headers to avoid duplicating logic and accidentally trusting client-provided IDs.
+  - Implementation: `src/lib/auth-middleware.ts` exports `validateSession` and `withAuth`, returning `{ userId, session }` when the Better Auth session is present.
+
 ## Community Features Architecture
 
 - **2025-11-07** — **Separate userProfiles table instead of extending Better Auth user table**
@@ -56,6 +60,18 @@ Last updated: 2025-11-07
 - **2025-11-07** — **Follow system for personalized feed**
   - Rationale: Builds relationships beyond geography; lets users curate their experience; enables "Following" filter.
   - Implementation: Many-to-many self-join on users table.
+
+- **2025-11-15** — **CopilotKit-powered chat v2 with dedicated tool renderers**
+  - Rationale: CopilotKit provides a stable runtime for streaming plus declarative generative UI; using `useCopilotAction` per tool keeps shadcn components in our control, no raw HTML injection.
+  - Implementation: `/chat-v2` route wraps `<CopilotKit>`, `ToolRenderers` map each action to ResourceCard/EventCard/PostPreview/etc., and shared result types live in `tool-renderers/types.ts`.
+
+- **2025-11-15** — **Voice input + smart prompts inside chat shell**
+  - Rationale: Quick actions ("hungry"/"full") and microphone capture reduce friction for the target audience; matches the persona-driven UX from the Community page.
+  - Implementation: `EnhancedChatV2` handles transcripts/headings, `voice-input.tsx` wraps the browser speech APIs, and prompt buttons feed CopilotKit once `useCopilotChat` auto-send is wired up.
+
+- **2025-11-15** — **Calendar view for community events**
+  - Rationale: Events are the hero of the Community experience; a `/community/events/calendar` view lets people see potlucks + volunteer shifts at a glance with filters.
+  - Implementation: Server component fetches via `getEventsWithinRange`, enforces auth, and provides month/type query params while reusing existing Event detail routes.
 
 ## Product Strategy
 

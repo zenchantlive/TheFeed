@@ -1,5 +1,5 @@
 # TheFeed Project Overview (formerly FoodShare)
-Last updated: 2025-11-08
+Last updated: 2025-11-15
 
 ## Vision
 TheFeed is a hyperlocal food-sharing network that connects people experiencing food insecurity with:
@@ -53,31 +53,24 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - Location & urgency features
 - Real-time updates and polish
 
-### **Phase 3: Event Hosting System** (IN PROGRESS - 6 weeks)
+### **Phase 3: Event Hosting System + Discovery** (IN PROGRESS)
 **Goal**: Enable neighbors to organize community potlucks and volunteer opportunities
 
-#### Phase 3A - Event Foundation 🔄 (Current)
-- 6 event tables: events, eventRsvps, signUpSlots, signUpClaims, eventRecurrence, eventAttendance
-- event-queries.ts data layer with RSVP and sign-up slot management
-- Complete API routes for events, RSVPs, and sign-up sheets
-- Capacity limits, waitlist logic, and promotion from waitlist
+- **Phase 3A - Event Foundation ✅**  
+  Completed tables (`events`, `eventRsvps`, `signUpSlots`, `signUpClaims`, `eventRecurrence`, `eventAttendance`), the `event-queries.ts` data layer, and every API route (events CRUD, RSVP workflow, slot claims) with capacity/waitlist logic.
 
-#### Phase 3B - Event Creation & Detail Page ⏳
-- Event creation flow with multi-step form
-- Event detail page with RSVP section
-- Host-only edit/cancel controls
-- Map showing event location
+- **Phase 3B - Event Creation & Detail Page ✅**  
+  Multi-step creation wizard, host-only actions, RSVP cards, and automatic `kind="event"` feed posts.
 
-#### Phase 3C - Sign-Up Sheets ⏳
+- **Phase 3C - Sign-Up Sheets ⏳**
 - Sign-up slot management UI
 - Claim/unclaim slot functionality
 - Potluck coordination interface
 
-#### Phase 3D - Discovery Integration ⏳
-- Event cards in community feed
-- Event pins on map
-- Calendar view for events
-- Event type filters
+- **Phase 3D - Discovery Integration 🔄**
+  - ✅ Event cards ship in Community layout (primary column) with quick actions.
+  - ✅ `/community/events/calendar` delivers the calendar view with month navigation + type filters.
+  - ⏳ Map overlays + global discovery.
 
 #### Phase 3E - Host Tools & Safety ⏳
 - Attendee check-in flow
@@ -114,24 +107,27 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - Partner sponsorships (grocery stores, restaurants)
 - Consider premium features for power users
 
-## Current Focus (2025-11-08)
-**Branch**: `feat/event-hosting-phase3a`
+## Current Focus (PR #22)
+**Branch**: `pr-22` (AI Sous-Chef v2 + event calendar)
 
-### This Sprint (Phase 3A - Event Foundation)
-- ✅ Design 6 event tables in database schema
-- ✅ Create event-queries.ts data layer
-- ✅ Build complete event API routes (events, RSVPs, slots, claims)
-- ✅ Implement capacity limits and waitlist logic
-- 🔄 Update documentation
-- ⏳ Run lint and typecheck
-- ⏳ Commit and create PR
+### This Sprint
+- ✅ Ship `/chat-v2` powered by CopilotKit (`EnhancedChatV2`, voice input, smart prompts, tool renderers).
+- ✅ Inject user + location context via `useCopilotReadable`, enabling tools to respect `radiusMiles`.
+- ✅ Add event calendar page with auth guard, month navigation, and potluck/volunteer filters.
+- ✅ Harden TypeScript across renderer components (`CopilotRenderProps`, shared tool result types).
+- 🔄 Stabilize CopilotKit streaming in the React UI (blank bubble regression).
+- ⏳ Productize the calendar in nav + deepen map integration.
 
-### Previous Sprint (PR #15 - Phase 2 Week 1)
-- ✅ Implemented posts, comments, userProfiles, follows, helpfulMarks tables
-- ✅ Built complete API routes for posts CRUD
-- ✅ Created post-queries.ts with cursor-based pagination
-- ✅ Connected community page to real database
-- ✅ Enabled actual post creation
+### Previous Sprint (Community Layout Refresh)
+- ✅ Modularized Community page (page-client orchestrator + components).
+- ✅ Added personalization (mode-aware greetings, location badge, urgency cards).
+- ✅ Kept events primary, posts secondary, with smart composer logic.
+
+## AI Sous-Chef v2 (CopilotKit) Highlights
+- `/chat-v2/page-client.tsx` wraps the experience in `<CopilotKit runtimeUrl="/api/copilotkit">`.
+- `ToolRenderers` subscribe to `useCopilotAction` for every backend tool so cards render as soon as actions complete.
+- `scripts/dev-terminal-chat.ts` + `scripts/test-chat-tools.ts` still exercise tools outside of CopilotKit for debugging.
+- Known issue: CopilotKit stream duplication leads to blank assistant bubbles; capturing logs via dev server panic file in `%LOCALAPPDATA%\Temp`.
 
 ## Key Files
 

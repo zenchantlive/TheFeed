@@ -26,12 +26,12 @@ You are expected to:
 - Maps: Mapbox GL JS (`react-map-gl`)
 - AI: Vercel AI SDK 5 + OpenRouter (`openai/gpt-4.1-mini` default)
 
-### AI Chat Status (January 2025)
+### AI Chat Status (CopilotKit v2)
 
-- `src/lib/ai-tools.ts` exports `sousChefTools` (7 tools) used by `/api/chat/route.ts`, `scripts/dev-terminal-chat.ts`, and `scripts/test-chat-tools.ts`.
-- `src/app/chat/page.tsx` was redesigned; it now streams via `useChat` with `{ userId, location, radiusMiles }` in the POST body.
-- `scripts/dev-terminal-chat.ts` provides a REPL for debugging; Anthropic models (e.g., `claude-sonnet-4.5`) make the correct tool calls. OpenRouter GPT models often stop after `get_user_context` despite the prompt “tool playbook.”
-- Known regression: the web UI intermittently renders blank assistant bubbles and logs `Maximum update depth exceeded`. The terminal harness works; the React stack seems to replace the same assistant message repeatedly when the provider drops the stream.
+- `/chat-v2` is the active playground for the Sous-Chef. `page-client.tsx` wraps the UI in `<CopilotKit runtimeUrl="/api/copilotkit">`, injects user + location context via `useCopilotReadable`, and renders `<EnhancedChatV2>` for the experience.
+- `src/app/chat-v2/components/tool-renderers/` defines one renderer per tool (`search_resources`, `search_events`, `search_posts`, `get_directions`, `get_resource_by_id`, `get_user_context`, `log_chat`). Do **not** use `dangerouslySetInnerHTML`; use these typed hooks.
+- `src/lib/ai-tools.ts` still exports `sousChefTools` for both CopilotKit and the terminal harnesses (`scripts/dev-terminal-chat.ts`, `scripts/test-chat-tools.ts`).
+- Legacy `/chat` still streams via `useChat`; it suffers from the blank assistant bubble bug when the provider drops the stream. Keep logging until we replace it entirely with CopilotKit.
 
 ## Essential Commands
 
@@ -71,12 +71,14 @@ Use pnpm exclusively.
 
 ### AI Chat System
 
-- `src/app/chat/page.tsx`: Chat UI.
-- `src/app/api/chat/route.ts`: Tools + OpenRouter integration.
-- Tools:
-  - `search_food_banks`
-  - `get_directions`
-  - `check_hours`
+- `src/app/chat-v2/page.tsx` + `page-client.tsx`: CopilotKit entry point (preferred going forward).
+- `src/app/chat-v2/components/`:
+  - `enhanced-chat-v2.tsx`: Shell w/ smart prompts, typing indicator, tool renderers, and message list.
+  - `tool-renderers/`: Declarative renderers driven by `useCopilotAction`.
+  - `voice-input.tsx`, `actions/smart-prompts.tsx`, `components/ui/*`: Theming + layout pieces shared across chat.
+- `/api/copilotkit` (in `src/app/api/copilotkit/route.ts`) passes CopilotKit requests through `sousChefTools`.
+- `scripts/dev-terminal-chat.ts` + `scripts/test-chat-tools.ts` exercise the same tool stack headlessly.
+- Legacy `/chat` (`src/app/chat/page.tsx`) still exists for regression testing but should not be extended without a plan to merge into `/chat-v2`.
 
 Use `openrouter()` provider; do NOT call OpenAI directly.
 
@@ -231,15 +233,11 @@ The page is designed to get people to food resources FAST while maintaining comm
 - Use smart filtering/prioritization instead of hiding content
 - Keep the clean, muted color palette
 
-### Event Hosting System
+### Event Hosting & Discovery System
 
-Backend and core UI implemented as documented in `context/state.md`:
-- Event creation wizard.
-- Event detail page.
-- Sign-up sheet display.
-- Events create corresponding posts (`kind = "event"`).
-
-Follow `context/state.md` for latest event system status.
+- Backend tables, event wizard, RSVP flows, and sign-up sheet display are all implemented (see `context/state.md` for schema recap).
+- `/community/events/calendar` is the canonical discovery surface: auth-guarded, supports `month=` + `type=` filters, and links back to event detail + creation.
+- Events still create `kind="event"` posts so they show up in the Community feed.
 
 ## Context Files
 
@@ -296,7 +294,7 @@ When working in this repo:
   - Initial mode-based community layout refactor (this document + state.md describe it).
 
 - Pending / Future:
-  - Deeper discovery (event cards in main feed, calendar view).
+  - Deeper discovery (map overlays, integrating calendar entry points everywhere).
   - Full signup sheet UI (Phase 3C).
   - Host tools, check-ins, safety flows (Phase 3E).
   - Recurring event UX (Phase 3F).
