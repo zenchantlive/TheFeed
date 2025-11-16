@@ -256,10 +256,39 @@ function EventPopup({
   event: MapEventPin;
   onClose: () => void;
 }) {
+  const [isRsvping, setIsRsvping] = useState(false);
+  const [guestCount, setGuestCount] = useState(1);
+  const [rsvpSuccess, setRsvpSuccess] = useState(false);
+  const [rsvpMessage, setRsvpMessage] = useState("");
+
+  const handleQuickRsvp = async () => {
+    setIsRsvping(true);
+    try {
+      const response = await fetch(`/api/events/${event.id}/rsvp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ guestCount }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRsvpSuccess(true);
+        setRsvpMessage(data.message || "RSVP confirmed!");
+      } else {
+        setRsvpMessage(data.error || "Failed to RSVP");
+      }
+    } catch (error) {
+      setRsvpMessage("Failed to RSVP. Please try again.");
+    } finally {
+      setIsRsvping(false);
+    }
+  };
+
   return (
-    <div className="fixed bottom-4 left-1/2 z-30 w-full max-w-md -translate-x-1/2 rounded-3xl border border-border/60 bg-card/95 p-5 shadow-2xl">
+    <div className="fixed bottom-4 left-1/2 z-30 w-full max-w-md -translate-x-1/2 rounded-3xl border border-border/60 bg-card/95 p-5 shadow-2xl backdrop-blur">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5" />
             {format(event.startTime, "EEEE, MMM d")}
@@ -279,6 +308,7 @@ function EventPopup({
             <span className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
               {event.rsvpCount} attending
+              {event.capacity && ` / ${event.capacity}`}
             </span>
           </div>
           <Badge
@@ -289,14 +319,52 @@ function EventPopup({
           </Badge>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
+          ×
         </Button>
       </div>
-      <div className="mt-4 flex justify-end">
-        <Button asChild>
-          <Link href={`/community/events/${event.id}`}>See details</Link>
-        </Button>
-      </div>
+
+      {rsvpSuccess ? (
+        <div className="mt-4 rounded-lg bg-primary/10 p-3 text-sm text-primary">
+          ✓ {rsvpMessage}
+        </div>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <label htmlFor="guestCount" className="text-sm font-medium">
+              Guests:
+            </label>
+            <select
+              id="guestCount"
+              value={guestCount}
+              onChange={(e) => setGuestCount(parseInt(e.target.value))}
+              className="rounded-lg border border-border bg-background px-3 py-1 text-sm"
+              disabled={isRsvping}
+            >
+              {[1, 2, 3, 4, 5].map((count) => (
+                <option key={count} value={count}>
+                  {count} {count === 1 ? "person" : "people"}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleQuickRsvp}
+              disabled={isRsvping}
+              className="flex-1"
+              size="sm"
+            >
+              {isRsvping ? "RSVPing..." : "Quick RSVP"}
+            </Button>
+            <Button asChild variant="secondary" size="sm">
+              <Link href={`/community/events/${event.id}`}>Full details</Link>
+            </Button>
+          </div>
+          {rsvpMessage && !rsvpSuccess && (
+            <p className="text-xs text-destructive">{rsvpMessage}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
