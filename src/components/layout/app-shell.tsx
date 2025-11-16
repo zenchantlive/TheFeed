@@ -11,17 +11,22 @@ export function AppShell({ children }: { children: ReactNode }) {
   const segments = useSelectedLayoutSegments();
   const isChatV2 = segments[0] === "chat-v2";
 
+  const containerClassName = cn(
+    "flex flex-col bg-background",
+    isChatV2 ? "h-screen" : "min-h-screen"
+  );
+
   const mainClassName = cn(
-    "flex-1 pb-28",
-    isChatV2 && "flex min-h-0 flex-1 overflow-hidden pb-0"
+    "flex-1",
+    isChatV2 ? "flex min-h-0 overflow-hidden pb-0" : "pb-28"
   );
 
   return (
     <>
-      <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader />
+      <div className={containerClassName}>
+        {!isChatV2 && <SiteHeader />}
         <main className={mainClassName}>{children}</main>
-        <SiteFooter />
+        {!isChatV2 && <SiteFooter />}
       </div>
       <BottomNav />
     </>
