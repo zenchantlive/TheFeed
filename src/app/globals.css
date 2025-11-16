@@ -154,3 +154,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .aurora-background {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.3), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(236, 72, 153, 0.15), transparent),
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(59, 130, 246, 0.15), transparent),
+      linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+  }
+}

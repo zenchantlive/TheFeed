@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useCopilotAction } from "@copilotkit/react-core";
 import { EventCard } from "../event-card";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { CopilotRenderProps, SearchEventResult } from "./types";
 
 type SearchEventsRendererProps = {
@@ -52,36 +50,33 @@ function EventGrid({
   events: SearchEventResult[];
   userLocation: { lat: number; lng: number } | null;
 }) {
-  // This component can be replaced by a generic PaginatedGrid.
-  // The implementation would be moved to a shared component file,
-  // and this file would use it like:
-  /*
-  return (
-    <PaginatedGrid
-      items={events}
-      itemNoun="event"
-      renderItem={(event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-          userLocation={userLocation}
-        />
-      )}
-    />
-  );
-  */
-  const [isExpanded, setIsExpanded] = useState(false);
-  const hasMore = events.length > 2;
-  const displayedEvents = isExpanded ? events : events.slice(0, 2);
+  const now = new Date();
+  const upcomingEvents = events
+    .map((event) => ({ ...event, startDate: new Date(event.startsAt) }))
+    .filter((event) => !isNaN(event.startDate.getTime()) && event.startDate >= now)
+    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+  const pastCount = events.length - upcomingEvents.length;
+
+  if (upcomingEvents.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 text-sm text-muted-foreground">
+        No upcoming events found. Try widening your search radius or asking about another day.
+      </div>
+    );
+  }
+
+  const visibleEvents = upcomingEvents.slice(0, 2);
+  const hiddenEvents = upcomingEvents.slice(2);
 
   return (
-    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <p className="text-sm font-medium text-foreground">
-        Found {events.length} event{events.length !== 1 ? "s" : ""}:
+        Found {upcomingEvents.length} upcoming event{upcomingEvents.length !== 1 ? "s" : ""}
+        {pastCount > 0 ? ` (filtered ${pastCount} past event${pastCount !== 1 ? "s" : ""})` : ""}:
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-        {displayedEvents.map((event) => (
+      <div className="space-y-3">
+        {visibleEvents.map((event) => (
           <EventCard
             key={event.id}
             event={event}
@@ -90,27 +85,24 @@ function EventGrid({
         ))}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Show less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Show {events.length - 2} more
-              </>
-            )}
-          </Button>
-        </div>
+      {hiddenEvents.length > 0 && (
+        <details className="group rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm">
+          <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-sm font-medium text-foreground">
+            <span>
+              Show {hiddenEvents.length} more upcoming event{hiddenEvents.length !== 1 ? "s" : ""}
+            </span>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+          </summary>
+          <div className="space-y-3 px-4 pb-4 pt-2">
+            {hiddenEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                userLocation={userLocation}
+              />
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );

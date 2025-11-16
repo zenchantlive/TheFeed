@@ -114,6 +114,7 @@ interface DisplayMessage {
   content: string | React.ReactNode;
   timestamp?: string;
   isStreaming?: boolean;
+  hasGenerativeContent?: boolean;
 }
 
 const contextualTypingMessages = [
@@ -151,7 +152,6 @@ export function EnhancedChatV2({
   const [timestamps, setTimestamps] = React.useState<Record<string, string>>({});
   const processedMessageIds = React.useRef<Set<string>>(new Set());
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const isDesktopLayout = useIsDesktopLayout();
 
   useChatSuggestions({ coords: coords || null });
 
@@ -216,6 +216,7 @@ export function EnhancedChatV2({
         content: renderMessageContent(message),
         timestamp: timestamps[message.id] ? formatTimestamp(timestamps[message.id]) : undefined,
         isStreaming: streamingAssistantId === message.id,
+        hasGenerativeContent: typeof message.generativeUI === "function",
       }));
   }, [messages, timestamps, streamingAssistantId]);
 
@@ -239,15 +240,9 @@ export function EnhancedChatV2({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#2d2d34] text-foreground">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-100"
-        aria-hidden
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(33,33,41,0.98) 0%, rgba(22,22,26,0.98) 65%, rgba(18,18,22,0.98) 100%)",
-        }}
-      />
+    <div className="relative flex h-full w-full flex-col overflow-hidden text-foreground">
+      {/* Aurora gradient background for glassmorphism effect */}
+      <div className="pointer-events-none fixed inset-0 -z-10 opacity-100 aurora-background" aria-hidden />
       <ToolRenderers userLocation={coords || null} />
 
       <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:px-10 xl:mx-auto xl:max-w-6xl 2xl:max-w-7xl">
@@ -271,6 +266,7 @@ export function EnhancedChatV2({
                       content={message.content}
                       timestamp={message.timestamp}
                       isStreaming={message.isStreaming}
+                      isStructuredContent={message.hasGenerativeContent}
                     />
                   ))}
                   {isLoading && (
@@ -295,7 +291,6 @@ export function EnhancedChatV2({
             </div>
 
             <ComposerDock
-              isDesktop={isDesktopLayout}
               onSendMessage={handleSendMessage}
               onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
               prefillPrompt={prefillPrompt}
@@ -355,19 +350,16 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     <div className="shrink-0 border-b border-white/10 px-3 pb-2.5 pt-3 sm:px-4 sm:pb-3 sm:pt-4 md:px-6 landscape:py-2">
       <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-muted-foreground/80 dark:text-white/60">
+          <p className="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-white/60">
             Neighborhood resource network
           </p>
-          <h1 className="mt-1 sm:mt-1.5 text-lg sm:text-xl font-semibold text-foreground dark:text-white">
-            Sous-chef AI
+          <h1 className="mt-1 sm:mt-1.5 text-lg sm:text-xl font-semibold text-white">
+            TheFeed
           </h1>
-          <p className="text-[0.7rem] sm:text-xs text-muted-foreground dark:text-white/70 truncate">{subtitle}</p>
+          <p className="text-[0.7rem] sm:text-xs text-white/70 truncate">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <span className="hidden xs:inline-flex rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-[0.6rem] sm:text-[0.65rem] font-semibold text-emerald-700 dark:bg-emerald-400/25 dark:text-emerald-50 transition-all duration-200 hover:bg-emerald-400/25 dark:hover:bg-emerald-400/35">
-            Online
-          </span>
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-border/60 bg-background/40 dark:border-white/15 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-white/15 bg-background/40 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
             <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "You"} />
             <AvatarFallback className="text-xs sm:text-sm">{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
           </Avatar>
@@ -378,7 +370,6 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
 }
 
 interface ComposerDockProps {
-  isDesktop: boolean;
   onSendMessage: (message: string) => void;
   onVoiceInput: (transcript: string) => void;
   prefillPrompt: string | null;
@@ -386,7 +377,6 @@ interface ComposerDockProps {
 }
 
 function ComposerDock({
-  isDesktop,
   onSendMessage,
   onVoiceInput,
   prefillPrompt,
@@ -394,9 +384,21 @@ function ComposerDock({
 }: ComposerDockProps) {
   return (
     <div className="shrink-0 px-3 pb-4 pt-2 sm:px-4 sm:pb-6 md:px-8 mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]">
-      <div className="rounded-[16px] sm:rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-2 sm:p-3 shadow-[0_15px_40px_rgba(0,0,0,0.35)] sm:shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all duration-200 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/20">
+      {/* Single glassmorphism composer - no card wrapper nesting */}
+      <div
+        className={cn(
+          // Glassmorphism styles applied directly
+          "rounded-full",
+          "bg-white/5 backdrop-blur-[15px]",
+          "border border-white/10",
+          "shadow-[0_4px_30px_rgba(0,0,0,0.1)]",
+          "transition-all duration-200 ease-out",
+          "hover:bg-white/8 hover:border-white/20 hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)]",
+          "px-4 py-2 sm:px-5 sm:py-2.5"
+        )}
+      >
         <InputArea
-          variant={isDesktop ? "floating" : "surface"}
+          variant="floating"
           onSendMessage={onSendMessage}
           onVoiceInput={onVoiceInput}
           placeholder="Ask Sous-chef about meals, resources, or ways to share..."
@@ -414,19 +416,4 @@ function getInitials(name: string) {
   if (parts.length === 0) return "U";
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-}
-
-function useIsDesktopLayout(query = "(min-width: 1024px)") {
-  const [matches, setMatches] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const media = window.matchMedia(query);
-    const handleChange = () => setMatches(media.matches);
-    handleChange();
-    media.addEventListener("change", handleChange);
-    return () => media.removeEventListener("change", handleChange);
-  }, [query]);
-
-  return matches;
 }

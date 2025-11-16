@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useCopilotAction } from "@copilotkit/react-core";
 import { ResourceCard } from "../resource-card";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { CopilotRenderProps, SearchResourceResult } from "./types";
 
 type SearchResourcesRendererProps = {
@@ -52,19 +50,25 @@ function ResourceGrid({
   resources: SearchResourceResult[];
   userLocation: { lat: number; lng: number } | null;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const hasMore = resources.length > 2;
-  const displayedResources = isExpanded ? resources : resources.slice(0, 2);
+  if (resources.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card/60 p-4 text-sm text-muted-foreground">
+        No nearby resources found.
+      </div>
+    );
+  }
+
+  const primaryResources = resources.slice(0, 2);
+  const hiddenResources = resources.slice(2);
 
   return (
-    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <p className="text-sm font-medium text-foreground">
-        Found {resources.length} resource{resources.length !== 1 ? "s" : ""}{" "}
-        near you:
+        Found {resources.length} resource{resources.length !== 1 ? "s" : ""} near you:
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-        {displayedResources.map((resource) => (
+      <div className="space-y-3">
+        {primaryResources.map((resource) => (
           <ResourceCard
             key={resource.id}
             resource={resource}
@@ -73,27 +77,24 @@ function ResourceGrid({
         ))}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95"
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Show less
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Show {resources.length - 2} more
-              </>
-            )}
-          </Button>
-        </div>
+      {hiddenResources.length > 0 && (
+        <details className="group rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm">
+          <summary className="flex cursor-pointer items-center justify-between px-4 py-2 text-sm font-medium text-foreground">
+            <span>
+              Show {hiddenResources.length} more resource{hiddenResources.length > 1 ? "s" : ""}
+            </span>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+          </summary>
+          <div className="space-y-3 px-4 pb-4 pt-2">
+            {hiddenResources.map((resource) => (
+              <ResourceCard
+                key={resource.id}
+                resource={resource}
+                userLocation={userLocation}
+              />
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );
