@@ -346,38 +346,86 @@ button[type="submit"]:disabled {
 }
 
 /* ============================================
-   SCROLLBAR - Subtle
+   SCROLLBAR - Subtle & Responsive
    ============================================ */
 
-[class*="copilotKitMessages"]::-webkit-scrollbar,
-div[role="log"]::-webkit-scrollbar {
-  width: 8px !important;
+/* Default scrollbar for all overflow-y-auto elements */
+.overflow-y-auto,
+.scrollbar-thin,
+[class*="copilotKitMessages"],
+div[role="log"] {
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: hsl(220 15% 85%) transparent !important;
 }
 
+.dark .overflow-y-auto,
+.dark .scrollbar-thin,
+.dark [class*="copilotKitMessages"],
+.dark div[role="log"] {
+  scrollbar-color: hsl(215 20% 35%) transparent !important;
+}
+
+/* Webkit scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar,
+[class*="copilotKitMessages"]::-webkit-scrollbar,
+div[role="log"]::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track,
+.scrollbar-thin::-webkit-scrollbar-track,
 [class*="copilotKitMessages"]::-webkit-scrollbar-track,
 div[role="log"]::-webkit-scrollbar-track {
   background: transparent !important;
 }
 
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb,
 [class*="copilotKitMessages"]::-webkit-scrollbar-thumb,
 div[role="log"]::-webkit-scrollbar-thumb {
   background: hsl(220 15% 85%) !important;
-  border-radius: 4px !important;
+  border-radius: 2px !important;
+  transition: background 150ms ease !important;
 }
 
+.dark .overflow-y-auto::-webkit-scrollbar-thumb,
+.dark .scrollbar-thin::-webkit-scrollbar-thumb,
 .dark [class*="copilotKitMessages"]::-webkit-scrollbar-thumb,
 .dark div[role="log"]::-webkit-scrollbar-thumb {
   background: hsl(215 20% 35%) !important;
 }
 
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.scrollbar-thin::-webkit-scrollbar-thumb:hover,
 [class*="copilotKitMessages"]::-webkit-scrollbar-thumb:hover,
 div[role="log"]::-webkit-scrollbar-thumb:hover {
   background: hsl(220 15% 75%) !important;
 }
 
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover,
 .dark [class*="copilotKitMessages"]::-webkit-scrollbar-thumb:hover,
 .dark div[role="log"]::-webkit-scrollbar-thumb:hover {
   background: hsl(215 20% 45%) !important;
+}
+
+/* Wider scrollbar on larger screens */
+@media (min-width: 640px) {
+  .overflow-y-auto::-webkit-scrollbar,
+  .scrollbar-thin::-webkit-scrollbar,
+  [class*="copilotKitMessages"]::-webkit-scrollbar,
+  div[role="log"]::-webkit-scrollbar {
+    width: 8px !important;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar-thumb,
+  .scrollbar-thin::-webkit-scrollbar-thumb,
+  [class*="copilotKitMessages"]::-webkit-scrollbar-thumb,
+  div[role="log"]::-webkit-scrollbar-thumb {
+    border-radius: 4px !important;
+  }
 }
 
 /* ============================================

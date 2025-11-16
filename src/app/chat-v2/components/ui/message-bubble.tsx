@@ -53,43 +53,46 @@ export function MessageBubble({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Role-specific styling
+  // Role-specific styling with enhanced responsiveness
   const roleStyles = {
     user: {
       container: "ml-auto",
       bubble: cn(
         "bg-primary text-primary-foreground border border-primary/20",
-        "hover:shadow-md hover:shadow-primary/20",
-        "transform transition-all duration-200 hover:-translate-y-0.5"
+        "hover:shadow-lg hover:shadow-primary/25",
+        "transform transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.01]",
+        "active:scale-[0.99]"
       ),
       avatar: "order-2",
-      content: "text-center"
+      content: "text-left"
     },
     assistant: {
       container: "mr-auto",
       bubble: cn(
-        "bg-card text-card-foreground border border-border",
-        "hover:shadow-md hover:shadow-border/30",
-        "transform transition-all duration-200 hover:-translate-y-0.5"
+        "bg-card text-card-foreground border border-border/60",
+        "hover:shadow-lg hover:shadow-border/40",
+        "transform transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.01]",
+        "dark:bg-card/95 dark:border-white/10"
       ),
       avatar: "order-1",
-      content: "text-center"
+      content: "text-left"
     }
   };
 
   const currentRole = roleStyles[role];
   const bubbleContent = typeof content === "string" ? (
-    <div className="prose prose-sm max-w-none">
-      <p className="whitespace-pre-wrap">{content}</p>
+    <div className="prose prose-sm max-w-none dark:prose-invert">
+      <p className="whitespace-pre-wrap leading-relaxed">{content}</p>
     </div>
   ) : content;
 
   return (
     <div
       className={cn(
-        "flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
-        role === "user" ? "max-w-[50%] ml-auto" : "max-w-[50%] mr-auto",
-        "sm:max-w-[55%]",
+        "flex gap-2 sm:gap-3 mb-3 sm:mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        role === "user"
+          ? "max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] xl:max-w-[50%] ml-auto"
+          : "max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] xl:max-w-[50%] mr-auto",
         currentRole.container,
         className
       )}
@@ -99,13 +102,13 @@ export function MessageBubble({
       {/* Avatar */}
       {role === "assistant" && (
         <Avatar className={cn(
-          "w-8 h-8 flex-shrink-0",
+          "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 ring-2 ring-transparent transition-all duration-200",
+          "hover:ring-primary/20",
           currentRole.avatar
         )}>
           <AvatarImage src={avatar} alt="Assistant" />
           <AvatarFallback className={cn(
-            "bg-primary/20 text-primary",
-            role === "assistant" && "bg-muted text-muted-foreground"
+            "bg-muted text-muted-foreground text-xs sm:text-sm font-medium"
           )}>
             {avatarFallback || "AI"}
           </AvatarFallback>
@@ -119,12 +122,12 @@ export function MessageBubble({
       )}>
         <div className="relative">
           <div className={cn(
-            "rounded-2xl px-4 py-3",
+            "rounded-2xl sm:rounded-3xl px-3 py-2.5 sm:px-4 sm:py-3",
             "shadow-sm border",
             "transition-all duration-200 ease-in-out",
             "backdrop-blur-sm",
             isStreaming && "animate-pulse",
-            isHovered && "shadow-md",
+            isHovered && "shadow-xl",
             currentRole.bubble
           )}>
             {/* Streaming indicator */}
@@ -132,24 +135,25 @@ export function MessageBubble({
             <div className="flex items-center gap-2 mb-2">
               <div className="flex space-x-1">
                 <div className={cn(
-                  "w-2 h-2 bg-primary-foreground/60 rounded-full",
+                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
                   "animate-bounce"
                 )} style={{ animationDelay: "0ms" }} />
                 <div className={cn(
-                  "w-2 h-2 bg-primary-foreground/60 rounded-full", 
+                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
                   "animate-bounce"
                 )} style={{ animationDelay: "150ms" }} />
                 <div className={cn(
-                  "w-2 h-2 bg-primary-foreground/60 rounded-full",
+                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
                   "animate-bounce"
                 )} style={{ animationDelay: "300ms" }} />
               </div>
-              <span className="text-xs opacity-75">Typing...</span>
+              <span className="text-[0.7rem] sm:text-xs opacity-75">Typing...</span>
             </div>
           )}
 
           <div className={cn(
-            "text-sm leading-relaxed text-center"
+            "text-sm leading-relaxed",
+            currentRole.content
           )}>
             {bubbleContent}
           </div>
@@ -198,12 +202,13 @@ export function MessageBubble({
       {/* User avatar (if needed) */}
       {role === "user" && (
         <Avatar className={cn(
-          "w-8 h-8 flex-shrink-0",
+          "w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 ring-2 ring-transparent transition-all duration-200",
+          "hover:ring-primary/30",
           currentRole.avatar
         )}>
           <AvatarImage src={avatar} alt="You" />
           <AvatarFallback className={cn(
-            "bg-primary/20 text-primary"
+            "bg-primary/20 text-primary text-xs sm:text-sm font-medium"
           )}>
             {avatarFallback || "You"}
           </AvatarFallback>
