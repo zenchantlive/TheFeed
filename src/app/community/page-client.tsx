@@ -186,7 +186,7 @@ function CommunityPageView({
               )}
             >
               <UtensilsCrossed className="h-4 w-4" />
-              <span>I'm hungry</span>
+              <span>I&apos;m hungry</span>
             </button>
             <button
               type="button"
@@ -199,7 +199,7 @@ function CommunityPageView({
               )}
             >
               <HandHeart className="h-4 w-4" />
-              <span>I'm Full</span>
+              <span>I&apos;m Full</span>
             </button>
           </div>
         </div>
@@ -371,7 +371,7 @@ function CommunityPageView({
               <div className="rounded-xl border border-border/60 bg-card p-4">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <Sparkles className="h-4 w-4 text-primary" />
-                  Tonight's hot dishes
+                  Tonight&apos;s hot dishes
                 </h3>
                 <div className="mt-3 space-y-2">
                   {hotItems.slice(0, 3).map((item) => (

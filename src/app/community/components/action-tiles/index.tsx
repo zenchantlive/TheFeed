@@ -34,7 +34,7 @@ export function ActionTiles({ onSelectAction }: ActionTilesProps) {
           Quick Actions
         </h2>
         <span className="text-xs text-slate-500 dark:text-slate-500">
-          Choose what you'd like to do
+          Choose what you&apos;d like to do
         </span>
       </div>
 

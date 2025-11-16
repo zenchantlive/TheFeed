@@ -16,6 +16,59 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
 import { formatTimestamp } from "../lib/date-utils";
 
+function useBottomNavHeight() {
+  const [height, setHeight] = React.useState(0);
+
+  React.useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let nav: HTMLElement | null = document.querySelector<HTMLElement>("[data-bottom-nav]");
+    let resizeObserver: ResizeObserver | null = null;
+
+    const update = () => {
+      if (nav) {
+        setHeight(nav.getBoundingClientRect().height);
+      }
+    };
+
+    const setupObservers = () => {
+      if (!nav) return;
+      update();
+      window.addEventListener("resize", update);
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(update);
+        resizeObserver.observe(nav);
+      }
+    };
+
+    const cleanupObservers = () => {
+      window.removeEventListener("resize", update);
+      resizeObserver?.disconnect();
+    };
+
+    if (nav) {
+      setupObservers();
+    } else {
+      const mutationObserver = new MutationObserver((mutations, observer) => {
+        nav = document.querySelector<HTMLElement>("[data-bottom-nav]");
+        if (nav) {
+          observer.disconnect();
+          setupObservers();
+        }
+      });
+      mutationObserver.observe(document.body, { childList: true, subtree: true });
+      return () => {
+        mutationObserver.disconnect();
+        cleanupObservers();
+      };
+    }
+
+    return cleanupObservers;
+  }, []);
+
+  return height;
+}
+
 interface EnhancedChatV2Props {
   coords?: { lat: number; lng: number } | null;
   locationLabel?: string | null;
@@ -152,6 +205,7 @@ export function EnhancedChatV2({
   const [timestamps, setTimestamps] = React.useState<Record<string, string>>({});
   const processedMessageIds = React.useRef<Set<string>>(new Set());
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const bottomNavHeight = useBottomNavHeight();
 
   useChatSuggestions({ coords: coords || null });
 
@@ -240,64 +294,69 @@ export function EnhancedChatV2({
   };
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden text-foreground">
+    <div className="min-h-screen bg-[#1f1f27] text-foreground">
       {/* Aurora gradient background for glassmorphism effect */}
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-100 aurora-background" aria-hidden />
       <ToolRenderers userLocation={coords || null} />
 
-      <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:px-10 xl:mx-auto xl:max-w-6xl 2xl:max-w-7xl">
-        <section className="relative flex h-full flex-1 min-h-0 flex-col overflow-hidden rounded-[24px] sm:rounded-[30px] border border-white/10 bg-[#1f1f27] shadow-[0_20px_60px_rgba(0,0,0,0.35)] sm:shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
-          <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      {/* Fixed header at top */}
+      <div className="fixed top-0 left-0 right-0 z-20 bg-[#1f1f27]/95 backdrop-blur-sm border-b border-white/10">
+        <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      </div>
 
-          <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-            <div
-              className={cn(
-                "flex-1 overflow-y-auto scrollbar-thin px-3 py-4 sm:px-6 sm:py-6 md:px-8",
-                hasChatHistory ? "space-y-3 sm:space-y-4" : "flex items-center justify-center",
-                "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
-              )}
-            >
-              {hasChatHistory ? (
-                <>
-                  {formattedMessages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      role={message.role}
-                      content={message.content}
-                      timestamp={message.timestamp}
-                      isStreaming={message.isStreaming}
-                      isStructuredContent={message.hasGenerativeContent}
-                    />
-                  ))}
-                  {isLoading && (
-                    <TypingIndicator
-                      message={typingMessage}
-                      className="animate-in fade-in duration-300"
-                    />
-                  )}
-                  <div ref={messagesEndRef} />
-                </>
-              ) : (
-                <EmptyState>
-                  <EnhancedSmartPrompts
-                    coords={coords || null}
-                    locationLabel={locationLabel}
-                    hasMessages={hasChatHistory}
-                    onSelectPrompt={handlePromptSelection}
-                    className="mt-6 sm:mt-8"
-                  />
-                </EmptyState>
-              )}
-            </div>
-
-            <ComposerDock
-              onSendMessage={handleSendMessage}
-              onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
-              prefillPrompt={prefillPrompt}
-              onPrefillConsumed={() => setPrefillPrompt(null)}
+      {/* Messages - naturally flowing content with padding for fixed header/composer */}
+      <div
+        className={cn(
+          "pt-[100px] px-3 sm:px-6 md:px-8",
+          hasChatHistory ? "space-y-3 sm:space-y-4" : "flex min-h-[calc(100vh-100px)] items-center justify-center",
+          "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
+        )}
+        style={{ paddingBottom: `${(bottomNavHeight || 0) + 140}px` }}
+      >
+        {hasChatHistory ? (
+          <>
+            {formattedMessages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                role={message.role}
+                content={message.content}
+                timestamp={message.timestamp}
+                isStreaming={message.isStreaming}
+                isStructuredContent={message.hasGenerativeContent}
+              />
+            ))}
+            {isLoading && (
+              <TypingIndicator
+                message={typingMessage}
+                className="animate-in fade-in duration-300"
+              />
+            )}
+            <div ref={messagesEndRef} />
+          </>
+        ) : (
+          <EmptyState>
+            <EnhancedSmartPrompts
+              coords={coords || null}
+              locationLabel={locationLabel}
+              hasMessages={hasChatHistory}
+              onSelectPrompt={handlePromptSelection}
+              className="mt-6 sm:mt-8"
             />
-          </div>
-        </section>
+          </EmptyState>
+        )}
+      </div>
+
+      {/* Fixed composer at bottom - dynamically positioned above bottom nav */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-[#1f1f27] via-[#1f1f27]/95 to-transparent pt-4 pb-4"
+        style={bottomNavHeight ? { bottom: `${bottomNavHeight}px` } : undefined}
+      >
+        <ComposerDock
+          onSendMessage={handleSendMessage}
+          onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
+          prefillPrompt={prefillPrompt}
+          onPrefillConsumed={() => setPrefillPrompt(null)}
+        />
       </div>
     </div>
   );

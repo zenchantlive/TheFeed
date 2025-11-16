@@ -98,21 +98,19 @@ export default function ChatV2Client({ user }: ChatV2ClientProps) {
       runtimeUrl="/api/copilotkit"
       publicLicenseKey={process.env.NEXT_PUBLIC_COPILOTKIT_LICENSE_KEY}
     >
-      <div className="flex h-full w-full flex-1 overflow-hidden">
-        {/* Inject user context into the AI */}
-        <UserContextProvider
-          user={user}
-          coords={coords}
-          locationLabel={locationLabel}
-        />
+      {/* Inject user context into the AI */}
+      <UserContextProvider
+        user={user}
+        coords={coords}
+        locationLabel={locationLabel}
+      />
 
-        {/* Enhanced Chat with Generative UI - takes full height */}
-        <EnhancedChatV2
-          coords={coords}
-          locationLabel={locationLabel}
-          user={user}
-        />
-      </div>
+      {/* Enhanced Chat with Generative UI - full page, no wrapper */}
+      <EnhancedChatV2
+        coords={coords}
+        locationLabel={locationLabel}
+        user={user}
+      />
     </CopilotKit>
   );
 }

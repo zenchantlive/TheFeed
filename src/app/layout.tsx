@@ -35,7 +35,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppShell>{children}</AppShell>
+          <div className="h-full">
+            <AppShell>{children}</AppShell>
+          </div>
         </ThemeProvider>
       </body>
     </html>
