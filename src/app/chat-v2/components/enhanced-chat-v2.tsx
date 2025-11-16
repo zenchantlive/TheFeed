@@ -21,29 +21,49 @@ function useBottomNavHeight() {
 
   React.useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    const nav = document.querySelector<HTMLElement>("[data-bottom-nav]");
-    if (!nav) return;
+
+    let nav: HTMLElement | null = document.querySelector<HTMLElement>("[data-bottom-nav]");
+    let resizeObserver: ResizeObserver | null = null;
 
     const update = () => {
-      setHeight(nav.getBoundingClientRect().height);
+      if (nav) {
+        setHeight(nav.getBoundingClientRect().height);
+      }
     };
 
-    update();
-    window.addEventListener("resize", update);
+    const setupObservers = () => {
+      if (!nav) return;
+      update();
+      window.addEventListener("resize", update);
+      if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(update);
+        resizeObserver.observe(nav);
+      }
+    };
 
-    const observer =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(update)
-        : null;
+    const cleanupObservers = () => {
+      window.removeEventListener("resize", update);
+      resizeObserver?.disconnect();
+    };
 
-    if (observer) {
-      observer.observe(nav);
+    if (nav) {
+      setupObservers();
+    } else {
+      const mutationObserver = new MutationObserver((mutations, observer) => {
+        nav = document.querySelector<HTMLElement>("[data-bottom-nav]");
+        if (nav) {
+          observer.disconnect();
+          setupObservers();
+        }
+      });
+      mutationObserver.observe(document.body, { childList: true, subtree: true });
+      return () => {
+        mutationObserver.disconnect();
+        cleanupObservers();
+      };
     }
 
-    return () => {
-      window.removeEventListener("resize", update);
-      observer?.disconnect();
-    };
+    return cleanupObservers;
   }, []);
 
   return height;
