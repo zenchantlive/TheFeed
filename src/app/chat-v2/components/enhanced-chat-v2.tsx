@@ -14,6 +14,7 @@ import { useChatSuggestions } from "../hooks/use-chat-suggestions";
 import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
+import { formatTimestamp } from "../lib/date-utils";
 
 interface EnhancedChatV2Props {
   coords?: { lat: number; lng: number } | null;
@@ -213,7 +214,7 @@ export function EnhancedChatV2({
         id: message.id,
         role: message.role === "user" ? "user" : "assistant",
         content: renderMessageContent(message),
-        timestamp: timestamps[message.id],
+        timestamp: timestamps[message.id] ? formatTimestamp(timestamps[message.id]) : undefined,
         isStreaming: streamingAssistantId === message.id,
       }));
   }, [messages, timestamps, streamingAssistantId]);
@@ -249,40 +250,56 @@ export function EnhancedChatV2({
       />
       <ToolRenderers userLocation={coords || null} />
 
-      <ChatHeroHeader user={user} locationLabel={locationLabel} />
+      <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-4 py-4 sm:px-6 lg:px-10 xl:mx-auto xl:max-w-5xl">
+        <section className="relative flex h-full flex-1 min-h-0 flex-col overflow-hidden rounded-[30px] border border-white/10 bg-[#1f1f27] shadow-[0_30px_80px_rgba(0,0,0,0.4)]">
+          <ChatHeroHeader user={user} locationLabel={locationLabel} />
 
-      <div
-        className={cn(
-          "flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6",
-          hasChatHistory ? "space-y-4" : "flex items-center justify-center"
-        )}
-      >
-        {hasChatHistory ? (
-          <>
-            {formattedMessages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                timestamp={message.timestamp}
-                isStreaming={message.isStreaming}
-              />
-            ))}
-            {isLoading && (
-              <TypingIndicator
-                message={typingMessage}
-                className="animate-in fade-in duration-300"
-              />
-            )}
-          </>
-        ) : (
-          <EmptyState>
-            <EnhancedSmartPrompts
-              coords={coords || null}
-              locationLabel={locationLabel}
-              hasMessages={hasChatHistory}
-              onSelectPrompt={handlePromptSelection}
-              className="mt-8"
+          <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+            <div
+              className={cn(
+                "flex-1 overflow-y-auto px-4 py-6 sm:px-8",
+                hasChatHistory ? "space-y-4" : "flex items-center justify-center",
+                "mx-auto w-full max-w-[900px]"
+              )}
+            >
+              {hasChatHistory ? (
+                <>
+                  {formattedMessages.map((message) => (
+                    <MessageBubble
+                      key={message.id}
+                      role={message.role}
+                      content={message.content}
+                      timestamp={message.timestamp}
+                      isStreaming={message.isStreaming}
+                    />
+                  ))}
+                  {isLoading && (
+                    <TypingIndicator
+                      message={typingMessage}
+                      className="animate-in fade-in duration-300"
+                    />
+                  )}
+                </>
+              ) : (
+                <EmptyState>
+                  <EnhancedSmartPrompts
+                    coords={coords || null}
+                    locationLabel={locationLabel}
+                    hasMessages={hasChatHistory}
+                    onSelectPrompt={handlePromptSelection}
+                    className="mt-8"
+                  />
+                </EmptyState>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <ComposerDock
+              isDesktop={isDesktopLayout}
+              onSendMessage={handleSendMessage}
+              onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
+              prefillPrompt={prefillPrompt}
+              onPrefillConsumed={() => setPrefillPrompt(null)}
             />
           </EmptyState>
         )}
@@ -385,15 +402,17 @@ function ComposerDock({
   onPrefillConsumed,
 }: ComposerDockProps) {
   return (
-    <div className="shrink-0 border-t border-border/10 bg-[#2d2d34] px-4 py-4 sm:px-6">
-      <InputArea
-        variant={isDesktop ? "floating" : "surface"}
-        onSendMessage={onSendMessage}
-        onVoiceInput={onVoiceInput}
-        placeholder="Ask Sous-chef about meals, resources, or ways to share..."
-        prefillValue={prefillPrompt}
-        onPrefillConsumed={onPrefillConsumed}
-      />
+    <div className="shrink-0 px-4 pb-6 pt-2 sm:px-8 mx-auto w-full max-w-[900px]">
+      <div className="rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-3 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <InputArea
+          variant={isDesktop ? "floating" : "surface"}
+          onSendMessage={onSendMessage}
+          onVoiceInput={onVoiceInput}
+          placeholder="Ask Sous-chef about meals, resources, or ways to share..."
+          prefillValue={prefillPrompt}
+          onPrefillConsumed={onPrefillConsumed}
+        />
+      </div>
     </div>
   );
 }

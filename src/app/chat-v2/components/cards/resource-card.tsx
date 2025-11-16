@@ -67,7 +67,7 @@ interface ResourceCardProps {
 interface ResourceActionsProps {
   resource: ResourceCardProps["resource"];
   userLocation: ResourceCardProps["userLocation"];
-  onAction?: (action: string, value: any) => void;
+  onAction?: (action: string, value: unknown) => void;
 }
 
 /**
