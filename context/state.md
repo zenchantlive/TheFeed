@@ -40,7 +40,21 @@ We are stabilizing TypeScript + runtime issues uncovered during the migration (c
   - `ToolRenderers` that subscribe to CopilotKit action states and render cards inline (no `dangerouslySetInnerHTML` path).
   - "Search intent" deeplinks via `?intent=hungry|full` (auto-apply soon).
 - Type safety: `src/app/chat-v2/components/tool-renderers/types.ts` holds shared result types, and every renderer consumes `CopilotRenderProps` instead of raw `any`.
-- Outstanding bugs:
+
+**Layout Architecture (January 2025) - COMPLETED ✅:**
+- Full-page chat layout (no "boxed widget" feeling):
+  - Header: `fixed top-0` with backdrop blur
+  - Composer: `fixed bottom-0` positioned dynamically above bottom nav
+  - Messages: Natural document flow, viewport scrolls naturally
+  - No nested scroll containers or flex wrappers
+- Dynamic bottom nav positioning:
+  - `useBottomNavHeight` hook measures actual nav height
+  - Composer uses `style={{ bottom: bottomNavHeight }}`
+  - Messages padding: `(bottomNavHeight || 0) + 140px`
+  - Fully responsive, works on mobile and desktop
+- Files: `chat-v2/layout.tsx`, `page-client.tsx`, `enhanced-chat-v2.tsx`
+
+Outstanding bugs:
   - CopilotKit render callbacks still expect non-null React elements (return fragments, never `null`).
   - Web UI blank-bubble race persists; need to coordinate with CopilotKit streaming vs `useChat`.
   - Need to remove the temporary console logging for `intent` handling once auto-send ships.
