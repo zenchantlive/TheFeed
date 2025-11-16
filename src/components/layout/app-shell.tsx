@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const containerClassName = cn(
     "flex flex-col bg-background",
-    isChatV2 ? "h-full" : "min-h-screen"
+    isChatV2 ? "h-screen" : "min-h-screen"
   );
 
   const mainClassName = cn(
