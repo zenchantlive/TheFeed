@@ -13,6 +13,25 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+/**
+ * Format ISO timestamp to human-readable time
+ * e.g., "2025-11-16T00:23:33.051Z" -> "4:23 PM"
+ */
+function formatTimestamp(isoString: string | undefined): string {
+  if (!isoString) return "";
+
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return "";
+  }
+}
+
 interface MessageBubbleProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   role: "user" | "assistant";
   content: string | React.ReactNode;
@@ -39,7 +58,6 @@ export function MessageBubble({
   className,
   ...props
 }: MessageBubbleProps) {
-  const styles = getChatStyles();
   const [copied, setCopied] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -87,7 +105,7 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-[85%] mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        "flex gap-3 max-w-[95%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[50%] mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
         currentRole.container,
         className
       )}
@@ -147,8 +165,7 @@ export function MessageBubble({
           )}
           
           <div className={cn(
-            "text-sm leading-relaxed",
-            role === "user" ? "text-right" : "text-left"
+            "text-sm leading-relaxed text-center"
           )}>
             {bubbleContent}
           </div>
@@ -186,11 +203,8 @@ export function MessageBubble({
 
         {/* Timestamp */}
         {timestamp && (
-          <div className={cn(
-            "text-xs text-muted-foreground mt-1",
-            role === "user" ? "text-right" : "text-left"
-          )}>
-            {timestamp}
+          <div className="text-xs text-muted-foreground mt-1 text-center">
+            {formatTimestamp(timestamp)}
           </div>
         )}
       </div>

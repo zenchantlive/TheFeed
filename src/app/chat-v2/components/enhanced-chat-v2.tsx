@@ -254,11 +254,11 @@ export function EnhancedChatV2({
       <div
         className={cn(
           "flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6",
-          hasChatHistory ? "space-y-4" : "flex items-center justify-center"
+          hasChatHistory ? "flex justify-center" : "flex items-center justify-center"
         )}
       >
         {hasChatHistory ? (
-          <>
+          <div className="w-full max-w-[900px] space-y-4">
             {formattedMessages.map((message) => (
               <MessageBubble
                 key={message.id}
@@ -274,7 +274,8 @@ export function EnhancedChatV2({
                 className="animate-in fade-in duration-300"
               />
             )}
-          </>
+            <div ref={messagesEndRef} />
+          </div>
         ) : (
           <EmptyState>
             <EnhancedSmartPrompts
@@ -286,7 +287,6 @@ export function EnhancedChatV2({
             />
           </EmptyState>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <ComposerDock
