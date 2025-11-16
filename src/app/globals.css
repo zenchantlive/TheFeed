@@ -142,9 +142,12 @@
     @apply border-border;
   }
 
-  html,
-  body {
+  html {
     @apply h-full;
+  }
+
+  body {
+    @apply min-h-full;
   }
 
   body {
