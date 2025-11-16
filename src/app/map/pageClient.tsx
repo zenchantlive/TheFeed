@@ -16,6 +16,7 @@ import type { FoodBank } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   DiscoveryFiltersProvider,
   useDiscoveryFilters,
@@ -44,6 +45,21 @@ type MapEventPin = {
   isVerified: boolean;
 };
 
+type MapPostPin = {
+  id: string;
+  content: string;
+  kind: "share" | "request" | "update" | "resource";
+  location: string | null;
+  latitude: number;
+  longitude: number;
+  createdAt: Date;
+  urgency?: string | null;
+  author: {
+    name: string;
+    image: string | null;
+  };
+};
+
 type EventApiResponseItem = {
   id: string;
   title: string;
@@ -54,6 +70,20 @@ type EventApiResponseItem = {
   rsvpCount: number;
   capacity: number | null;
   isVerified: boolean;
+};
+
+type PostApiResponseItem = {
+  id: string;
+  content: string;
+  kind: "share" | "request" | "update" | "resource";
+  location: string | null;
+  locationCoords: { lat: number; lng: number } | null;
+  createdAt: string;
+  urgency?: string | null;
+  author: {
+    name: string;
+    image: string | null;
+  };
 };
 
 export function MapPageClient(props: MapPageClientProps) {
@@ -145,6 +175,79 @@ function useMapEvents({
   return { events, isLoading };
 }
 
+function useMapPosts({
+  postKindFilter,
+}: {
+  postKindFilter: "all" | "share" | "request";
+}) {
+  const [posts, setPosts] = useState<MapPostPin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchPosts() {
+      setIsLoading(true);
+      const searchParams = new URLSearchParams({
+        limit: "50",
+        onlyWithCoords: "true",
+        includeExpired: "false",
+      });
+
+      if (postKindFilter !== "all") {
+        searchParams.set("kind", postKindFilter);
+      }
+
+      try {
+        const response = await fetch(`/api/posts?${searchParams.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          throw new Error("Failed to load posts");
+        }
+        const data = await response.json();
+        if (Array.isArray(data?.items)) {
+          const mapped = (data.items as PostApiResponseItem[])
+            .map((item) => {
+              if (!item.locationCoords) return null;
+              return {
+                id: item.id,
+                content: item.content,
+                kind: item.kind,
+                location: item.location,
+                latitude: item.locationCoords.lat,
+                longitude: item.locationCoords.lng,
+                createdAt: new Date(item.createdAt),
+                urgency: item.urgency,
+                author: item.author,
+              } satisfies MapPostPin;
+            })
+            .filter(Boolean) as MapPostPin[];
+          setPosts(mapped);
+        } else {
+          setPosts([]);
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Failed to fetch posts for map:", error);
+          setPosts([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchPosts();
+
+    return () => {
+      controller.abort();
+    };
+  }, [postKindFilter]);
+
+  return { posts, isLoading };
+}
+
 function EventPopup({
   event,
   onClose,
@@ -197,6 +300,70 @@ function EventPopup({
   );
 }
 
+function PostPopup({
+  post,
+  onClose,
+}: {
+  post: MapPostPin;
+  onClose: () => void;
+}) {
+  // Truncate content to first 150 characters
+  const truncatedContent =
+    post.content.length > 150
+      ? post.content.substring(0, 150) + "..."
+      : post.content;
+
+  return (
+    <div className="fixed bottom-4 left-1/2 z-30 w-full max-w-md -translate-x-1/2 rounded-3xl border border-border/60 bg-card/95 p-5 shadow-2xl">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-[0.65rem]",
+                post.kind === "share" && "border-full-end/40 bg-full-start/10 text-full-end",
+                post.kind === "request" && "border-hungry-end/40 bg-hungry-start/10 text-hungry-end"
+              )}
+            >
+              {post.kind === "share" && "🍽️ Share"}
+              {post.kind === "request" && "🙏 Request"}
+              {post.kind === "update" && "📢 Update"}
+              {post.kind === "resource" && "📍 Resource"}
+            </Badge>
+            {post.urgency && (
+              <Badge variant="outline" className="text-[0.65rem]">
+                {post.urgency === "asap" && "⚡ ASAP"}
+                {post.urgency === "today" && "📅 Today"}
+                {post.urgency === "this_week" && "📆 This week"}
+              </Badge>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-foreground">{truncatedContent}</p>
+          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+            {post.location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {post.location}
+              </span>
+            )}
+            <span>•</span>
+            <span>by {post.author.name}</span>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Button>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button asChild variant="secondary">
+          <Link href="/community">View in community</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [openNow, setOpenNow] = useState(false);
@@ -207,6 +374,8 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const [isLocating, setIsLocating] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [postKindFilter, setPostKindFilter] = useState<"all" | "share" | "request">("all");
   const {
     eventTypeFilter,
     dateRangeFilter,
@@ -216,6 +385,9 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const { events: mapEvents, isLoading: isLoadingEvents } = useMapEvents({
     eventTypeFilter,
     dateRangeFilter,
+  });
+  const { posts: mapPosts, isLoading: isLoadingPosts } = useMapPosts({
+    postKindFilter,
   });
 
   useEffect(() => {
@@ -301,11 +473,13 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const selectedFoodBank =
     enrichedFoodBanks.find((bank) => bank.id === selectedId) ?? null;
   const selectedEvent = mapEvents.find((event) => event.id === selectedEventId) ?? null;
+  const selectedPost = mapPosts.find((post) => post.id === selectedPostId) ?? null;
 
   const handleSelectFoodBank = (id: string | null) => {
     setSelectedId(id);
     if (id) {
       setSelectedEventId(null);
+      setSelectedPostId(null);
     }
   };
 
@@ -313,6 +487,15 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
     setSelectedEventId(id);
     if (id) {
       setSelectedId(null);
+      setSelectedPostId(null);
+    }
+  };
+
+  const handleSelectPost = (id: string | null) => {
+    setSelectedPostId(id);
+    if (id) {
+      setSelectedId(null);
+      setSelectedEventId(null);
     }
   };
 
@@ -377,6 +560,33 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
             )}
           </div>
         </div>
+        <div className="space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Community posts
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {["all", "share", "request"].map((kind) => (
+              <Button
+                key={kind}
+                size="sm"
+                variant={postKindFilter === kind ? "default" : "secondary"}
+                className="rounded-full"
+                onClick={() =>
+                  setPostKindFilter(kind as typeof postKindFilter)
+                }
+              >
+                {kind === "all" && "All posts"}
+                {kind === "share" && "🍽️ Shares"}
+                {kind === "request" && "🙏 Requests"}
+              </Button>
+            ))}
+            {isLoadingPosts && (
+              <span className="text-xs text-muted-foreground">
+                Loading posts…
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="relative h-[70vh] w-full">
@@ -388,6 +598,9 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
           events={mapEvents}
           selectedEventId={selectedEventId}
           onSelectEvent={handleSelectEvent}
+          posts={mapPosts}
+          selectedPostId={selectedPostId}
+          onSelectPost={handleSelectPost}
         />
       </div>
 
@@ -403,6 +616,10 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
 
       {selectedEvent ? (
         <EventPopup event={selectedEvent} onClose={() => setSelectedEventId(null)} />
+      ) : null}
+
+      {selectedPost ? (
+        <PostPopup post={selectedPost} onClose={() => setSelectedPostId(null)} />
       ) : null}
     </div>
   );

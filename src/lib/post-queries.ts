@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { posts, comments, userProfiles, user, follows } from "./schema";
-import { eq, desc, and, lt, or, isNull, gt, inArray, sql } from "drizzle-orm";
+import { eq, desc, and, lt, or, isNull, gt, inArray, sql, isNotNull } from "drizzle-orm";
 
 export type PostRecord = typeof posts.$inferSelect;
 export type CommentRecord = typeof comments.$inferSelect;
@@ -36,6 +36,7 @@ export type GetPostsParams = {
   userId?: string; // Filter by specific user
   followingUserId?: string; // Show posts from users this user follows
   includeExpired?: boolean;
+  onlyWithCoords?: boolean; // Only posts with location coordinates
 };
 
 export type GetPostsResult = {
@@ -54,6 +55,7 @@ export async function getPosts({
   userId,
   followingUserId,
   includeExpired = false,
+  onlyWithCoords = false,
 }: GetPostsParams = {}): Promise<GetPostsResult> {
   // Build WHERE conditions
   const conditions = [];
@@ -80,6 +82,11 @@ export async function getPosts({
   }
   if (userId) {
     conditions.push(eq(posts.userId, userId));
+  }
+
+  // Only posts with location coordinates
+  if (onlyWithCoords) {
+    conditions.push(isNotNull(posts.locationCoords));
   }
 
   // Hide expired posts unless explicitly included

@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get("userId");
     const followingFilter = searchParams.get("following") === "true";
     const includeExpired = searchParams.get("includeExpired") === "true";
+    const onlyWithCoords = searchParams.get("onlyWithCoords") === "true";
 
     // Fetch posts
     const result = await getPosts({
@@ -49,6 +50,7 @@ export async function GET(req: NextRequest) {
       userId: userId || undefined,
       followingUserId: followingFilter ? session.user.id : undefined,
       includeExpired,
+      onlyWithCoords,
     });
 
     return NextResponse.json(result, { status: 200 });
