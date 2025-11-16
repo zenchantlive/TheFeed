@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { addDays, format } from "date-fns";
 import { MapSearchBar } from "@/components/map/MapSearchBar";
 import { MapView } from "@/components/map/MapView";
@@ -365,6 +366,15 @@ function PostPopup({
 }
 
 function MapPageView({ foodBanks, services }: MapPageClientProps) {
+  const searchParams = useSearchParams();
+
+  // Read URL params for initial state
+  const initialFoodBankId = searchParams.get("foodBankId");
+  const initialEventId = searchParams.get("eventId");
+  const initialPostId = searchParams.get("postId");
+  const initialEventType = searchParams.get("eventType") as "all" | "potluck" | "volunteer" | null;
+  const initialPostKind = searchParams.get("postKind") as "all" | "share" | "request" | null;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [openNow, setOpenNow] = useState(false);
   const [maxDistance, setMaxDistance] = useState<number | null>(null);
@@ -372,16 +382,23 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const [postKindFilter, setPostKindFilter] = useState<"all" | "share" | "request">("all");
+  const [selectedId, setSelectedId] = useState<string | null>(initialFoodBankId);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(initialPostId);
+  const [postKindFilter, setPostKindFilter] = useState<"all" | "share" | "request">(initialPostKind || "all");
   const {
     eventTypeFilter,
     dateRangeFilter,
     setEventTypeFilter,
     setDateRangeFilter,
   } = useDiscoveryFilters();
+
+  // Set event type filter from URL param on mount
+  useEffect(() => {
+    if (initialEventType && ["all", "potluck", "volunteer"].includes(initialEventType)) {
+      setEventTypeFilter(initialEventType);
+    }
+  }, [initialEventType, setEventTypeFilter]);
   const { events: mapEvents, isLoading: isLoadingEvents } = useMapEvents({
     eventTypeFilter,
     dateRangeFilter,

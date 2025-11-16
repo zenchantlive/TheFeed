@@ -89,7 +89,7 @@ function EventCardWithActions({
           variant="secondary"
           className="rounded-full bg-background/95 shadow-md backdrop-blur hover:bg-background"
         >
-          <Link href={`/map?event=${event.id}`}>
+          <Link href={`/map?eventId=${event.id}`}>
             <MapPin className="h-4 w-4" />
           </Link>
         </Button>
