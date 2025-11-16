@@ -126,7 +126,7 @@ export function EnhancedSmartPrompts({
     >
       {prompts.map((prompt, index) => (
         <SmartPrompt
-          key={index}
+          key={prompt.text}
           text={prompt.text}
           category={prompt.category}
           icon={prompt.icon}
