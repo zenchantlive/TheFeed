@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useCopilotAction } from "@copilotkit/react-core";
 import { PostPreview } from "../post-preview";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { CopilotRenderProps, SearchPostResult } from "./types";
 
 export function SearchPostsRenderer() {
@@ -26,16 +29,7 @@ export function SearchPostsRenderer() {
       }
 
       if (status === "complete" && result && Array.isArray(result)) {
-        return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground mb-3">
-              Found {result.length} post{result.length !== 1 ? "s" : ""}:
-            </p>
-            {result.map((post) => (
-              <PostPreview key={post.id} post={post} />
-            ))}
-          </div>
-        );
+        return <PostGrid posts={result} />;
       }
 
       return <></>;
@@ -43,4 +37,47 @@ export function SearchPostsRenderer() {
   });
 
   return null;
+}
+
+function PostGrid({ posts }: { posts: SearchPostResult[] }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasMore = posts.length > 2;
+  const displayedPosts = isExpanded ? posts : posts.slice(0, 2);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-medium text-foreground">
+        Found {posts.length} post{posts.length !== 1 ? "s" : ""}:
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {displayedPosts.map((post) => (
+          <PostPreview key={post.id} post={post} />
+        ))}
+      </div>
+
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="gap-2"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4" />
+                Show less
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4" />
+                Show {posts.length - 2} more
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -78,7 +78,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
   };
 
   return (
-    <div className="my-3 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden max-w-md">
+    <div className="my-0 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden w-full">
       {/* Header */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-start justify-between gap-3">

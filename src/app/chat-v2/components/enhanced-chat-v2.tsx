@@ -14,6 +14,7 @@ import { useChatSuggestions } from "../hooks/use-chat-suggestions";
 import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
+import { formatTimestamp } from "../lib/date-utils";
 
 interface EnhancedChatV2Props {
   coords?: { lat: number; lng: number } | null;
@@ -219,7 +220,7 @@ export function EnhancedChatV2({
         id: message.id,
         role: message.role === "user" ? "user" : "assistant",
         content: renderMessageContent(message),
-        timestamp: timestamps[message.id],
+        timestamp: timestamps[message.id] ? formatTimestamp(timestamps[message.id]) : undefined,
         isStreaming: streamingAssistantId === message.id,
       }));
   }, [messages, timestamps, streamingAssistantId]);
@@ -297,7 +298,8 @@ export function EnhancedChatV2({
             <div
               className={cn(
                 "flex-1 overflow-y-auto px-4 py-6 sm:px-8",
-                hasChatHistory ? "space-y-4" : "flex items-center justify-center"
+                hasChatHistory ? "space-y-4" : "flex items-center justify-center",
+                "mx-auto w-full max-w-[900px]"
               )}
             >
               {hasChatHistory ? (
@@ -431,7 +433,7 @@ function ComposerDock({
   onPrefillConsumed,
 }: ComposerDockProps) {
   return (
-    <div className="shrink-0 px-4 pb-6 pt-2 sm:px-8">
+    <div className="shrink-0 px-4 pb-6 pt-2 sm:px-8 mx-auto w-full max-w-[900px]">
       <div className="rounded-[20px] border border-white/12 bg-[#2d2d34]/95 p-3 shadow-[0_25px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl">
         <InputArea
           variant={isDesktop ? "floating" : "surface"}

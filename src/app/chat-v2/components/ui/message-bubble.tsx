@@ -63,7 +63,7 @@ export function MessageBubble({
         "transform transition-all duration-200 hover:-translate-y-0.5"
       ),
       avatar: "order-2",
-      content: "text-right"
+      content: "text-center"
     },
     assistant: {
       container: "mr-auto",
@@ -73,7 +73,7 @@ export function MessageBubble({
         "transform transition-all duration-200 hover:-translate-y-0.5"
       ),
       avatar: "order-1",
-      content: "text-left"
+      content: "text-center"
     }
   };
 
@@ -87,7 +87,9 @@ export function MessageBubble({
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-[85%] mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        "flex gap-3 mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
+        role === "user" ? "max-w-[50%] ml-auto" : "max-w-[50%] mr-auto",
+        "sm:max-w-[55%]",
         currentRole.container,
         className
       )}
@@ -145,10 +147,9 @@ export function MessageBubble({
               <span className="text-xs opacity-75">Typing...</span>
             </div>
           )}
-          
+
           <div className={cn(
-            "text-sm leading-relaxed",
-            role === "user" ? "text-right" : "text-left"
+            "text-sm leading-relaxed text-center"
           )}>
             {bubbleContent}
           </div>
@@ -187,8 +188,7 @@ export function MessageBubble({
         {/* Timestamp */}
         {timestamp && (
           <div className={cn(
-            "text-xs text-muted-foreground mt-1",
-            role === "user" ? "text-right" : "text-left"
+            "text-xs text-muted-foreground mt-1 text-center"
           )}>
             {timestamp}
           </div>
