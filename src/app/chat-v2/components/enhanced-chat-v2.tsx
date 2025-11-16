@@ -16,6 +16,39 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
 import { formatTimestamp } from "../lib/date-utils";
 
+function useBottomNavHeight() {
+  const [height, setHeight] = React.useState(0);
+
+  React.useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav = document.querySelector<HTMLElement>("[data-bottom-nav]");
+    if (!nav) return;
+
+    const update = () => {
+      setHeight(nav.getBoundingClientRect().height);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(update)
+        : null;
+
+    if (observer) {
+      observer.observe(nav);
+    }
+
+    return () => {
+      window.removeEventListener("resize", update);
+      observer?.disconnect();
+    };
+  }, []);
+
+  return height;
+}
+
 interface EnhancedChatV2Props {
   coords?: { lat: number; lng: number } | null;
   locationLabel?: string | null;
@@ -152,6 +185,7 @@ export function EnhancedChatV2({
   const [timestamps, setTimestamps] = React.useState<Record<string, string>>({});
   const processedMessageIds = React.useRef<Set<string>>(new Set());
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const bottomNavHeight = useBottomNavHeight();
 
   useChatSuggestions({ coords: coords || null });
 
@@ -253,10 +287,11 @@ export function EnhancedChatV2({
       {/* Messages - naturally flowing content with padding for fixed header/composer */}
       <div
         className={cn(
-          "pt-[100px] pb-[180px] px-3 sm:px-6 md:px-8",
+          "pt-[100px] px-3 sm:px-6 md:px-8",
           hasChatHistory ? "space-y-3 sm:space-y-4" : "flex min-h-[calc(100vh-100px)] items-center justify-center",
           "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
         )}
+        style={{ paddingBottom: `${(bottomNavHeight || 0) + 140}px` }}
       >
         {hasChatHistory ? (
           <>
@@ -291,8 +326,11 @@ export function EnhancedChatV2({
         )}
       </div>
 
-      {/* Fixed composer at bottom - pb-20 accounts for mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-[#1f1f27] via-[#1f1f27]/95 to-transparent pt-4 pb-20 sm:pb-4">
+      {/* Fixed composer at bottom - dynamically positioned above bottom nav */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-[#1f1f27] via-[#1f1f27]/95 to-transparent pt-4 pb-4"
+        style={bottomNavHeight ? { bottom: `${bottomNavHeight}px` } : undefined}
+      >
         <ComposerDock
           onSendMessage={handleSendMessage}
           onVoiceInput={(transcript) => setPrefillPrompt(transcript)}
