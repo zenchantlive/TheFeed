@@ -51,7 +51,7 @@ export function EventCard({ event, userLocation }: EventCardProps) {
   };
 
   return (
-    <div className="my-3 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden max-w-md">
+    <div className="w-full rounded-2xl border border-border/40 bg-card shadow-sm overflow-hidden">
       {/* Header */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-3">

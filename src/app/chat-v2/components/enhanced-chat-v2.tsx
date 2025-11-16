@@ -114,6 +114,7 @@ interface DisplayMessage {
   content: string | React.ReactNode;
   timestamp?: string;
   isStreaming?: boolean;
+  hasGenerativeContent?: boolean;
 }
 
 const contextualTypingMessages = [
@@ -215,6 +216,7 @@ export function EnhancedChatV2({
         content: renderMessageContent(message),
         timestamp: timestamps[message.id] ? formatTimestamp(timestamps[message.id]) : undefined,
         isStreaming: streamingAssistantId === message.id,
+        hasGenerativeContent: typeof message.generativeUI === "function",
       }));
   }, [messages, timestamps, streamingAssistantId]);
 
@@ -240,14 +242,7 @@ export function EnhancedChatV2({
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden text-foreground">
       {/* Aurora gradient background for glassmorphism effect */}
-      <div
-        className="pointer-events-none fixed inset-0 -z-10 opacity-100"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.3), transparent), radial-gradient(ellipse 60% 50% at 80% 50%, rgba(236, 72, 153, 0.15), transparent), radial-gradient(ellipse 60% 50% at 20% 80%, rgba(59, 130, 246, 0.15), transparent), linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)",
-        }}
-      />
+      <div className="pointer-events-none fixed inset-0 -z-10 opacity-100 aurora-background" aria-hidden />
       <ToolRenderers userLocation={coords || null} />
 
       <div className="relative z-10 flex h-full w-full flex-1 min-h-0 flex-col px-3 py-3 sm:px-4 sm:py-4 md:px-6 lg:px-10 xl:mx-auto xl:max-w-6xl 2xl:max-w-7xl">
@@ -271,6 +266,7 @@ export function EnhancedChatV2({
                       content={message.content}
                       timestamp={message.timestamp}
                       isStreaming={message.isStreaming}
+                      isStructuredContent={message.hasGenerativeContent}
                     />
                   ))}
                   {isLoading && (

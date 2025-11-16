@@ -20,6 +20,7 @@ interface MessageBubbleProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 
   avatarFallback?: string;
   timestamp?: string;
   isStreaming?: boolean;
+  isStructuredContent?: boolean;
   className?: string;
 }
 
@@ -36,6 +37,7 @@ export function MessageBubble({
   avatarFallback,
   timestamp,
   isStreaming = false,
+  isStructuredContent = false,
   className,
   ...props
 }: MessageBubbleProps) {
@@ -86,13 +88,16 @@ export function MessageBubble({
     </div>
   ) : content;
 
+  const widthClass =
+    role === "assistant" && isStructuredContent
+      ? "w-full max-w-none"
+      : "max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] xl:max-w-[50%]";
+
   return (
     <div
       className={cn(
         "flex gap-2 sm:gap-3 mb-3 sm:mb-4 animate-in fade-in-0 slide-in-from-bottom-2 duration-300",
-        role === "user"
-          ? "max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] xl:max-w-[50%] ml-auto"
-          : "max-w-[85%] sm:max-w-[75%] md:max-w-[65%] lg:max-w-[55%] xl:max-w-[50%] mr-auto",
+        widthClass,
         currentRole.container,
         className
       )}
@@ -118,7 +123,8 @@ export function MessageBubble({
       {/* Message Bubble */}
       <div className={cn(
         "flex-1 group",
-        currentRole.container
+        currentRole.container,
+        isStructuredContent && "w-full"
       )}>
         <div className="relative">
           <div className={cn(
