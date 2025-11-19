@@ -1,9 +1,54 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-15
+Last updated: 2025-11-19
 
 ## Current Focus: AI Sous-Chef v2 (CopilotKit) + Community Event Discovery
 
 Branch: `pr-22` (merged locally for polish)
+
+## CRITICAL: Navigation Architecture Broken
+
+**Audit Date**: 2025-11-19
+**Full Report**: `context/navigation-audit.md`
+
+### Key Finding
+
+**All deep links to the map page are completely non-functional.** The `MapPageClient` component (`src/app/map/pageClient.tsx`) has **zero `useSearchParams()` calls**, meaning:
+
+- `/map?event=123` - Does nothing (from community event cards)
+- `/map?highlight=123` - Does nothing (from saved locations)
+- `/map?foodBankId=123` - Does nothing (documented but broken)
+
+### Broken Functionality
+
+1. **Community → Map navigation**: Clicking map pin icon on event cards navigates but shows no selected event
+2. **Saved locations → Map**: "View on map" button does nothing
+3. **Chat prefill**: `/chat?prefill=...` links don't populate chat input
+4. **Filter sync**: Map and Community use separate localStorage-based providers, not URL
+
+### Immediate Fix Required
+
+Add `useSearchParams()` to `MapPageClient`:
+
+```tsx
+import { useSearchParams } from "next/navigation";
+
+function MapPageView({ ... }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const eventId = searchParams.get('eventId') || searchParams.get('event');
+    const foodBankId = searchParams.get('foodBankId') || searchParams.get('highlight');
+
+    if (eventId) setSelectedEventId(eventId);
+    else if (foodBankId) setSelectedId(foodBankId);
+  }, [searchParams]);
+  // ...
+}
+```
+
+See `context/navigation-audit.md` for complete analysis and implementation roadmap.
+
+---
 
 ### Overview
 
