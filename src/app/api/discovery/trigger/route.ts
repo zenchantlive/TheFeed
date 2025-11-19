@@ -99,7 +99,7 @@ export const POST = async (req: NextRequest) => {
   
   const stream = new ReadableStream({
     async start(controller) {
-      const sendUpdate = (data: any) => {
+      const sendUpdate = (data: { type: "progress" | "complete" | "error"; [key: string]: any }) => {
         controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
       };
 
