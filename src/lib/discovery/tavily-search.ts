@@ -212,7 +212,9 @@ function deduplicateResults(results: DiscoveryResult[]): DiscoveryResult[] {
   const seen = new Set<string>();
   return results.filter(res => {
     // Create a simple normalization key
-    const key = `${res.name.toLowerCase().trim()}|${res.address.toLowerCase().trim().split(' ')[0]}`; // Name + Street Num
+    // Create a more robust normalization key
+    const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const key = `${normalize(res.name)}|${normalize(res.address)}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
