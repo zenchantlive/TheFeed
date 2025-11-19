@@ -174,14 +174,14 @@ export function MapView({
             >
               <span
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform",
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-md transition-transform",
                   selected?.id === bank.id ? "scale-110" : "scale-100",
                   // Verified vs Unverified Logic
                   bank.verificationStatus === "unverified"
-                    ? "bg-gray-400 text-white border-dashed"
+                    ? "border-yellow-400 bg-gray-400 text-white"
                     : bank.isOpen
-                    ? "bg-primary"
-                    : "bg-muted text-muted-foreground"
+                    ? "border-white bg-primary"
+                    : "border-white bg-muted text-muted-foreground"
                 )}
               >
                 <MapPin className="h-4 w-4 text-white" />

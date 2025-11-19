@@ -79,15 +79,6 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
     setQuery(suggestion.place_name);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Allow manual override if they really want, defaulting to CA if not selected
-    if (query.trim()) {
-      onLocationChange(query.trim(), "CA"); 
-      setIsOpen(false);
-    }
-  };
-
   if (!isOpen) {
     return (
       <button

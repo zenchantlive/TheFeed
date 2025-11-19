@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { addDays, format } from "date-fns";
 import { MapSearchBar } from "@/components/map/MapSearchBar";
@@ -260,14 +260,28 @@ function EventPopup({
   const [guestCount, setGuestCount] = useState(1);
   const [rsvpSuccess, setRsvpSuccess] = useState(false);
   const [rsvpMessage, setRsvpMessage] = useState("");
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const handleQuickRsvp = async () => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsRsvping(true);
+    setRsvpMessage("");
+
     try {
       const response = await fetch(`/api/events/${event.id}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ guestCount }),
+        signal: controller.signal,
       });
 
       const data = await response.json();
@@ -279,9 +293,13 @@ function EventPopup({
         setRsvpMessage(data.error || "Failed to RSVP");
       }
     } catch (error) {
-      setRsvpMessage("Failed to RSVP. Please try again.");
+      if ((error as Error).name !== "AbortError") {
+        setRsvpMessage("Failed to RSVP. Please try again.");
+      }
     } finally {
-      setIsRsvping(false);
+      if (!controller.signal.aborted) {
+        setIsRsvping(false);
+      }
     }
   };
 
