@@ -28,6 +28,7 @@ type FoodBankOnMap = {
   hours: Record<string, { open: string; close: string; closed?: boolean }> | null;
   distanceMiles?: number | null;
   isOpen?: boolean;
+  verificationStatus?: "unverified" | "community_verified" | "official" | "rejected" | "duplicate";
 };
 
 type MapViewProps = {
@@ -175,7 +176,12 @@ export function MapView({
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition-transform",
                   selected?.id === bank.id ? "scale-110" : "scale-100",
-                  bank.isOpen ? "bg-primary" : "bg-muted text-muted-foreground"
+                  // Verified vs Unverified Logic
+                  bank.verificationStatus === "unverified"
+                    ? "bg-gray-400 text-white border-dashed"
+                    : bank.isOpen
+                    ? "bg-primary"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 <MapPin className="h-4 w-4 text-white" />

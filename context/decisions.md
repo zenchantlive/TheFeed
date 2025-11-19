@@ -40,6 +40,10 @@ Last updated: 2025-11-07
   - Rationale: Not critical for MVP; adds complexity (uploads, storage, moderation); can add via Supabase Storage when needed.
   - Prepared: `photoUrl` column exists but unused initially.
 
+- **2025-11-16** — **Expose posts to map via `onlyWithCoords` filter**
+  - Rationale: Map pins should only represent posts that opted-in with approximate coordinates; reduces payload size and prevents private posts without location from leaking into discovery.
+  - Implementation: `src/app/api/posts/route.ts` and `src/lib/post-queries.ts` accept `onlyWithCoords`, filtering via `isNotNull(posts.locationCoords)`.
+
 ## UI/UX Strategy
 
 - **2025-11-07** — **Feed-first layout with FAB (not inline composer)**
@@ -72,6 +76,14 @@ Last updated: 2025-11-07
 - **2025-11-15** — **Calendar view for community events**
   - Rationale: Events are the hero of the Community experience; a `/community/events/calendar` view lets people see potlucks + volunteer shifts at a glance with filters.
   - Implementation: Server component fetches via `getEventsWithinRange`, enforces auth, and provides month/type query params while reusing existing Event detail routes.
+
+- **2025-11-16** — **Quick RSVP directly from map popups**
+  - Rationale: Reduce friction by letting users commit to events without leaving the map; keeps discovery momentum high, especially on mobile.
+  - Implementation: `MapPageClient` event popups now expose guest count selector (1-5) and call `/api/events/[id]/rsvp`. Success/error states render inline while preserving "Full details" link.
+
+- **2025-11-16** — **URL-driven cross-area navigation**
+  - Rationale: Community posts/events should deep-link into the same context on the map (pins selected + filters applied) to unify discovery surfaces.
+  - Implementation: Community cards link to `/map?eventId=...` or `/map?postId=...`; MapPage reads `foodBankId`, `eventId`, `postId`, `eventType`, `postKind` search params and seeds local filter state.
 
 ## Product Strategy
 

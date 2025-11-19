@@ -14,6 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "db:dev": "drizzle-kit push",
     "db:reset": "drizzle-kit drop && drizzle-kit push",
+    "nuke:discovery": "tsx --env-file=.env scripts/nuke-test-data.ts",
     "sync-template": "node create-agentic-app/scripts/sync-templates.js"
   },
   "dependencies": {

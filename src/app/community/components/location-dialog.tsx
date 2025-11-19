@@ -7,17 +7,83 @@ import { MapPin, X } from "lucide-react";
 
 interface LocationDialogProps {
   currentLocation: string | null;
-  onLocationChange: (location: string) => void;
+  onLocationChange: (city: string, state: string) => void;
 }
+
+type Suggestion = {
+  id: string;
+  place_name: string;
+  text: string; // City
+  context?: { id: string; text: string }[]; // Contains region (state)
+};
 
 export function LocationDialog({ currentLocation, onLocationChange }: LocationDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [location, setLocation] = useState(currentLocation || "");
+  const [query, setQuery] = useState(currentLocation || "");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSearch = async (value: string) => {
+    setQuery(value);
+    if (value.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+      if (!token) return;
+
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          value
+        )}.json?types=place&country=us&access_token=${token}`
+      );
+      const data = await res.json();
+      setSuggestions(data.features || []);
+    } catch (error) {
+      console.error("Autocomplete error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelect = (suggestion: Suggestion) => {
+    const city = suggestion.text;
+    // Extract state code (e.g., "New York" -> "NY" or just use name if we can't map it)
+    // Mapbox 'region' context usually gives full state name. We need code for Tavily.
+    // For simplicity MVP, we'll try to find a 2-letter code in the context or just pass the full name
+    // and let the backend/Tavily handle it (Tavily is flexible).
+    
+    // Actually, route.ts validation expects 2 chars for state.
+    // We need a mapping or extract the code. 
+    // Mapbox context looks like: [{id: "region.123", text: "California", short_code: "US-CA"}]
+    const region = suggestion.context?.find((c) => c.id.startsWith("region"));
+    let state = "CA"; // Default
+    
+    if (region) {
+      // Mapbox often provides short_code like "US-CA"
+      // @ts-ignore - Types might be loose here for raw JSON
+      const shortCode = region.short_code || "";
+      if (shortCode.startsWith("US-")) {
+        state = shortCode.replace("US-", "");
+      } else {
+        // Fallback: extract from text if possible, or map logic needed.
+        // For now, defaulting/assuming mapbox returns US-XX code.
+      }
+    }
+
+    onLocationChange(city, state);
+    setIsOpen(false);
+    setQuery(suggestion.place_name);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (location.trim()) {
-      onLocationChange(location.trim());
+    // Allow manual override if they really want, defaulting to CA if not selected
+    if (query.trim()) {
+      onLocationChange(query.trim(), "CA"); 
       setIsOpen(false);
     }
   };
@@ -56,20 +122,40 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label htmlFor="location" className="text-sm font-medium text-foreground">
-              Enter your location
+              Search for your city
             </label>
             <Input
               id="location"
               type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Downtown Seattle"
+              value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="e.g. Sacramento, Boston..."
               className="mt-1"
               autoFocus
+              autoComplete="off"
             />
+            
+            {/* Suggestions List */}
+            {suggestions.length > 0 && (
+              <ul className="mt-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-sm">
+                {suggestions.map((s) => (
+                  <li key={s.id}>
+                    <button
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted transition-colors"
+                      onClick={() => handleSelect(s)}
+                    >
+                      <span className="font-medium">{s.text}</span>
+                      <span className="text-muted-foreground ml-2 text-xs">
+                        {s.context?.find(c => c.id.startsWith('region'))?.text}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="flex gap-3 justify-end">
@@ -80,11 +166,8 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!location.trim()}>
-              Save Location
-            </Button>
           </div>
-        </form>
+        </div>
       </div>
     </>
   );

@@ -1,63 +1,31 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-15
+Last updated: 2025-11-16
 
-## Current Focus: AI Sous-Chef v2 (CopilotKit) + Community Event Discovery
+## Current Focus: Data Unification Phase 1 (Map + Community)
 
-Branch: `pr-22` (merged locally for polish)
+Branch: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
 
-### Overview
+### Recent Deliverables
+- **Community posts on the map** — `/api/posts` + `getPosts` accept `onlyWithCoords`, MapPage pins shares/requests with gradient badges, and post popups deep-link back to `/community`.
+- **Cross-area navigation** — Community Event/Post cards now link to `/map?eventId=...` or `/map?postId=...`, and the map reads `eventType`/`postKind` query parameters so filters stay in sync.
+- **Quick RSVP from map popups** — Event popovers support guest count selection (1-5) and POST directly to `/api/events/[id]/rsvp`, giving immediate confirmation without leaving the map.
 
-PR #22 introduced the first end-to-end CopilotKit-powered chat experience (`/chat-v2`) plus the calendar view for community events. We now have:
+### CopilotKit / Chat Status
+- `/chat-v2` remains the flagship chat route (CopilotKit provider + `EnhancedChatV2`). All tool renderers are type-safe, and contexts expose user/location metadata via `useCopilotReadable`.
+- **Open issues**:
+  - Blank assistant bubbles still appear due to duplicate CopilotKit streams; we need better instrumentation on `useCopilotChatHeadless_c` to trace chunk order.
+  - Intent auto-send is still stubbed; logs remain in place until CopilotKit exposes the official hook.
+  - `auth-middleware.ts` needs to wrap remaining `/api/...` routes so CopilotKit endpoints never trust client headers directly.
 
-- A new `EnhancedChatV2` client that streams through CopilotKit, injects user/location context, and renders generative UI blocks for every backend tool (`search_resources`, `search_events`, `search_posts`, `get_directions`, `get_resource_by_id`, `get_user_context`, `log_chat`).
-- Dedicated tool renderer components that hydrate our shadcn cards (ResourceCard, EventCard, PostPreview) directly from CopilotKit `useCopilotAction` hooks.
-- Voice input, smart prompt actions, and a refreshed chat shell that mirrors the Community aesthetic.
-- `/community/events/calendar` which surfaces potlucks & volunteer shifts on a scrollable, filterable calendar, rounding out discovery alongside the feed.
+### Community Discovery Snapshot
+- Community layout continues prioritizing events with personalized greetings, urgency cards, and modular components (`page-client.tsx` orchestrator).
+- `/map` now hosts three synchronized layers: food banks, events, and posts. It shares filters with Community via `DiscoveryFiltersProvider`, and popups keep users within discovery surfaces (RSVP, map view, view in community).
+- `/community/events/calendar` (auth-guarded) remains the canonical calendar view; next steps are shared filter state + nav entry.
 
-We are stabilizing TypeScript + runtime issues uncovered during the migration (copilot render props, auth middleware typing, and the lingering blank bubble bug).
-
-### AI Sous-Chef Status (January 2025)
-
-- `sousChefTools` replaces the inline functions in `/api/chat/route.ts`, and the same tool set powers the new `scripts/dev-terminal-chat.ts` REPL plus `scripts/test-chat-tools.ts`.
-- Chat UI (`src/app/chat/page.tsx`) was overhauled: always-on transcript, suggested prompts, location banner, tool-status chips, and request bodies now include `{ userId, location, radiusMiles }` via a memoized ref.
-- **Verified working**:
-  - Terminal harness + Anthropic models exercise `search_posts`/`search_events` and return realistic data (with Supabase warnings only).
-  - Deep-link intent loop is partially mitigated: we guard query params with `searchParamsKey` + `hasFiredIntentRef`.
-- **Still broken**:
-  - UI frequently renders blank assistant bubbles and eventually throws `Maximum update depth exceeded`; `useChat` keeps replaying the same assistant message when the provider never finishes streaming.
-  - OpenRouter GPT models often stop after `get_user_context` despite the “tool playbook” instructions.
-- **Next steps**:
-- Instrument `useChat` with `onFinish`/`onError` to log stream lifecycles.
-- Capture API responses to confirm whether the assistant chunk is empty or not emitted.
-- Investigate whether `convertToModelMessages` is being called with duplicate messages (possible race between optimistic append and stream replacements).
-
-### AI Sous-Chef v2 Snapshot (CopilotKit)
-
-- `/chat-v2` is a fully client-side experience that mounts inside `<CopilotKit runtimeUrl="/api/copilotkit">`.
-- `page-client.tsx` injects two readable contexts (user profile + geolocation) so tools always know the caller.
-- `EnhancedChatV2` stitches together:
-  - Smart prompts, streaming indicator, typing indicator, and voice capture.
-  - `ToolRenderers` that subscribe to CopilotKit action states and render cards inline (no `dangerouslySetInnerHTML` path).
-  - "Search intent" deeplinks via `?intent=hungry|full` (auto-apply soon).
-- Type safety: `src/app/chat-v2/components/tool-renderers/types.ts` holds shared result types, and every renderer consumes `CopilotRenderProps` instead of raw `any`.
-
-**Layout Architecture (January 2025) - COMPLETED ✅:**
-- Full-page chat layout (no "boxed widget" feeling):
-  - Header: `fixed top-0` with backdrop blur
-  - Composer: `fixed bottom-0` positioned dynamically above bottom nav
-  - Messages: Natural document flow, viewport scrolls naturally
-  - No nested scroll containers or flex wrappers
-- Dynamic bottom nav positioning:
-  - `useBottomNavHeight` hook measures actual nav height
-  - Composer uses `style={{ bottom: bottomNavHeight }}`
-  - Messages padding: `(bottomNavHeight || 0) + 140px`
-  - Fully responsive, works on mobile and desktop
-- Files: `chat-v2/layout.tsx`, `page-client.tsx`, `enhanced-chat-v2.tsx`
-
-Outstanding bugs:
-  - CopilotKit render callbacks still expect non-null React elements (return fragments, never `null`).
-  - Web UI blank-bubble race persists; need to coordinate with CopilotKit streaming vs `useChat`.
-  - Need to remove the temporary console logging for `intent` handling once auto-send ships.
+### Active Work / Next Steps
+- Expand shared discovery filters (type/date/radius) so map, feed, and calendar stay consistent.
+- Hook `/chat-v2` into the main nav and keep `/chat` as the fallback until CopilotKit streaming issues are resolved.
+- Continue hardening TypeScript around CopilotKit render props and remove temporary logging once intent automation ships.
 
 ### Tool Renderer Inventory
 - `search_resources` → Resource cards (distance + open state) with CTA buttons.

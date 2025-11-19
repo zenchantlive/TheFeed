@@ -1,5 +1,5 @@
 # TheFeed Project Overview (formerly FoodShare)
-Last updated: 2025-11-15
+Last updated: 2025-11-16
 
 ## Vision
 TheFeed is a hyperlocal food-sharing network that connects people experiencing food insecurity with:
@@ -107,27 +107,28 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - Partner sponsorships (grocery stores, restaurants)
 - Consider premium features for power users
 
-## Current Focus (PR #22)
-**Branch**: `pr-22` (AI Sous-Chef v2 + event calendar)
+## Current Focus (Data Unification Phase 1)
+**Branch**: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
 
-### This Sprint
-- ✅ Ship `/chat-v2` powered by CopilotKit (`EnhancedChatV2`, voice input, smart prompts, tool renderers).
-- ✅ Inject user + location context via `useCopilotReadable`, enabling tools to respect `radiusMiles`.
-- ✅ Add event calendar page with auth guard, month navigation, and potluck/volunteer filters.
-- ✅ Harden TypeScript across renderer components (`CopilotRenderProps`, shared tool result types).
-- 🔄 Stabilize CopilotKit streaming in the React UI (blank bubble regression).
-- ⏳ Productize the calendar in nav + deepen map integration.
+### Delivered This Week
+- ✅ **Map + Community deep links** — `/map` now reads `foodBankId`, `eventId`, `postId`, `eventType`, and `postKind` so links from Community/Event cards land in the right context.
+- ✅ **Community posts as a map layer** — `/api/posts` + `post-queries.ts` gained an `onlyWithCoords` filter so posts with coordinates render as color-coded pins with popups that link back to `/community`.
+- ✅ **Quick RSVP on the map** — Event popups now include guest count selection and inline RSVP via `/api/events/[id]/rsvp`, keeping users on the discovery surface.
 
-### Previous Sprint (Community Layout Refresh)
-- ✅ Modularized Community page (page-client orchestrator + components).
-- ✅ Added personalization (mode-aware greetings, location badge, urgency cards).
-- ✅ Kept events primary, posts secondary, with smart composer logic.
+### Up Next
+- 🔄 Wire CopilotKit chat into the main nav and keep stabilizing streaming (blank bubble bug persists).
+- 🔄 Expand discovery filters so feed, map, and calendar respect the same shared state.
+- ⏳ Map overlays for global discovery + real-time updates once sign-up sheet UI work resumes.
+
+### Previous Milestones
+- `/chat-v2` CopilotKit migration shipped in PR #22 (voice input, smart prompts, tool renderers).
+- Community layout refresh delivered modular page-client orchestration with personalized greetings and urgency cards.
 
 ## AI Sous-Chef v2 (CopilotKit) Highlights
 - `/chat-v2/page-client.tsx` wraps the experience in `<CopilotKit runtimeUrl="/api/copilotkit">`.
 - `ToolRenderers` subscribe to `useCopilotAction` for every backend tool so cards render as soon as actions complete.
 - `scripts/dev-terminal-chat.ts` + `scripts/test-chat-tools.ts` still exercise tools outside of CopilotKit for debugging.
-- Known issue: CopilotKit stream duplication leads to blank assistant bubbles; capturing logs via dev server panic file in `%LOCALAPPDATA%\Temp`.
+- Known issue: CopilotKit stream duplication leads to blank assistant bubbles; capture logs via dev server panic file in `%LOCALAPPDATA%\Temp` while investigating.
 
 ## Key Files
 
@@ -148,6 +149,8 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - `src/app/api/posts/[id]/comments/route.ts` — Comments API
 - `src/app/community/page.tsx` — Server component (fetches real posts)
 - `src/app/community/page-client.tsx` — Client component with post creation
+- `src/app/map/pageClient.tsx` — Resource/event/post layers, quick RSVP, cross-area deep links
+- `src/components/map/MapView.tsx` — Marker rendering for food banks, events, and posts
 
 ### Existing Core Features
 - `src/app/map/`, `src/components/map/` — Mapbox GL integration
