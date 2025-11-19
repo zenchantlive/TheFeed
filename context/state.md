@@ -1,5 +1,5 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-16
+Last updated: 2025-11-19
 
 ## Current Focus: Data Unification Phase 1 (Map + Community)
 
@@ -15,6 +15,7 @@ Branch: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
 - **Community posts on the map** — `/api/posts` + `getPosts` accept `onlyWithCoords`, MapPage pins shares/requests with gradient badges, and post popups deep-link back to `/community`.
 - **Cross-area navigation** — Community Event/Post cards now link to `/map?eventId=...` or `/map?postId=...`, and the map reads `eventType`/`postKind` query parameters so filters stay in sync.
 - **Quick RSVP from map popups** — Event popovers support guest count selection (1-5) and POST directly to `/api/events/[id]/rsvp`, giving immediate confirmation without leaving the map.
+- **Admin verification workspace** — `/admin` layout + `/api/admin/resources` ship with RBAC guards, paginated filters (missing info, duplicates), batch status updates, and a resource editor panel with contextual ✨ buttons that fire the AI enhancer for address/phone/website/hours gaps.
 
 ### CopilotKit / Chat Status
 - `/chat-v2` remains the flagship chat route (CopilotKit provider + `EnhancedChatV2`). All tool renderers are type-safe, and contexts expose user/location metadata via `useCopilotReadable`.
@@ -32,6 +33,11 @@ Branch: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
 - Expand shared discovery filters (type/date/radius) so map, feed, and calendar stay consistent.
 - Hook `/chat-v2` into the main nav and keep `/chat` as the fallback until CopilotKit streaming issues are resolved.
 - Continue hardening TypeScript around CopilotKit render props and remove temporary logging once intent automation ships.
+- Resolve AI enhancement schema errors: OpenRouter currently rejects `/api/admin/resources/[id]/enhance?field=phone` with `Invalid schema for response_format 'response': ... Missing 'phone'`. Need to either flatten optional fields or provide explicit `required` arrays per provider before releasing auto-fill to admins.
+
+### Known Issues / Alerts
+- **2025-11-19** — `/api/admin/resources/[id]/enhance` fails with `Error [AI_APICallError]: Provider returned error ... Invalid schema for response_format 'response': In context=('properties', 'updates'), 'required' ... Missing 'phone'.` The dashboard still renders, but the ✨ buttons log 500s until the schema is rewritten. Track in admin-enhancer.ts once a provider-compatible schema is finalized.
+- Supabase warning: `"invalid configuration parameter name "supautils.disable_program", removing it"` appears when hitting `/api/auth/get-session`. It's noisy but harmless (Supabase reserved the `supautils` prefix).
 
 ### Tool Renderer Inventory
 - `search_resources` → Resource cards (distance + open state) with CTA buttons.

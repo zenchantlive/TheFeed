@@ -17,6 +17,9 @@ Last updated: 2025-11-07
 - **2025-11-15** — **Better Auth middleware helper**
   - Rationale: CopilotKit + new calendar routes call APIs frequently; we need a single helper to validate sessions via Better Auth headers to avoid duplicating logic and accidentally trusting client-provided IDs.
   - Implementation: `src/lib/auth-middleware.ts` exports `validateSession` and `withAuth`, returning `{ userId, session }` when the Better Auth session is present.
+- **2025-11-19** — **Admin RBAC + in-app verification dashboard**
+  - Rationale: Unverified discovery imports need human review before surfacing on `/map`. Building `/admin` with the same Next.js stack keeps auth/streaming consistent and lets us reuse shared context.
+  - Implementation: `src/lib/auth/admin.ts` adds `validateAdminSession`, `withAdminAuth`, and `/api/admin/resources` powers the queue with missing-field filters (hours/phone/website/description/address/duplicates).
 
 ## Community Features Architecture
 
@@ -129,6 +132,12 @@ Last updated: 2025-11-07
 - **2025-11-07** — **Start with polling, migrate to Supabase Realtime in Phase 6**
   - Rationale: Polling simpler to implement; validates UX first; Supabase Realtime adds complexity (WebSocket management); can add when proven valuable.
   - Polling: Every 30 seconds for new posts.
+
+## AI & Automation
+
+- **2025-11-19** — **LLM response schema flattened under `updates`**
+  - Rationale: OpenRouter (Azure) enforces JSON schema where every property must appear in `required`. Nesting optional fields (phone/website/hours) under an `updates` object avoids constant 400s while still letting us parse structured responses.
+  - Implementation: `admin-enhancer.ts` now expects `{ summary, confidence, updates: { … } }` and converts `updates.hours` strings into `HoursType`. See current warning in logs when provider rejects invalid schema.
 
 ## Deferred Decisions
 

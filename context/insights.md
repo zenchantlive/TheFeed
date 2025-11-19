@@ -24,3 +24,7 @@ Last updated: 2025-11-16 05:30 UTC
 
 - 2025-11-18 — **LLMs are bad at coordinates**
   - Extracted addresses from Tavily often lack coordinates. Relying on LLMs to hallucinate lat/lng is unsafe. The robust solution is a dedicated geocoding step (Mapbox API) before database insertion to prevent "Null Island" placement.
+- 2025-11-19 — **Missing address is the main blocker for map-quality resources**
+  - Discovery imports frequently arrive with blank street/city fields or `(0,0)` coordinates. The new admin dashboard exposes an explicit "Address" missing filter and highlights these entries so we can prioritize fixes before anything reaches `/map`.
+- 2025-11-19 — **OpenRouter requires every JSON schema branch to list `required` props**
+  - Even when nesting optional fields inside `updates`, Azure's OpenAI proxy returns `Invalid schema for response_format … Missing 'phone'`. We must either move optional data to a string field (e.g., `hours: string`) or restructure the schema so each nested object includes `required = [...]`. Current error surfaced via `/api/admin/resources/[id]/enhance?field=phone`.
