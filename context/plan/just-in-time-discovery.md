@@ -80,7 +80,7 @@ graph TD
 ### <phase id="5">
 <title>Phase 5: Dev Tooling & Refinement</title>
 <objective>Enable rapid iteration and testing without polluting production data.</objective>
-<status>In Progress</status>
+<status>Complete</status>
 
 <steps>
   <step>
@@ -111,6 +111,19 @@ graph TD
     </details>
   </step>
 </steps>
+</phase>
+
+### <phase id="6">
+<title>Phase 6: Robustness & Scale (Implemented)</title>
+<objective>Handle large-scale discovery without timeouts or hallucinations.</objective>
+<status>Complete</status>
+<details>
+  - **Streaming API**: Converted `/api/discovery/trigger` to NDJSON stream for real-time progress.
+  - **Deep Extraction**: Fetch full raw text for documents to find all resources.
+  - **Batch Processing**: Process 3 docs at a time to avoid timeouts.
+  - **Geocoding**: Added Mapbox Geocoding to prevent "Null Island" placements.
+  - **Strict Schema**: Fixed Zod schema for OpenRouter/Azure compatibility.
+</details>
 </phase>
 
 </section_implementation_phases>

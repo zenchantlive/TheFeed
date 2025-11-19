@@ -6,6 +6,12 @@ Last updated: 2025-11-16
 Branch: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
 
 ### Recent Deliverables
+- **Just-in-Time Discovery Engine Improvements**:
+  - **Streaming API**: Discovery endpoint now streams real-time progress (batches, count) to the client.
+  - **Deep Content Extraction**: Fetches full raw text (PDFs/Docs) from search results to extract *all* resources.
+  - **Batch Processing**: Processes documents in batches of 3 to prevent timeouts.
+  - **Automatic Geocoding**: Uses Mapbox API to geocode new resources before insertion (lat/lng).
+  - **UI Upgrade**: Community page shows a live progress bar and status during scans; "Change Location" now uses Mapbox Autocomplete.
 - **Community posts on the map** — `/api/posts` + `getPosts` accept `onlyWithCoords`, MapPage pins shares/requests with gradient badges, and post popups deep-link back to `/community`.
 - **Cross-area navigation** — Community Event/Post cards now link to `/map?eventId=...` or `/map?postId=...`, and the map reads `eventType`/`postKind` query parameters so filters stay in sync.
 - **Quick RSVP from map popups** — Event popovers support guest count selection (1-5) and POST directly to `/api/events/[id]/rsvp`, giving immediate confirmation without leaving the map.

@@ -15,3 +15,12 @@ Last updated: 2025-11-16 05:30 UTC
 
 - 2025-11-16 — **Discovery filters must initialize from URL params**  
   - `MapPageClient` reads `eventType`/`postKind` from `useSearchParams()` once; we need to sync discovery context whenever query params change (e.g., using `useEffect` + router) to handle repeated deep links.
+
+- 2025-11-18 — **Strict Schema Validation for LLM Providers**
+  - Providers like OpenRouter (Azure OpenAI) enforce strict JSON schema validation where all properties must be required. Using `.optional()` in Zod causes API errors ("Missing property..."). The fix is to use `.nullable()` instead, which forces the LLM to explicitly return `null` for missing data.
+
+- 2025-11-18 — **Streaming is mandatory for batch AI processing**
+  - Processing 20+ search results with an LLM takes >60s, causing timeouts in standard HTTP handlers. Switching to a streaming response (NDJSON) with `ReadableStream` allows infinite duration tasks while keeping the user informed via progress bars.
+
+- 2025-11-18 — **LLMs are bad at coordinates**
+  - Extracted addresses from Tavily often lack coordinates. Relying on LLMs to hallucinate lat/lng is unsafe. The robust solution is a dedicated geocoding step (Mapbox API) before database insertion to prevent "Null Island" placement.
