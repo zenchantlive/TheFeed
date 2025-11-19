@@ -13,6 +13,12 @@ import { z } from "zod";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 const TAVILY_API_URL = "https://api.tavily.com/search";
+export class DiscoveryConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DiscoveryConfigError";
+  }
+}
 
 export interface ProgressUpdate {
   stage: "searching" | "processing" | "deduplicating";
@@ -35,9 +41,8 @@ export async function searchResourcesInArea(
   onProgress?: (update: ProgressUpdate) => void
 ): Promise<DiscoveryResult[]> {
   const apiKey = process.env.TAVILY_API_KEY;
-
   if (!apiKey) {
-    throw new Error("TAVILY_API_KEY is not set in environment variables.");
+    throw new DiscoveryConfigError("TAVILY_API_KEY is not set in environment variables.");
   }
 
   // Construct a specific query to get relevant results
@@ -62,8 +67,10 @@ export async function searchResourcesInArea(
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`Tavily API Error: ${response.status} - ${errorBody}`);
+      console.error("Tavily API error", {
+        status: response.status,
+        statusText: response.statusText,
+      });
       throw new Error(`Tavily search failed with status ${response.status}`);
     }
 
@@ -72,8 +79,12 @@ export async function searchResourcesInArea(
     // Process results in batches to avoid timeouts and handle large documents
     return await processBatchResults(data.results, city, state, onProgress);
   } catch (error) {
+    if (error instanceof DiscoveryConfigError) {
+      console.error("Discovery configuration error:", error.message);
+      throw error;
+    }
     console.error("Error in searchResourcesInArea:", error);
-    return []; // Return empty on failure to be graceful
+    return []; // Return empty on failure to be graceful for runtime issues
   }
 }
 
@@ -102,6 +113,9 @@ async function processBatchResults(
     try {
       return await extractResourcesFromContent(contentToAnalyze, result.url, city, state);
     } catch (err) {
+      if (err instanceof DiscoveryConfigError) {
+        throw err;
+      }
       console.warn(`Failed to process ${result.url}:`, err);
       return [];
     }
@@ -139,6 +153,10 @@ async function extractResourcesFromContent(
   state: string
 ): Promise<DiscoveryResult[]> {
   const model = process.env.OPENROUTER_MODEL || "anthropic/claude-haiku-4.5";
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  if (!openrouterApiKey) {
+    throw new DiscoveryConfigError("OPENROUTER_API_KEY is not set in environment variables.");
+  }
 
   const { object } = await generateObject({
     model: openrouter(model),

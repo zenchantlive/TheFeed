@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSession } from "@/lib/auth-middleware"; // Use validateSession instead of withAuth for streaming
 import { db } from "@/lib/db";
 import { foodBanks } from "@/lib/schema";
-import { searchResourcesInArea, type ProgressUpdate } from "@/lib/discovery/tavily-search";
+import { searchResourcesInArea, type ProgressUpdate, DiscoveryConfigError } from "@/lib/discovery/tavily-search";
 import {
   checkDiscoveryEligibility,
   logDiscoveryStart,
@@ -19,10 +19,13 @@ import { isDuplicateOrBlocked } from "@/lib/discovery/duplicate-guard";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-// Helper to geocode address using Mapbox
+// Helper to geocode address using Mapbox (server-side token only)
 async function geocodeAddress(address: string, city: string, state: string): Promise<{ latitude: number; longitude: number } | null> {
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!mapboxToken) return null;
+  const mapboxToken = process.env.MAPBOX_SERVER_TOKEN || process.env.MAPBOX_TOKEN;
+  if (!mapboxToken) {
+    console.warn("Mapbox server token missing. Skipping geocoding fallback.");
+    return null;
+  }
 
   const query = `${address}, ${city}, ${state}`;
   const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&limit=1`;
@@ -183,7 +186,11 @@ export const POST = async (req: NextRequest) => {
         controller.close();
       } catch (error) {
         console.error("Discovery stream failed:", error);
-        sendUpdate({ type: "error", message: "Discovery process failed." });
+        const message =
+          error instanceof DiscoveryConfigError
+            ? error.message
+            : "Discovery process failed.";
+        sendUpdate({ type: "error", message });
         controller.close();
       }
     },
