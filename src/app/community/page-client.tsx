@@ -36,7 +36,7 @@ function CommunityPageView({
 }: CommunityPageClientProps) {
   const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
   const [userLocation, setUserLocation] = useState<string | null>(null);
-  const [userState, setUserState] = useState<string>("CA");
+  const [userState, setUserState] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleModeToggle = (mode: "hungry" | "full") => {
