@@ -107,7 +107,7 @@ export const discoveryEvents = pgTable("discovery_events", {
   status: text("status").notNull(), // "completed", "failed", "no_results"
   provider: text("provider").notNull().default("tavily"),
   resourcesFound: integer("resources_found").notNull().default(0),
-  triggeredByUserId: text("triggered_by_user_id").references(() => user.id),
+  triggeredByUserId: text("triggered_by_user_id").references(() => user.id, { onDelete: "set null" }),
   metadata: json("metadata"), // Store search query details
   searchedAt: timestamp("searched_at").notNull().defaultNow(),
 });
