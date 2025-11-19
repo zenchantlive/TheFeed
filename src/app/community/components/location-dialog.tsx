@@ -14,7 +14,7 @@ type Suggestion = {
   id: string;
   place_name: string;
   text: string; // City
-  context?: { id: string; text: string }[]; // Contains region (state)
+  context?: { id: string; text: string; short_code?: string }[]; // Contains region (state)
 };
 
 export function LocationDialog({ currentLocation, onLocationChange }: LocationDialogProps) {
