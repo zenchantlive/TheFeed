@@ -21,7 +21,7 @@ CREATE TABLE "user_verifications" (
 	"id" text PRIMARY KEY NOT NULL,
 	"resource_id" text NOT NULL,
 	"user_id" text NOT NULL,
-	"vote" text NOT NULL,
+	"vote" text NOT NULL CHECK (vote IN ('up', 'down')),
 	"field" text,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
