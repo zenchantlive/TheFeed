@@ -8,10 +8,19 @@ import { Check, Copy, Terminal } from "lucide-react";
 export function DeveloperInfo({ userId }: { userId: string }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(userId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    if (!navigator.clipboard) {
+      // Clipboard API not available, you could show an error toast or log this.
+      console.error("Clipboard API not available in this context.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(userId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
   };
 
   return (
