@@ -25,7 +25,7 @@ You are expected to:
 - **UI**: shadcn/ui + Tailwind CSS 4, dark mode via next-themes
 - **Fonts**: Geist Sans & Geist Mono
 - **Maps**: Mapbox GL JS v3.1 (`react-map-gl`)
-- **AI**: Vercel AI SDK v5 + OpenRouter (`openai/gpt-4.1-mini` default)
+- **AI**: Vercel AI SDK v5 + OpenRouter (`anthropic/claude-sonnet-4.5` default)
 - **CopilotKit**: v1.10.6 for enhanced AI chat experience
 
 ### AI Chat Status (CopilotKit v2)
@@ -474,6 +474,19 @@ Located in `src/components/ui/`:
 ## Recent Changes & Migration Notes
 
 **January 2025 Updates:**
+- **Data Quality & UX Phase 1 - COMPLETED ✅ (January 2025):**
+  - Comprehensive audit of data aggregation, verification, and resource management
+  - Baseline grading: **59/100** across 5 dimensions
+  - Created 5-phase improvement plan (see `context/plans/`)
+  - **Phase 1 (Critical Fixes) - ALL COMPLETE:**
+    1. ✅ Enhancement API schema error fixed (`generateObject` with Zod)
+    2. ✅ Resource feed pagination bug fixed (proper `inArray`/`notInArray`)
+    3. ✅ Geocoding (0,0) insertions eliminated (validation + skipping)
+    4. ✅ Database indices added (10-100x performance improvement)
+    5. ✅ Request timeout handling (10min discovery, 30s Tavily, 3 retries)
+  - **Impact:** Admin dashboard ✨ buttons work, zero invalid coords, fast queries
+  - **Next:** Phase 2 - Data Integrity (confidence scoring, duplication, validation)
+
 - **Chat System Refactor (PR #22, #24):**
   - Migrated primary chat to CopilotKit v2 at `/chat-v2`
   - Fixed full-page layout with proper viewport height chain
@@ -498,7 +511,9 @@ Located in `src/components/ui/`:
 - ✅ CopilotKit v1.10.6 for chat
 - ✅ Tailwind CSS 4
 - ✅ Next.js 15 + React 19
+- ✅ Data Quality Phase 1 (critical fixes) - COMPLETE
 - ⚠️ Migrate all chat features from `/chat` to `/chat-v2`
+- 🔄 Data Quality Phase 2 (data integrity) - IN PROGRESS
 
 ## Context Files
 
@@ -513,6 +528,12 @@ Always consult and update relevant context files in `/context/`:
 - `context/copilotkit-migration-plan.md` - CopilotKit migration details
 - `context/chat-v2-typescript-fixes.md` - TypeScript fixes for chat v2
 - `context/lucide-react-troubleshooting.md` - Icon library troubleshooting
+- **`context/plans/`** - Phased improvement plans:
+  - `phase-1-critical-fixes.md` - ✅ COMPLETE (Week 1-2)
+  - `phase-2-data-integrity.md` - 🔄 NEXT (Week 3-4)
+  - `phase-3-trust-ux.md` - (Week 5-6)
+  - `phase-4-performance-scale.md` - (Week 7)
+  - `phase-5-community-engagement.md` - (Week 8)
 
 **When to update:**
 - When changing architecture, critical flows, or semantics for posts/events
@@ -587,6 +608,16 @@ When working in this repo:
 **Problem:** Auth middleware blocking routes
 - **Solution:** Check `src/lib/auth-middleware.ts`, ensure route is in public list
 
+**Problem:** Enhancement API returns 500 error (schema error)
+- **Solution:** See `context/plans/data-quality-and-ux-improvements.md` Phase 1.1 for fix
+- **Issue:** Using `generateText` when OpenRouter expects `generateObject` with Zod schema
+
+**Problem:** Resources with (0,0) coordinates appearing on map
+- **Solution:** See Phase 1.3 - geocoding failures should skip insertion, not insert invalid coords
+
+**Problem:** Duplicate resources being inserted
+- **Solution:** See Phase 2.2 - enhanced duplicate detection with multi-factor scoring
+
 ### Performance Considerations
 - Use Server Components by default (`src/app/**/page.tsx`)
 - Client Components only when needed (hooks, interactivity)
@@ -598,6 +629,7 @@ When working in this repo:
 
 **✅ Completed:**
 - Core map discovery with Mapbox GL
+- **Admin Discovery Workflow:** Scan new areas + deduplication logic
 - AI chat with CopilotKit v2 and tool renderers
 - Better Auth with Google OAuth
 - Phase 1 community social (posts, comments, follows, karma)
@@ -606,13 +638,18 @@ When working in this repo:
 - Mode-based community layout refactor
 - RSVP and signup sheet functionality
 - Full-page chat layout fixes
+- **Data Quality Phase 1 (Critical Fixes):** Enhancement API, pagination, geocoding, indices, timeouts
 
 **🚧 In Progress:**
+- **Data Quality Phase 2 (Data Integrity):** Confidence scoring, duplicate detection, validation
 - Migrate remaining features from `/chat` to `/chat-v2`
 - User profile management enhancements
 - Follow/unfollow API routes
 
 **📋 Pending / Future:**
+- **Trust & UX (Phase 3):** Verification badges, source attribution, user contribution flows
+- **Performance & Scale (Phase 4):** PostGIS queries, Redis caching, pagination enforcement
+- **Community Engagement (Phase 5):** Gamification, provider claims, leaderboards
 - Deeper discovery (map overlays, calendar entry points everywhere)
 - Enhanced signup sheet UI (Phase 3C)
 - Host tools and event management dashboard

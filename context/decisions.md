@@ -139,6 +139,14 @@ Last updated: 2025-11-07
   - Rationale: OpenRouter (Azure) enforces JSON schema where every property must appear in `required`. Nesting optional fields (phone/website/hours) under an `updates` object avoids constant 400s while still letting us parse structured responses.
   - Implementation: `admin-enhancer.ts` now expects `{ summary, confidence, updates: { … } }` and converts `updates.hours` strings into `HoursType`. See current warning in logs when provider rejects invalid schema.
 
+- **2025-11-23** — **Relaxed State Validation for Discovery**
+  - Rationale: Geocoding/Autocomplete often returns full state names ("California") instead of codes ("CA"). Enforcing strict 2-letter validation caused UX errors.
+  - Implementation: `triggerSchema` now uses `min(2)` for state.
+
+- **2025-11-23** — **Insert "Soft Duplicates" instead of blocking**
+  - Rationale: Duplicate detection isn't perfect. Admins need to see potential duplicates to manually verify or merge them, rather than them being silently discarded.
+  - Implementation: `duplicate-guard.ts` distinguishes "hard" (exact address) vs "soft" (fuzzy) duplicates. `trigger` route inserts soft matches with `potentialDuplicate` flag.
+
 ## Deferred Decisions
 
 - **Photo moderation approach** - Deferred until photo uploads implemented

@@ -1,6 +1,28 @@
+// Try to load .env without requiring the dotenv package
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require("dotenv/config");
+} catch {
+  // Minimal fallback loader
+  const fs = require("fs");
+  const path = require("path");
+  const envPath = path.join(process.cwd(), ".env");
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, "utf8").split("\n");
+    for (const line of lines) {
+      if (!line || line.startsWith("#")) continue;
+      const [key, ...rest] = line.split("=");
+      if (!key) continue;
+      const value = rest.join("=").trim().replace(/^"+|"+$/g, "");
+      if (value) process.env[key] = value;
+    }
+  }
+}
 import { searchResourcesInArea } from "../src/lib/discovery/tavily-search";
 import * as readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { isTrustedSource } from "../src/lib/resource-normalizer";
+import type { HoursType } from "../src/lib/schema";
 
 // ANSI Color Codes
 const RESET = "\x1b[0m";
@@ -10,6 +32,30 @@ const GREEN = "\x1b[32m";
 const YELLOW = "\x1b[33m";
 const BLUE = "\x1b[34m";
 const CYAN = "\x1b[36m";
+const MAGENTA = "\x1b[35m";
+
+function formatHours(hours: HoursType | null | undefined): string {
+  if (!hours) return "Not available";
+  const summarize = (day: keyof HoursType) => {
+    const entry = hours[day];
+    if (!entry) return `${capitalize(day)}: —`;
+    if (entry.closed) return `${capitalize(day)}: Closed`;
+    return `${capitalize(day)}: ${entry.open} - ${entry.close}`;
+  };
+  return [
+    summarize("monday"),
+    summarize("tuesday"),
+    summarize("wednesday"),
+    summarize("thursday"),
+    summarize("friday"),
+    summarize("saturday"),
+    summarize("sunday"),
+  ].join("\n      ");
+}
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 async function main() {
   const rl = readline.createInterface({ input, output });
@@ -49,26 +95,19 @@ async function main() {
       }
 
       results.forEach((res, index) => {
+        const trusted = isTrustedSource(res.sourceUrl);
         console.log(`${BOLD}${CYAN}[${index + 1}] ${res.name}${RESET}`);
         console.log(`    ${BOLD}Address:${RESET}  ${res.address}, ${res.zipCode}`);
-        console.log(`    ${BOLD}Services:${RESET} ${res.services.join(", ")}`);
+        console.log(`    ${BOLD}Services:${RESET} ${res.services.join(", ") || "—"}`);
         
         if (res.phone) console.log(`    ${BOLD}Phone:${RESET}    ${res.phone}`);
         if (res.website) console.log(`    ${BOLD}Website:${RESET}  ${res.website}`);
         
-        if (res.hours) {
-          console.log(`    ${BOLD}Hours:${RESET}`);
-          Object.entries(res.hours).forEach(([day, time]) => {
-            if (time) {
-              console.log(`      - ${day}: ${time.open} - ${time.close}`);
-            }
-          });
-        } else {
-          console.log(`    ${BOLD}Hours:${RESET}    ${YELLOW}Not available${RESET}`);
-        }
+        console.log(`    ${BOLD}Hours:${RESET}`);
+        console.log(`      ${formatHours(res.hours ?? null)}`.replace(/\n/g, "\n      "));
 
-        console.log(`    ${BOLD}Source:${RESET}   ${res.sourceUrl}`);
-        console.log(`    ${BOLD}Confidence:${RESET} ${res.confidence}`);
+        console.log(`    ${BOLD}Source:${RESET}   ${res.sourceUrl ?? "—"} ${trusted ? `${MAGENTA}[trusted]${RESET}` : ""}`);
+        console.log(`    ${BOLD}Confidence:${RESET} ${(res.confidence ?? 0).toFixed(2)}`);
         console.log(""); // Empty line separator
       });
 

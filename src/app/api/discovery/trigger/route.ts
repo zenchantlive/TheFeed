@@ -16,6 +16,10 @@ import {
   logDiscoveryComplete,
 } from "@/lib/discovery/circuit-breaker";
 import { isDuplicateOrBlocked } from "@/lib/discovery/duplicate-guard";
+import { detectDuplicates } from "@/lib/discovery/duplicate-detector";
+import { normalizeResource, isTrustedSource } from "@/lib/resource-normalizer";
+import { calculateConfidence, shouldAutoApprove } from "@/lib/discovery/confidence-scoring";
+import { withTimeout } from "@/lib/timeout";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -48,7 +52,7 @@ async function geocodeAddress(address: string, city: string, state: string): Pro
 // Validation schema for the request body
 const triggerSchema = z.object({
   city: z.string().min(1),
-  state: z.string().length(2),
+  state: z.string().min(2), // Allow full state names (e.g. "California")
   force: z.boolean().optional(),
   isTest: z.boolean().optional(),
 });
@@ -65,7 +69,7 @@ export const POST = async (req: NextRequest) => {
   let body;
   try {
     body = await req.json();
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
@@ -86,7 +90,7 @@ export const POST = async (req: NextRequest) => {
   // 3. Circuit Breaker Check
   const eligibility = shouldForce
     ? { shouldSearch: true }
-    : await checkDiscoveryEligibility(locationHash, userId);
+    : await checkDiscoveryEligibility(locationHash);
 
   if (!eligibility.shouldSearch) {
     return NextResponse.json({
@@ -102,9 +106,14 @@ export const POST = async (req: NextRequest) => {
   
   const stream = new ReadableStream({
     async start(controller) {
-      const sendUpdate = (data: { type: "progress" | "complete" | "error"; [key: string]: any }) => {
+      const sendUpdate = (
+        data: { type: "progress" | "complete" | "error" } & Record<string, unknown>
+      ) => {
         controller.enqueue(encoder.encode(JSON.stringify(data) + "\n"));
       };
+
+      // Send immediate feedback to confirm connection
+      sendUpdate({ type: "progress", stage: "init", message: "Connected to discovery engine..." });
 
       try {
         // Start Log
@@ -116,46 +125,125 @@ export const POST = async (req: NextRequest) => {
           sendUpdate({ type: "progress", ...update });
         };
 
-        // Execute Search
-        const results = await searchResourcesInArea(city, state, handleProgress);
+        // Execute Search with 10-minute timeout
+        const results = await withTimeout(
+          searchResourcesInArea(city, state, handleProgress),
+          10 * 60 * 1000, // 10 minutes
+          "Discovery scan timed out after 10 minutes"
+        );
 
         // Processing
         sendUpdate({ type: "progress", stage: "saving", message: "Saving new resources..." });
         
         for (const result of results) {
-          const { isDuplicate } = await isDuplicateOrBlocked(result);
-          if (!isDuplicate) {
-            let lat = result.latitude;
-            let lng = result.longitude;
+          const normalized = normalizeResource({
+            ...result,
+            services: result.services ?? [],
+            hours: result.hours ?? null,
+            sourceUrl: result.sourceUrl ?? null,
+          });
 
-            // Geocode if missing coordinates (0,0)
-            if (lat === 0 && lng === 0) {
-              const coords = await geocodeAddress(result.address, result.city, result.state);
-              if (coords) {
-                lat = coords.latitude;
-                lng = coords.longitude;
-              }
+          // Geocode if missing coordinates (0,0)
+          let lat = normalized.latitude;
+          let lng = normalized.longitude;
+          if (lat === 0 && lng === 0) {
+            const coords = await geocodeAddress(normalized.address, normalized.city, normalized.state);
+            if (coords) {
+              lat = coords.latitude;
+              lng = coords.longitude;
             }
-
-            await db.insert(foodBanks).values({
-              name: result.name,
-              address: result.address,
-              city: result.city,
-              state: result.state,
-              zipCode: result.zipCode,
-              latitude: lat,
-              longitude: lng,
-              phone: result.phone,
-              website: result.website,
-              description: result.description,
-              services: result.services,
-              hours: result.hours,
-              verificationStatus: "unverified",
-              importSource: importSource,
-              autoDiscoveredAt: new Date(),
-            });
-            newCount++;
           }
+
+          const { isDuplicate, type, duplicateId } = await isDuplicateOrBlocked({
+            ...normalized,
+            latitude: lat,
+            longitude: lng,
+            // DiscoveryResult expects undefined, not null
+            phone: normalized.phone ?? undefined,
+            website: normalized.website ?? undefined,
+            description: normalized.description ?? undefined,
+            hours: normalized.hours ?? undefined,
+            confidence: normalized.confidence ?? 0,
+            sourceUrl: normalized.sourceUrl ?? "",
+          });
+
+          // Skip hard duplicates or blocked items
+          if (isDuplicate && (type === "hard" || type === "blocked")) {
+            continue;
+          }
+
+          // Enhanced duplicate detection with multi-factor scoring
+          const duplicateMatches = await detectDuplicates({
+            name: normalized.name,
+            address: normalized.address,
+            city: normalized.city,
+            state: normalized.state,
+            zipCode: normalized.zipCode,
+            latitude: lat,
+            longitude: lng,
+            phone: normalized.phone ?? null,
+            website: normalized.website ?? null,
+          });
+
+          const isPotentialDuplicate = duplicateMatches.some(d => d.confidence === "high");
+
+          if (isPotentialDuplicate) {
+            console.info(`Potential duplicate found for ${normalized.name}:`, {
+              matches: duplicateMatches
+                .filter(d => d.confidence === "high")
+                .map(d => d.matchedResource?.name)
+            });
+          }
+
+          // Calculate quantitative confidence score
+          const { score: confidenceScore } = calculateConfidence({
+            ...normalized,
+            latitude: lat,
+            longitude: lng,
+            phone: normalized.phone ?? undefined,
+            website: normalized.website ?? undefined,
+            description: normalized.description ?? undefined,
+            hours: normalized.hours ?? undefined,
+            services: normalized.services ?? [],
+            sourceUrl: normalized.sourceUrl ?? "",
+            confidence: normalized.confidence ?? 0,
+          }, {
+            discoveryDate: new Date(),
+            confirmingSources: [] // TODO: Track multi-source confirmation
+          });
+
+          const autoApprove = shouldAutoApprove(
+            confidenceScore,
+            normalized.sourceUrl ?? "",
+            isPotentialDuplicate
+          );
+
+          await db.insert(foodBanks).values({
+            name: normalized.name,
+            address: normalized.address,
+            city: normalized.city,
+            state: normalized.state,
+            zipCode: normalized.zipCode,
+            latitude: lat,
+            longitude: lng,
+            phone: normalized.phone ?? undefined,
+            website: normalized.website ?? undefined,
+            description: normalized.description ?? undefined,
+            services: normalized.services,
+            hours: normalized.hours,
+            verificationStatus: autoApprove ? "community_verified" : "unverified",
+            communityVerifiedAt: autoApprove ? new Date() : null,
+            importSource: importSource,
+            autoDiscoveredAt: new Date(),
+            confidenceScore: confidenceScore, // Use quantitative score instead of LLM "vibes"
+            sourceUrl: normalized.sourceUrl ?? null,
+            potentialDuplicates: duplicateMatches
+              .filter(d => d.confidence !== "low")
+              .map(d => d.matchedResource?.id)
+              .filter((id): id is string => id !== undefined),
+            aiSummary: isPotentialDuplicate && duplicateId ? `Potential duplicate of ${duplicateId}` : undefined,
+          });
+          newCount++;
         }
 
         // Log Success
@@ -186,10 +274,14 @@ export const POST = async (req: NextRequest) => {
         controller.close();
       } catch (error) {
         console.error("Discovery stream failed:", error);
-        const message =
-          error instanceof DiscoveryConfigError
-            ? error.message
-            : "Discovery process failed.";
+
+        let message = "Discovery process failed.";
+        if (error instanceof DiscoveryConfigError) {
+          message = error.message;
+        } else if (error instanceof Error && error.message.includes("timed out")) {
+          message = "Scan timed out. Try a smaller area or contact support.";
+        }
+
         sendUpdate({ type: "error", message });
         controller.close();
       }

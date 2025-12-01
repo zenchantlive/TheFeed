@@ -6,6 +6,7 @@ import { getChatStyles } from "../../lib/theme-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import { Calendar, MessageCircle, Eye, Share2, User, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -190,11 +191,13 @@ export function EnhancedPostPreviewCard({
           {/* Image Preview */}
           {post.imageUrl && (
             <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-              <img
+              <Image
                 src={post.imageUrl}
                 alt={post.title}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={false}
               />
             </div>
           )}

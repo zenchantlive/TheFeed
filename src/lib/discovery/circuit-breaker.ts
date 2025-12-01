@@ -20,8 +20,7 @@ const DISCOVERY_COOLDOWN_DAYS = 30;
  * @returns Object indicating if we should proceed and the event ID if created
  */
 export async function checkDiscoveryEligibility(
-  locationHash: string,
-  userId?: string
+  locationHash: string
 ): Promise<{ shouldSearch: boolean; eventId?: string; reason?: string }> {
   // Calculate the cutoff date
   const cutoffDate = new Date();
@@ -62,7 +61,7 @@ export async function checkDiscoveryEligibility(
 export async function logDiscoveryStart(
   locationHash: string,
   userId?: string,
-  metadata: Record<string, any> = {}
+  metadata: Record<string, unknown> = {}
 ): Promise<string> {
   const id = randomUUID();
   await db.insert(discoveryEvents).values({

@@ -39,6 +39,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",
+    "fastest-levenshtein": "^1.0.16",
+    "libphonenumber-js": "^1.12.30",
     "lucide-react": "^0.538.0",
     "mapbox-gl": "^3.1.0",
     "next": "15.4.6",

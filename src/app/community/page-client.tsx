@@ -30,8 +30,6 @@ function CommunityPageView({
   posts,
   initialEvents,
   hotItems,
-  guideMoments,
-  vibeStats,
   user,
 }: CommunityPageClientProps) {
   const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);

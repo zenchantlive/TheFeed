@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { getChatStyles } from "../../lib/theme-utils";
 
 interface TypingIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
   message?: string;
@@ -22,21 +21,23 @@ export function TypingIndicator({
   className,
   ...props 
 }: TypingIndicatorProps) {
-  const styles = getChatStyles();
   const [isVisible, setIsVisible] = React.useState(true);
 
   // Contextual messages based on common actions
-  const contextualMessages = {
-    searching: "🔍 Searching nearby resources...",
-    calculating: "🗺️ Calculating distances...",
-    checking: "📅 Checking event schedules...",
-    analyzing: "🧠 Analyzing your request...",
-    processing: "⚡ Processing your request...",
-    loading: "⏳ Loading resources...",
-    finding: "📍 Finding nearby options...",
-    matching: "🎯 Matching your preferences...",
-    connecting: "🔗 Connecting to services..."
-  };
+  const contextualMessages = React.useMemo(
+    () => ({
+      searching: "🔍 Searching nearby resources...",
+      calculating: "🗺️ Calculating distances...",
+      checking: "📅 Checking event schedules...",
+      analyzing: "🧠 Analyzing your request...",
+      processing: "⚡ Processing your request...",
+      loading: "⏳ Loading resources...",
+      finding: "📍 Finding nearby options...",
+      matching: "🎯 Matching your preferences...",
+      connecting: "🔗 Connecting to services...",
+    }),
+    []
+  );
 
   // Choose appropriate message based on variant
   const displayMessage = React.useMemo(() => {
@@ -118,8 +119,6 @@ interface StatusIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function StatusIndicator({ status, className, ...props }: StatusIndicatorProps) {
-  const styles = getChatStyles();
-
   const statusConfig = {
     online: {
       text: "Online",

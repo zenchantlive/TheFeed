@@ -1,13 +1,27 @@
 import { db } from "@/lib/db";
-import { foodBanks } from "@/lib/schema";
+import { userProfiles } from "@/lib/schema";
 import { MapPageClient } from "./pageClient";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
+import { getNormalizedResources } from "@/lib/resource-feed";
 
 export default async function MapPage() {
-  const banks = (await db.select().from(foodBanks)) as typeof foodBanks.$inferSelect[];
+  const session = await auth.api.getSession({ headers: await headers() });
+  
+  let isAdmin = false;
+  if (session?.user) {
+    const profile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, session.user.id),
+    });
+    isAdmin = profile?.role === "admin";
+  }
+
+  const normalizedBanks = await getNormalizedResources();
 
   const services = Array.from(
     new Set(
-      banks
+      normalizedBanks
         .flatMap((bank) => bank.services ?? [])
         .filter((service): service is string => Boolean(service))
     )
@@ -28,7 +42,7 @@ export default async function MapPage() {
         </p>
       </header>
 
-      <MapPageClient foodBanks={banks} services={services} />
+      <MapPageClient foodBanks={normalizedBanks} services={services} isAdmin={isAdmin} />
     </div>
   );
 }

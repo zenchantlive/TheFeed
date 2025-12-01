@@ -21,7 +21,6 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(currentLocation || "");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async (value: string) => {
     setQuery(value);
@@ -30,7 +29,6 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
       return;
     }
 
-    setIsLoading(true);
     try {
       const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
       if (!token) return;
@@ -44,8 +42,6 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
       setSuggestions(data.features || []);
     } catch (error) {
       console.error("Autocomplete error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -64,7 +60,6 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
     
     if (region) {
       // Mapbox often provides short_code like "US-CA"
-      // @ts-ignore - Types might be loose here for raw JSON
       const shortCode = region.short_code || "";
       if (shortCode.startsWith("US-")) {
         state = shortCode.replace("US-", "");

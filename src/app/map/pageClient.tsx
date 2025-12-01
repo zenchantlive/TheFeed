@@ -13,7 +13,7 @@ import {
   isCurrentlyOpen,
   type Coordinates,
 } from "@/lib/geolocation";
-import type { FoodBank } from "@/lib/schema";
+import type { NormalizedResourceWithMeta } from "@/lib/resource-feed";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
@@ -24,11 +24,15 @@ import {
 } from "@/app/community/discovery-context";
 
 type MapPageClientProps = {
-  foodBanks: FoodBank[];
+  foodBanks: NormalizedResourceWithMeta[];
   services: string[];
+  isAdmin?: boolean;
 };
 
-type EnrichedFoodBank = FoodBank & {
+type VerificationStatus = "unverified" | "community_verified" | "official" | "rejected" | "duplicate";
+
+type EnrichedFoodBank = NormalizedResourceWithMeta & {
+  verificationStatus: VerificationStatus;
   distanceMiles: number | null;
   isOpen: boolean;
 };
@@ -451,7 +455,7 @@ function PostPopup({
   );
 }
 
-function MapPageView({ foodBanks, services }: MapPageClientProps) {
+function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
   const searchParams = useSearchParams();
 
   // Read URL params for initial state
@@ -524,6 +528,7 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
   const enrichedFoodBanks = useMemo<EnrichedFoodBank[]>(() => {
     return foodBanks.map((bank) => {
       const hours = bank.hours ?? null;
+      const verificationStatus = (bank.verificationStatus ?? "unverified") as VerificationStatus;
       const distance =
         userLocation !== null
           ? calculateDistance(
@@ -534,6 +539,7 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
 
       return {
         ...bank,
+        verificationStatus,
         distanceMiles: distance,
         isOpen: hours ? isCurrentlyOpen(hours) : false,
       };
@@ -714,6 +720,7 @@ function MapPageView({ foodBanks, services }: MapPageClientProps) {
           foodBank={selectedFoodBank}
           distanceMiles={selectedFoodBank.distanceMiles}
           currentlyOpen={selectedFoodBank.isOpen}
+          isAdmin={isAdmin}
         />
       ) : null}
 

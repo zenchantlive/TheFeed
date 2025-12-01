@@ -28,6 +28,7 @@ export type LocationPopupProps = {
   currentlyOpen?: boolean;
   onDirections?: () => void;
   className?: string;
+  isAdmin?: boolean;
 };
 
 export function LocationPopup({
@@ -38,6 +39,7 @@ export function LocationPopup({
   currentlyOpen,
   onDirections,
   className,
+  isAdmin,
 }: LocationPopupProps) {
   const {
     isSaved,
@@ -57,6 +59,22 @@ export function LocationPopup({
     const result = await toggleSave();
     if (!result.success && result.error) {
       alert(result.error);
+    }
+  };
+
+  const handleMarkDuplicate = async () => {
+    if (!confirm("Are you sure you want to mark this as a duplicate?")) return;
+    try {
+      const res = await fetch("/api/admin/resources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [foodBank.id], status: "duplicate" }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      onClose();
+      window.location.reload();
+    } catch {} {
+      alert("Failed to mark as duplicate");
     }
   };
 
@@ -123,6 +141,16 @@ export function LocationPopup({
                     <a href={directionsAction} target="_blank" rel="noreferrer">
                       Open in Maps
                     </a>
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    onClick={handleMarkDuplicate}
+                    variant="destructive"
+                    className="w-full mt-2"
+                    size="sm"
+                  >
+                    Mark Duplicate (Admin)
                   </Button>
                 )}
               </>

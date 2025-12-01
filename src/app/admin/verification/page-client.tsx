@@ -13,6 +13,7 @@ import type {
   MissingFieldFilter,
   ResourceStats,
 } from "@/lib/admin-queries";
+import { ScanDialog } from "./components/scan-dialog";
 
 export type SerializedAdminResource = {
   resource: {
@@ -37,6 +38,11 @@ export type SerializedAdminResource = {
     autoDiscoveredAt: string | null;
     communityVerifiedAt: string | null;
     adminVerifiedBy: string | null;
+    // Pipeline Fields
+    confidenceScore: number | null;
+    sourceUrl: string | null;
+    rawHours: string | null;
+    aiSummary: string | null;
     createdAt: string | null;
     updatedAt: string | null;
   };
@@ -51,8 +57,11 @@ export type SerializedAdminResource = {
 type FiltersState = {
   sort: "newest" | "oldest";
   requireMissingInfo: boolean;
+  requireCompleteInfo?: boolean;
   onlyPotentialDuplicates: boolean;
   missingFields?: MissingFieldFilter[];
+  showArchived?: boolean;
+  confidenceBucket?: "high" | "medium" | "low" | "all";
 };
 
 export type VerificationPageData = {
@@ -97,6 +106,7 @@ const batchActions = [
   { label: "Community Verified", status: "community_verified" },
   { label: "Mark Duplicate", status: "duplicate" },
   { label: "Reject", status: "rejected" },
+  { label: "Move to Inbox", status: "unverified" },
 ];
 
 export default function VerificationPageClient({
@@ -117,6 +127,11 @@ export default function VerificationPageClient({
   );
   const [enhancementError, setEnhancementError] = useState<string | null>(null);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancementQueue, setEnhancementQueue] = useState<
+    Record<string, EnhancementProposal | "loading" | "error">
+  >({});
+  const [isQueueProcessing, setIsQueueProcessing] = useState(false);
+  const [isPipelineRunning, setIsPipelineRunning] = useState(false);
 
   const activeResource = useMemo(
     () =>
@@ -160,12 +175,25 @@ export default function VerificationPageClient({
 
         if (nextFilters.requireMissingInfo) {
           params.set("missingOnly", "true");
+        } else if (nextFilters.requireCompleteInfo) {
+          params.set("completeOnly", "true");
         }
         if (nextFilters.onlyPotentialDuplicates) {
           params.set("duplicates", "only");
         }
         if (nextFilters.missingFields?.length) {
           params.set("missing", nextFilters.missingFields.join(","));
+        }
+        if (nextFilters.showArchived) {
+          params.set("archived", "true");
+        }
+        if (nextFilters.confidenceBucket) {
+          // This requires backend support for filtering by confidence bucket.
+          // For now, we can sort client-side or filter client-side if the list is small,
+          // but ideally backend should filter.
+          // I will filter client-side for simplicity in this iteration since pagination is small.
+          // Or I can add it to params if I update backend query.
+          // Let's filter client-side for now as "Triage Mode".
         }
 
         const response = await fetch(`/api/admin/resources?${params}`, {
@@ -232,6 +260,65 @@ export default function VerificationPageClient({
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]
     );
+  };
+
+  const handleRunPipeline = async () => {
+    setIsPipelineRunning(true);
+    try {
+      const res = await fetch("/api/admin/pipeline/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchSize: 5 }),
+      });
+      if (!res.ok) throw new Error("Pipeline failed");
+      const result = await res.json();
+      setStatusMessage(`Pipeline processed ${result.processed} items.`);
+      refreshList();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to run pipeline");
+    } finally {
+      setIsPipelineRunning(false);
+    }
+  };
+
+  const handleBatchEnhance = async () => {
+    if (selectedIds.length === 0) return;
+    setIsQueueProcessing(true);
+    
+    // Mark all selected as loading
+    setEnhancementQueue((prev) => {
+      const next = { ...prev };
+      selectedIds.forEach((id) => {
+        if (!next[id]) next[id] = "loading";
+      });
+      return next;
+    });
+
+    const CONCURRENCY = 1;
+    const idsToProcess = selectedIds.filter(
+      (id) => enhancementQueue[id] !== "loading" && typeof enhancementQueue[id] !== "object"
+    );
+
+    for (let i = 0; i < idsToProcess.length; i += CONCURRENCY) {
+      const chunk = idsToProcess.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        chunk.map(async (id) => {
+          try {
+            const response = await fetch(
+              `/api/admin/resources/${id}/enhance`,
+              { method: "POST" }
+            );
+            if (!response.ok) throw new Error("Failed");
+            const proposal = (await response.json()) as EnhancementProposal;
+            setEnhancementQueue((prev) => ({ ...prev, [id]: proposal }));
+          } catch {
+            setEnhancementQueue((prev) => ({ ...prev, [id]: "error" }));
+          }
+        })
+      );
+    }
+    setIsQueueProcessing(false);
   };
 
   const handleBatchUpdate = async (
@@ -305,7 +392,36 @@ export default function VerificationPageClient({
     }
   };
 
+  // Check queue for active resource enhancement
+  useEffect(() => {
+    if (activeResourceId && enhancementQueue[activeResourceId] && typeof enhancementQueue[activeResourceId] === 'object') {
+       setEnhancement(enhancementQueue[activeResourceId] as EnhancementProposal);
+    }
+  }, [activeResourceId, enhancementQueue]);
+
+  const handleNext = () => {
+    if (!activeResourceId) return;
+    const currentIndex = data.items.findIndex(item => item.resource.id === activeResourceId);
+    if (currentIndex >= 0 && currentIndex < data.items.length - 1) {
+      setActiveResourceId(data.items[currentIndex + 1].resource.id);
+    }
+  };
+
   const statusBadge = (resource: SerializedAdminResource) => {
+    const status = resource.resource.verificationStatus;
+    if (status === "official") {
+      return <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20">Verified</Badge>;
+    }
+    if (status === "community_verified") {
+      return <Badge className="bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 border-blue-500/20">Community</Badge>;
+    }
+    if (status === "rejected") {
+      return <Badge variant="destructive">Rejected</Badge>;
+    }
+    if (status === "duplicate") {
+      return <Badge variant="secondary">Duplicate</Badge>;
+    }
+
     if (resource.potentialDuplicate) {
       return <Badge variant="outline">Possible Duplicate</Badge>;
     }
@@ -336,6 +452,21 @@ export default function VerificationPageClient({
             <RefreshCw className="mr-2 h-3.5 w-3.5" />
             Refresh
           </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleRunPipeline}
+            disabled={isPipelineRunning}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            {isPipelineRunning ? (
+              <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              "🚀"
+            )}
+            Run Pipeline
+          </Button>
+          <ScanDialog onScanComplete={refreshList} />
         </div>
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <span>Queue</span>
@@ -347,21 +478,64 @@ export default function VerificationPageClient({
       <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-4 rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <Checkbox
-              id="missing-info"
-              checked={filters.requireMissingInfo}
-              onCheckedChange={() =>
-                handleFilterChange({
-                  requireMissingInfo: !filters.requireMissingInfo,
-                })
-              }
-            />
-            <label
-              htmlFor="missing-info"
-              className="text-sm font-medium text-foreground"
-            >
-              Missing info only
-            </label>
+            {/* Triage Tabs */}
+            <div className="flex items-center rounded-lg border p-1 bg-muted/20">
+              <Button
+                variant={filters.confidenceBucket === "high" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs text-emerald-600 font-medium"
+                onClick={() => handleFilterChange({ confidenceBucket: "high" })}
+              >
+                High Confidence
+              </Button>
+              <Button
+                variant={filters.confidenceBucket === "medium" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs text-amber-600 font-medium"
+                onClick={() => handleFilterChange({ confidenceBucket: "medium" })}
+              >
+                Ambiguous
+              </Button>
+              <Button
+                variant={filters.confidenceBucket === "all" || !filters.confidenceBucket ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => handleFilterChange({ confidenceBucket: "all" })}
+              >
+                All Unverified
+              </Button>
+            </div>
+            
+            <div className="h-6 w-px bg-border" />
+
+            <div className="flex items-center rounded-lg border p-1 bg-muted/20">
+              <Button
+                variant={!filters.requireMissingInfo && !filters.requireCompleteInfo ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => handleFilterChange({ requireMissingInfo: false, requireCompleteInfo: false })}
+              >
+                Any
+              </Button>
+              <Button
+                variant={filters.requireMissingInfo ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => handleFilterChange({ requireMissingInfo: true, requireCompleteInfo: false })}
+              >
+                Missing Info
+              </Button>
+              <Button
+                variant={filters.requireCompleteInfo ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs"
+                onClick={() => handleFilterChange({ requireMissingInfo: false, requireCompleteInfo: true })}
+              >
+                Complete Info
+              </Button>
+            </div>
+
+            <div className="h-6 w-px bg-border" />
 
             <Checkbox
               id="duplicates-only"
@@ -390,6 +564,24 @@ export default function VerificationPageClient({
             >
               Sort: {filters.sort === "newest" ? "Newest first" : "Oldest first"}
             </Button>
+
+            <div className="h-6 w-px bg-border" />
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="show-archived"
+                checked={filters.showArchived}
+                onCheckedChange={() =>
+                  handleFilterChange({ showArchived: !filters.showArchived })
+                }
+              />
+              <label
+                htmlFor="show-archived"
+                className="text-sm font-medium text-foreground"
+              >
+                Show Archived
+              </label>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -422,6 +614,20 @@ export default function VerificationPageClient({
               Select all
             </label>
             <div className="ml-auto flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="default"
+                disabled={selectedIds.length === 0 || isQueueProcessing}
+                onClick={handleBatchEnhance}
+              >
+                {isQueueProcessing ? (
+                  <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  "✨"
+                )}
+                Prep with AI
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
               {batchActions.map((action) => (
                 <Button
                   key={action.status}
@@ -458,7 +664,16 @@ export default function VerificationPageClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70 bg-background/60">
-                {data.items.map((item) => (
+                {data.items
+                  .filter((item) => {
+                    if (!filters.confidenceBucket || filters.confidenceBucket === "all") return true;
+                    const score = item.resource.confidenceScore ?? 0;
+                    if (filters.confidenceBucket === "high") return score >= 0.8;
+                    if (filters.confidenceBucket === "medium") return score >= 0.4 && score < 0.8;
+                    if (filters.confidenceBucket === "low") return score < 0.4;
+                    return true;
+                  })
+                  .map((item) => (
                   <tr
                     key={item.resource.id}
                     className="cursor-pointer transition hover:bg-muted/50"
@@ -472,14 +687,34 @@ export default function VerificationPageClient({
                           onClick={(event) => event.stopPropagation()}
                         />
                         <div>
-                          <div className="font-medium text-foreground">
-                            {item.resource.name}
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-foreground">
+                              {item.resource.name}
+                            </span>
+                            {enhancementQueue[item.resource.id] === "loading" && (
+                              <RefreshCw className="h-3 w-3 animate-spin text-muted-foreground" />
+                            )}
+                            {typeof enhancementQueue[item.resource.id] === "object" && (
+                              <span className="text-[10px] text-emerald-600">✨ Ready</span>
+                            )}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {item.resource.importSource || "Manual"}
                           </div>
                         </div>
                       </div>
+                      {/* AI Score Indicator */}
+                      {item.resource.confidenceScore != null && item.resource.confidenceScore > 0 && (
+                        <div className="ml-8 mt-1 flex items-center gap-1 text-[10px]">
+                           <span className={
+                             item.resource.confidenceScore >= 0.8 ? "text-emerald-600 font-bold" :
+                             item.resource.confidenceScore >= 0.5 ? "text-amber-600 font-bold" :
+                             "text-muted-foreground"
+                           }>
+                             {(item.resource.confidenceScore * 100).toFixed(0)}% Confidence
+                           </span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-muted-foreground">
                       <div>{item.resource.address}</div>
@@ -582,6 +817,8 @@ export default function VerificationPageClient({
           enhancement={enhancement}
           enhancementError={enhancementError}
           isEnhancing={isEnhancing}
+          onNext={handleNext}
+          hasNext={Boolean(activeResourceId && data.items.findIndex(i => i.resource.id === activeResourceId) < data.items.length - 1)}
         />
       </div>
     </div>
@@ -597,6 +834,8 @@ type ResourceEditorPanelProps = {
   enhancement: EnhancementProposal | null;
   enhancementError: string | null;
   isEnhancing: boolean;
+  onNext?: () => void;
+  hasNext?: boolean;
 };
 
 function ResourceEditorPanel({
@@ -608,18 +847,112 @@ function ResourceEditorPanel({
   enhancement,
   enhancementError,
   isEnhancing,
+  onNext,
+  hasNext,
 }: ResourceEditorPanelProps) {
   const [formData, setFormData] = useState<Partial<SerializedAdminResource["resource"]>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingHours, setIsEditingHours] = useState(false);
+  const [hoursInput, setHoursInput] = useState("");
+  const [isParsingHours, setIsParsingHours] = useState(false);
 
   // Sync form data when resource changes
   useEffect(() => {
     if (resource) {
       setFormData(resource.resource);
+      setIsEditingHours(false);
+      setHoursInput("");
     } else {
       setFormData({});
     }
   }, [resource]);
+
+  const handleInputChange = <K extends keyof SerializedAdminResource["resource"]>(
+    field: K,
+    value: SerializedAdminResource["resource"][K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleApplyEnhancement = () => {
+    if (!enhancement?.proposed) return;
+    setFormData((prev) => ({
+      ...prev,
+      ...enhancement.proposed,
+      // Ensure we don't wipe existing data if proposal is null for some fields
+      phone: enhancement.proposed.phone ?? prev.phone,
+      website: enhancement.proposed.website ?? prev.website,
+      description: enhancement.proposed.description ?? prev.description,
+      services: enhancement.proposed.services ?? prev.services,
+      hours: enhancement.proposed.hours ?? prev.hours,
+    }));
+  };
+
+  const handleParseHours = async () => {
+    if (!hoursInput.trim()) return;
+    setIsParsingHours(true);
+    try {
+      const res = await fetch("/api/admin/parse-hours", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: hoursInput }),
+      });
+      if (!res.ok) throw new Error("Failed to parse");
+      type Hours = NonNullable<SerializedAdminResource["resource"]["hours"]>;
+      const data = (await res.json()) as { hours: Hours };
+      setFormData((prev) => ({ ...prev, hours: data.hours }));
+      setIsEditingHours(false);
+    } catch (error) {
+      console.error(error);
+      alert("Could not understand schedule format. Please try again.");
+    } finally {
+      setIsParsingHours(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!resource) return;
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/admin/resources/${resource.resource.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Failed to save updates");
+      
+      // Refresh the list to reflect changes
+      onRefresh();
+    } catch (error) {
+      console.error("Failed to save:", error);
+      alert("Failed to save changes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleVerify = async (status: string) => {
+    if (!resource) return;
+    const isDirty = JSON.stringify(formData) !== JSON.stringify(resource.resource);
+    if (isDirty) {
+      await handleSave();
+    }
+    await onStatusChange(status, [resource.resource.id]);
+    if (onNext) onNext();
+  };
+
+  useEffect(() => {
+    if (!resource) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleVerify("official");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [formData, resource]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!resource) {
     return (
@@ -650,52 +983,6 @@ function ResourceEditorPanel({
   const missingHours = !formData.hours;
 
   const fieldDiffs = computeDiffs(formData as SerializedAdminResource["resource"], enhancement?.proposed ?? null);
-
-  const handleInputChange = (field: keyof SerializedAdminResource["resource"], value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleApplyEnhancement = () => {
-    if (!enhancement?.proposed) return;
-    setFormData((prev) => ({
-      ...prev,
-      ...enhancement.proposed,
-      // Ensure we don't wipe existing data if proposal is null for some fields
-      phone: enhancement.proposed.phone ?? prev.phone,
-      website: enhancement.proposed.website ?? prev.website,
-      description: enhancement.proposed.description ?? prev.description,
-      services: enhancement.proposed.services ?? prev.services,
-      hours: enhancement.proposed.hours ?? prev.hours,
-    }));
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(`/api/admin/resources/${details.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error("Failed to save updates");
-      
-      // Refresh the list to reflect changes
-      onRefresh();
-    } catch (error) {
-      console.error("Failed to save:", error);
-      alert("Failed to save changes");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleVerify = async (status: string) => {
-    if (isDirty) {
-      await handleSave();
-    }
-    onStatusChange(status, [details.id]);
-  };
 
   return (
     <Card className="sticky top-8 h-fit rounded-3xl border border-border/70 bg-card/95">
@@ -736,9 +1023,31 @@ function ResourceEditorPanel({
                 onClick={() => onEnhance(details.id)}
                 disabled={isEnhancing}
               >
-                ✨ {isEnhancing ? "Searching…" : "Auto-fill"}
+                ✨ {isEnhancing ? "Searching…" : "Re-Run Analysis"}
               </Button>
             </div>
+            
+            {/* Existing AI Metadata Display */}
+            {details.confidenceScore != null && details.confidenceScore > 0 && !enhancement && (
+              <div className="space-y-2 rounded-xl bg-muted/30 p-3 text-xs border border-border/50">
+                 <div className="flex items-center justify-between">
+                    <p className="font-medium text-foreground">Previous Analysis</p>
+                    <Badge variant="outline">{(details.confidenceScore * 100).toFixed(0)}% Score</Badge>
+                 </div>
+                 <p className="text-muted-foreground">{details.aiSummary}</p>
+                 {details.sourceUrl && (
+                   <a href={details.sourceUrl} target="_blank" rel="noreferrer" className="text-primary underline truncate block max-w-[250px]">
+                     {details.sourceUrl}
+                   </a>
+                 )}
+                 {details.rawHours && (
+                   <div className="mt-2">
+                     <p className="font-semibold text-foreground">Raw Hours Found:</p>
+                     <p className="text-muted-foreground bg-background/50 p-1 rounded">{details.rawHours}</p>
+                   </div>
+                 )}
+              </div>
+            )}
             {enhancementError && (
               <p className="text-xs text-destructive">{enhancementError}</p>
             )}
@@ -943,26 +1252,61 @@ function ResourceEditorPanel({
               </Button>
             )}
           </div>
-          {formData.hours ? (
-            <div className="rounded-xl border border-dashed p-3 text-sm">
-              {Object.entries(formData.hours).map(([day, hours]) => (
-                <div
-                  key={day}
-                  className="flex items-center justify-between text-muted-foreground"
+          {isEditingHours ? (
+            <div className="space-y-2">
+              <Textarea
+                value={hoursInput}
+                onChange={(e) => setHoursInput(e.target.value)}
+                placeholder="e.g. Mon-Fri 9am to 5pm, Sat 10-2"
+                className="min-h-[80px] text-sm"
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleParseHours}
+                  disabled={isParsingHours || !hoursInput.trim()}
                 >
-                  <span className="font-medium">{day}</span>
-                  <span>
-                    {hours
-                      ? `${hours.open} - ${hours.close}${
-                          hours.closed ? " (Closed)" : ""
-                        }`
-                      : "—"}
-                  </span>
-                </div>
-              ))}
+                  {isParsingHours ? "Parsing..." : "Apply Schedule"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditingHours(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">No schedule</span>
+            <div
+              className="group relative min-h-[60px] cursor-pointer rounded-xl border border-dashed p-3 text-sm hover:border-primary/50"
+              onClick={() => setIsEditingHours(true)}
+            >
+              {formData.hours ? (
+                Object.entries(formData.hours).map(([day, hours]) => (
+                  <div
+                    key={day}
+                    className="flex items-center justify-between text-muted-foreground"
+                  >
+                    <span className="font-medium capitalize">{day}</span>
+                    <span>
+                      {hours
+                        ? `${hours.open} - ${hours.close}${
+                            hours.closed ? " (Closed)" : ""
+                          }`
+                        : "—"}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-muted-foreground">Click to add schedule...</span>
+              )}
+              <div className="absolute right-2 top-2 hidden group-hover:block">
+                <Badge variant="secondary" className="opacity-90">
+                  Edit
+                </Badge>
+              </div>
+            </div>
           )}
         </div>
         <Separator />
@@ -975,8 +1319,9 @@ function ResourceEditorPanel({
               size="sm"
               onClick={() => handleVerify("official")}
               disabled={isUpdating || isSaving}
+              className="min-w-[140px]"
             >
-              {isDirty ? "Save & Verify" : "Mark Verified"}
+              {hasNext ? "Verify & Next" : (isDirty ? "Save & Verify" : "Mark Verified")}
             </Button>
             <Button
               size="sm"
@@ -1002,7 +1347,20 @@ function ResourceEditorPanel({
             >
               Reject
             </Button>
+            {hasNext && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onNext}
+                disabled={isUpdating || isSaving}
+              >
+                Skip
+              </Button>
+            )}
           </div>
+          <p className="text-xs text-muted-foreground text-center pt-2">
+            Tip: Press <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100"><span className="text-xs">⌘</span>Enter</kbd> to verify & next
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -1065,7 +1423,7 @@ function computeDiffs(
 }
 
 function isEqualValue(a: unknown, b: unknown) {
-  const normalize = (value: unknown): any => {
+  const normalize = (value: unknown): unknown => {
     if (typeof value === "string") {
       return value.trim();
     }

@@ -1,4 +1,4 @@
-import { and, asc, count, desc, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, inArray, not, or, sql, type SQL } from "drizzle-orm";
 import { db } from "./db";
 import { foodBanks } from "./schema";
 
@@ -18,7 +18,9 @@ export type GetUnverifiedResourcesOptions = {
   sort?: "newest" | "oldest";
   missingFields?: MissingFieldFilter[];
   requireMissingInfo?: boolean;
+  requireCompleteInfo?: boolean;
   onlyPotentialDuplicates?: boolean;
+  statuses?: AdminVerificationStatus[];
 };
 
 export type AdminResourceRecord = {
@@ -43,8 +45,6 @@ const missingFieldExpressions: Record<MissingFieldFilter, SQL<boolean>> = {
     OR ${foodBanks.city} = ''
     OR ${foodBanks.state} IS NULL
     OR ${foodBanks.state} = ''
-    OR ${foodBanks.latitude} = 0
-    OR ${foodBanks.longitude} = 0
   `,
 };
 
@@ -77,6 +77,12 @@ const resourceSelection = {
   autoDiscoveredAt: foodBanks.autoDiscoveredAt,
   communityVerifiedAt: foodBanks.communityVerifiedAt,
   adminVerifiedBy: foodBanks.adminVerifiedBy,
+  // Pipeline Fields
+  confidenceScore: foodBanks.confidenceScore,
+  sourceUrl: foodBanks.sourceUrl,
+  rawHours: foodBanks.rawHours,
+  aiSummary: foodBanks.aiSummary,
+  potentialDuplicates: foodBanks.potentialDuplicates,
   createdAt: foodBanks.createdAt,
   updatedAt: foodBanks.updatedAt,
 };
@@ -87,8 +93,12 @@ export async function getUnverifiedResources(
   const limit = Math.min(options.limit ?? DEFAULT_LIMIT, 100);
   const offset = options.offset ?? 0;
 
+  const statuses = options.statuses && options.statuses.length > 0
+    ? options.statuses
+    : ["unverified"];
+
   const whereConditions: SQL<boolean>[] = [
-    sql`${foodBanks.verificationStatus} = 'unverified'`,
+    inArray(foodBanks.verificationStatus, statuses) as SQL<boolean>,
   ];
 
   const requestedFields = options.missingFields?.filter(
@@ -108,8 +118,16 @@ export async function getUnverifiedResources(
 
   if (missingFiltersToUse.length > 0) {
     whereConditions.push(
-      or(...missingFiltersToUse.map((field) => missingFieldExpressions[field]))
+      or(...missingFiltersToUse.map((field) => missingFieldExpressions[field])) as SQL<boolean>
     );
+  } else if (options.requireCompleteInfo) {
+    // Require that NONE of the default missing fields are true
+    const condition = or(
+      ...DEFAULT_MISSING_FIELDS.map((field) => missingFieldExpressions[field])
+    ) as SQL<boolean> | undefined;
+    if (condition) {
+      whereConditions.push(not(condition) as SQL<boolean>);
+    }
   }
 
   if (options.onlyPotentialDuplicates) {

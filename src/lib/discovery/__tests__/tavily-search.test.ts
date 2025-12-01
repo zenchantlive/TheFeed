@@ -53,7 +53,7 @@ describe("tavily-search", () => {
             zipCode: "90210",
             services: ["Pantry"],
             sourceUrl: "http://test.com",
-            hours: { Monday: { open: "09:00", close: "17:00" } },
+            hours: { monday: { open: "09:00", close: "17:00" } },
           },
         ],
       },
@@ -65,6 +65,7 @@ describe("tavily-search", () => {
     expect(results[0].name).toBe("Test Food Bank");
     expect(results[0].city).toBe("Beverly Hills"); // Added by wrapper
     expect(results[0].confidence).toBe(0.8); // Default confidence
+    expect(results[0].hours?.monday?.open).toBe("09:00");
     expect(generateObject).toHaveBeenCalledTimes(1);
   });
 

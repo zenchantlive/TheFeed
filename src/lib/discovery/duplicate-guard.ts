@@ -21,7 +21,7 @@ const NAME_SIMILARITY_THRESHOLD = 0.8; // 80% similarity
  */
 export async function isDuplicateOrBlocked(
   resource: DiscoveryResult
-): Promise<{ isDuplicate: boolean; reason?: string }> {
+): Promise<{ isDuplicate: boolean; reason?: string; duplicateId?: string; type?: "hard" | "soft" | "blocked" }> {
   // 1. Check Tombstone (Blacklist)
   // We check if this specific address has been marked as "closed" or "invalid"
   const tombstones = await db
@@ -31,7 +31,31 @@ export async function isDuplicateOrBlocked(
     .limit(1);
 
   if (tombstones.length > 0) {
-    return { isDuplicate: true, reason: `Tombstoned: ${tombstones[0].reason}` };
+    return { isDuplicate: true, reason: `Tombstoned: ${tombstones[0].reason}`, type: "blocked" };
+  }
+
+  // 2. Address-level duplicate check (case-insensitive exact match)
+  if (resource.address && resource.city && resource.state) {
+    const addrMatch = await db
+      .select()
+      .from(foodBanks)
+      .where(
+        sql`
+          lower(${foodBanks.address}) = lower(${resource.address})
+          AND lower(${foodBanks.city}) = lower(${resource.city})
+          AND lower(${foodBanks.state}) = lower(${resource.state})
+        `
+      )
+      .limit(1);
+
+    if (addrMatch.length > 0) {
+      return {
+        isDuplicate: true,
+        reason: `Duplicate address match: ${addrMatch[0].name ?? "existing record"}`,
+        duplicateId: addrMatch[0].id,
+        type: "hard",
+      };
+    }
   }
 
   // 2. Geo-Spatial Check
@@ -48,17 +72,20 @@ export async function isDuplicateOrBlocked(
   const latBuffer = 0.005; // approx 500m
   const lngBuffer = 0.005;
 
-  const nearbyCandidates = await db
-    .select()
-    .from(foodBanks)
-    .where(
-      sql`${foodBanks.latitude} BETWEEN ${resource.latitude - latBuffer} AND ${
-        resource.latitude + latBuffer
-      }
-      AND ${foodBanks.longitude} BETWEEN ${resource.longitude - lngBuffer} AND ${
-        resource.longitude + lngBuffer
-      }`
-    );
+  const nearbyCandidates =
+    resource.latitude === 0 && resource.longitude === 0
+      ? []
+      : await db
+          .select()
+          .from(foodBanks)
+          .where(
+            sql`${foodBanks.latitude} BETWEEN ${resource.latitude - latBuffer} AND ${
+              resource.latitude + latBuffer
+            }
+            AND ${foodBanks.longitude} BETWEEN ${resource.longitude - lngBuffer} AND ${
+              resource.longitude + lngBuffer
+            }`
+          );
 
   for (const candidate of nearbyCandidates) {
     // 3. Refine Distance (Haversine)
@@ -76,6 +103,8 @@ export async function isDuplicateOrBlocked(
         return {
           isDuplicate: true,
           reason: `Duplicate of ${candidate.name} (${distance.toFixed(0)}m away)`,
+          duplicateId: candidate.id,
+          type: "soft",
         };
       }
     }

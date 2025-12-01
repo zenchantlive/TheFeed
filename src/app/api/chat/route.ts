@@ -2,7 +2,6 @@ import { openrouter } from "@openrouter/ai-sdk-provider";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { sousChefTools } from "@/lib/ai-tools";
 import { buildSousChefSystemPrompt, locationSchema } from "@/lib/prompts/chat-system";
 import { validateSession } from "@/lib/auth-middleware";

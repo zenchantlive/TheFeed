@@ -5,7 +5,7 @@
  * Supports both light (cork board) and dark (chalkboard) themes.
  */
 
-import { type ClassValue } from "clsx";
+
 
 /**
  * Pin colors for cards - subtle, warm tones

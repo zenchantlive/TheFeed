@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, MapPin, Clock, CheckCircle, Navigation } from "lucide-react";
+import { Calendar, MapPin, Clock, CheckCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 interface EventCardProps {
@@ -14,10 +14,9 @@ interface EventCardProps {
     location: string;
     isVerified: boolean;
   };
-  userLocation?: { lat: number; lng: number } | null;
 }
 
-export function EventCard({ event, userLocation }: EventCardProps) {
+export function EventCard({ event }: EventCardProps) {
   const eventDate = parseISO(event.startsAt);
   const formattedDate = format(eventDate, "EEE, MMM d");
   const formattedTime = format(eventDate, "h:mm a");

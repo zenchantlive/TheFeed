@@ -81,7 +81,7 @@ export async function searchFoodBanks({
       return true;
     })
     .sort((a, b) => a.distance - b.distance)
-    .map(({ matchesServices: _matchesServices, ...rest }) => rest);
+    .map(({ ...rest }) => rest);
 
   return typeof limit === "number" ? results.slice(0, limit) : results;
 }

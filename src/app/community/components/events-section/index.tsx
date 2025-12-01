@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MapPin, Calendar as CalendarIcon } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { EventCard } from "@/components/events/event-card";
 import { useDiscoveryEvents } from "../../use-discovery-events";
 import type { EventCardData } from "../../types";
@@ -71,11 +71,9 @@ export function EventsSection({ initialEvents, mode }: EventsSectionProps) {
  * Adds RSVP and map pin buttons to each event
  */
 function EventCardWithActions({
-  event,
-  mode
+  event
 }: {
   event: EventCardData;
-  mode?: "hungry" | "full";
 }) {
   return (
     <div className="relative">

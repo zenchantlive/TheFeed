@@ -91,6 +91,12 @@ export const foodBanks = pgTable("food_banks", {
   autoDiscoveredAt: timestamp("auto_discovered_at"),
   communityVerifiedAt: timestamp("community_verified_at"),
   adminVerifiedBy: text("admin_verified_by").references(() => user.id),
+  // Pipeline Fields
+  confidenceScore: real("confidence_score").default(0),
+  sourceUrl: text("source_url"),
+  rawHours: text("raw_hours"),
+  aiSummary: text("ai_summary"),
+  potentialDuplicates: text("potential_duplicates").array(), // IDs of potential duplicate resources
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -626,3 +632,59 @@ export const discoveryEventsRelations = relations(discoveryEvents, ({ one }) => 
     references: [user.id],
   }),
 }));
+
+/**
+ * Resource Versions - Complete change history for every resource
+ * Enables rollback and audit trail functionality
+ */
+export const resourceVersions = pgTable("resource_versions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  resourceId: text("resource_id")
+    .notNull()
+    .references(() => foodBanks.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(), // 1, 2, 3, etc.
+
+  // Snapshot of full resource at this version
+  snapshot: json("snapshot").notNull().$type<Record<string, any>>(),
+
+  // What changed
+  changedFields: json("changed_fields").$type<string[]>(),
+
+  // Who changed it
+  changedBy: text("changed_by").notNull(), // User ID or "system"
+  changeReason: text("change_reason"), // "ai_enhancement" | "admin_edit" | "provider_claim"
+
+  // Source attribution
+  sources: json("sources").$type<string[]>(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Admin Audit Log - Tracks all admin actions for security and compliance
+ */
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  adminId: text("admin_id")
+    .notNull()
+    .references(() => user.id),
+  action: text("action").notNull(), // "approve" | "reject" | "merge" | "edit" | "delete"
+  resourceId: text("resource_id").references(() => foodBanks.id, { onDelete: "set null" }),
+
+  // Batch operations
+  affectedIds: json("affected_ids").$type<string[]>(),
+
+  // Change details
+  changes: json("changes").$type<Record<string, { old: any; new: any }>>(),
+  reason: text("reason"),
+
+  // IP for security audit
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

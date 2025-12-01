@@ -44,8 +44,14 @@ export const GET = async (req: NextRequest) => {
     const offset = parsePositiveInt(searchParams.get("offset"), 0);
     const sort = searchParams.get("sort") === "oldest" ? "oldest" : "newest";
     const requireMissingInfo = searchParams.get("missingOnly") === "true";
+    const requireCompleteInfo = searchParams.get("completeOnly") === "true";
     const onlyPotentialDuplicates = searchParams.get("duplicates") === "only";
     const missingFields = parseMissingFields(searchParams.get("missing"));
+    const showArchived = searchParams.get("archived") === "true";
+
+    const statuses: AdminVerificationStatus[] = showArchived
+      ? ["official", "community_verified", "rejected", "duplicate"]
+      : ["unverified"];
 
     const [{ items, total }, stats] = await Promise.all([
       getUnverifiedResources({
@@ -53,8 +59,10 @@ export const GET = async (req: NextRequest) => {
         offset,
         sort,
         requireMissingInfo,
+        requireCompleteInfo,
         onlyPotentialDuplicates,
         missingFields,
+        statuses,
       }),
       getResourceStats(),
     ]);
@@ -69,8 +77,10 @@ export const GET = async (req: NextRequest) => {
       filters: {
         sort,
         requireMissingInfo,
+        requireCompleteInfo,
         onlyPotentialDuplicates,
         missingFields,
+        showArchived,
       },
       stats,
     });

@@ -5,6 +5,8 @@ import { withAdminAuth } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { foodBanks, type HoursType } from "@/lib/schema";
 import { geocodeAddress } from "@/lib/server-geocoding";
+import { createResourceVersion } from "@/lib/versioning";
+import { logAdminAction } from "@/lib/audit";
 
 const updateResourceSchema = z.object({
   name: z.string().min(1).optional(),
@@ -72,6 +74,12 @@ export const PUT = async (
         );
       }
 
+      // Determine changed fields for versioning
+      const changedFields = Object.keys(updates).filter(
+        key => JSON.stringify(updates[key as keyof typeof updates]) !==
+               JSON.stringify(currentRecord[key as keyof typeof currentRecord])
+      );
+
       // Handle automatic geocoding if address fields change but coords aren't provided
       let newCoords = {};
       const addressChanged =
@@ -107,6 +115,31 @@ export const PUT = async (
         })
         .where(eq(foodBanks.id, id))
         .returning();
+
+      // Create version snapshot
+      await createResourceVersion(
+        id,
+        userId,
+        "admin_edit",
+        changedFields,
+        []
+      );
+
+      // Log admin action
+      await logAdminAction({
+        adminId: userId,
+        action: "edit",
+        resourceId: id,
+        changes: changedFields.reduce((acc, field) => {
+          acc[field] = {
+            old: currentRecord[field as keyof typeof currentRecord],
+            new: updates[field as keyof typeof updates]
+          };
+          return acc;
+        }, {} as Record<string, { old: any; new: any }>),
+        ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
+      });
 
       return NextResponse.json({ resource: updatedRecord });
     } catch (err) {

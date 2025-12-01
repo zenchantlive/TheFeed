@@ -231,7 +231,7 @@ export function ScannerNotification({
               Found {foundCount} new resources!
             </h4>
             <p className="text-xs text-green-700 mb-2">
-              They are marked as "Unverified". Help us check them?
+              They are marked as &quot;Unverified&quot;. Help us check them?
             </p>
             {samples.length > 0 && (
               <Button

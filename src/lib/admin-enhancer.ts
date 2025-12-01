@@ -1,8 +1,9 @@
 import { openrouter } from "@openrouter/ai-sdk-provider";
-import { z } from "zod";
 import { generateObject } from "ai";
+import { z } from "zod";
 import { db } from "./db";
 import { foodBanks, type HoursType } from "./schema";
+import { normalizeHours, normalizePhone, normalizeServices, normalizeWebsite } from "./resource-normalizer";
 
 const TAVILY_API_URL = "https://api.tavily.com/search";
 
@@ -40,6 +41,7 @@ export type EnhancementProposal = {
   confidence: number;
   sources: string[];
   focusField?: string | null;
+  rawHours?: string | null;
 };
 
 async function fetchResource(resourceId: string) {
@@ -67,21 +69,49 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
   ]
     .filter(Boolean)
     .join(", ");
-  const query = `${resource.name} ${locationContext || "Sacramento, CA"} hours phone services`;
+  
+  // Improved query: strictly look for food-related services to avoid church/childcare confusion
+  const query = `"${resource.name}" "food pantry" OR "food bank" OR "soup kitchen" OR "food distribution" hours services ${locationContext || "Sacramento, CA"}`;
 
-  const response = await fetch(TAVILY_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      api_key: apiKey,
-      query,
-      search_depth: "basic",
-      max_results: 5,
-      include_raw_content: true,
-    }),
-  });
+  const fetchWithRetry = async (retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        const res = await fetch(TAVILY_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: apiKey,
+            query,
+            search_depth: "basic",
+            max_results: 5,
+            include_raw_content: true,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) return res;
+        
+        // If 429 or 5xx, retry. If 400, fail.
+        if (res.status === 429 || res.status >= 500) {
+          console.warn(`Tavily fetch failed (attempt ${i + 1}/${retries}): ${res.status}`);
+          if (i === retries - 1) return res;
+        } else {
+          return res; // Fatal client error
+        }
+      } catch (err) {
+        console.warn(`Tavily fetch error (attempt ${i + 1}/${retries}):`, err);
+        if (i === retries - 1) throw err;
+      }
+      await new Promise((r) => setTimeout(r, delay * (i + 1))); // Exponential backoff
+    }
+    throw new Error("Max retries reached");
+  };
+
+  const response = await fetchWithRetry();
 
   if (!response.ok) {
     console.error("Tavily enhancement error", {
@@ -95,28 +125,13 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
   return data.results ?? [];
 }
 
-const enhancementSchema = z.object({
-  summary: z.string().describe("Human readable summary of any updates found."),
-  confidence: z.number().min(0).max(1),
-  updates: z
-    .object({
-      phone: z.string().nullable(),
-      website: z.string().nullable(),
-      description: z.string().nullable(),
-      services: z.array(z.string()).nullable(),
-      hours: z.string().nullable(),
-    })
-    .nullable()
-    .describe("Proposed updates. Return null for any field if no new info found."),
-});
-
 function truncateContent(results: TavilyResult[]): { content: string; sources: string[] } {
   const top = results.slice(0, 3);
   const content = top
     .map((result) => {
       const body = result.raw_content || result.content || "";
       const truncated = body.slice(0, 4000);
-      return `Source: ${result.url}\n${truncated}`;
+      return `Source: ${result.url}\nTitle: ${result.title}\n${truncated}`;
     })
     .join("\n\n---\n\n");
 
@@ -146,67 +161,76 @@ export async function enhanceResource(
     ? `Focus primarily on confirming or updating the "${focusField}" field.`
     : "Focus on any missing or incomplete details.";
 
+  // Use generateObject with Zod schema for type-safe structured output
   const { object } = await generateObject({
     model: openrouter(model),
-    schema: enhancementSchema,
+    schema: z.object({
+      updates: z.object({
+        phone: z.string().nullable().optional(),
+        website: z.string().url().nullable().optional(),
+        description: z.string().nullable().optional(),
+        services: z.array(z.string()).nullable().optional(),
+        raw_hours: z.string().nullable().optional(),
+        hours: z.record(z.string(), z.object({
+          open: z.string(),
+          close: z.string(),
+          closed: z.boolean().optional()
+        }).nullable()).nullable().optional()
+      }),
+      summary: z.string(),
+      confidence: z.number().min(0).max(1),
+      sources: z.array(z.string().url()).optional()
+    }),
     prompt: `
-      You are an assistant that fills in missing structured data for community resources.
-      We have the following existing information:
+      You are an expert data analyst verifying food bank information.
 
+      Goal: Extract specific contact info and operating hours for the "Food Pantry" or "Food Distribution" service.
+
+      CRITICAL RULES:
+      1. IGNORE non-food services. If the entity is a church, do NOT extract Sunday Worship hours or Office hours. Look ONLY for "Pantry", "Distribution", "Soup Kitchen".
+      2. If you cannot find specific food distribution hours, leave 'hours' as null. Do NOT guess office hours.
+      3. Return structured data matching the schema exactly.
+
+      Current Data:
       Name: ${resource.name}
-      Address: ${resource.address}, ${resource.city}, ${resource.state} ${resource.zipCode}
+      Address: ${resource.address}, ${resource.city}, ${resource.state}
       Phone: ${resource.phone ?? "Unknown"}
-      Website: ${resource.website ?? "Unknown"}
-      Description: ${resource.description ?? "Unknown"}
 
-      Review the documents below and extract updated details if they are clearly stated.
-      ${focusInstruction}
-      Only provide fields when the information is explicit and confident.
+      Instructions:
+      - Extract phone, website, description, and services if found
+      - raw_hours: The raw text description of hours found (e.g. 'Mon-Fri 9am-12pm')
+      - hours: Structured hours object with all 7 days (monday through sunday)
+        Each day should be { open: "HH:MM", close: "HH:MM", closed: boolean } or null
+      - summary: Brief human-readable summary of what you found
+      - confidence: 0.0 to 1.0 (Low confidence if only office hours found, high if food pantry hours confirmed)
 
       Documents:
       ${content}
+
+      ${focusInstruction}
     `,
+    temperature: 0.3, // Add for consistency as recommended in plan
   });
 
-  const updates = object.updates || {
-    phone: null,
-    website: null,
-    description: null,
-    services: null,
-    hours: null,
-  };
+  const updates = object.updates || {};
+  const normalizedHours = updates.hours ? normalizeHours(updates.hours).hours : null;
+  const normalizedServices = normalizeServices(updates.services || []);
+  const normalizedPhone = normalizePhone(updates.phone);
+  const normalizedWebsite = normalizeWebsite(updates.website);
 
   return {
     resourceId,
     proposed: {
-      phone: updates.phone ?? null,
-      website: updates.website ?? null,
+      phone: normalizedPhone,
+      website: normalizedWebsite,
       description: updates.description ?? null,
-      services: updates.services ?? null,
-      hours: normalizeHours(updates.hours),
+      services: normalizedServices ?? null,
+      hours: normalizedHours ?? null,
     },
-    summary: object.summary,
-    confidence: object.confidence,
+    summary: object.summary || "AI enhancement complete.",
+    confidence: object.confidence || 0.5,
     sources,
     focusField: focusField ?? null,
+    rawHours: updates.raw_hours ?? null,
   };
-}
-
-function normalizeHours(raw?: string | null): HoursType | null {
-  if (!raw) return null;
-  const lines = raw.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (!lines.length) return null;
-  const normalized: HoursType = {};
-  for (const line of lines) {
-    const [dayPart, hoursPart] = line.split(":").map((part) => part?.trim());
-    if (!dayPart || !hoursPart) continue;
-    if (/closed/i.test(hoursPart)) {
-      normalized[dayPart] = { open: "Closed", close: "Closed", closed: true };
-      continue;
-    }
-    const [open, close] = hoursPart.split("-").map((part) => part?.trim());
-    if (!open || !close) continue;
-    normalized[dayPart] = { open, close };
-  }
-  return Object.keys(normalized).length > 0 ? normalized : null;
 }

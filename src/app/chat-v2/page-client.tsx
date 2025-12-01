@@ -72,8 +72,6 @@ export default function ChatV2Client({ user }: ChatV2ClientProps) {
   const {
     coords,
     label: locationLabel,
-    status: locationStatus,
-    refresh: refreshLocation,
   } = useResolvedLocation();
 
   const [hasAppliedIntent, setHasAppliedIntent] = useState(false);
