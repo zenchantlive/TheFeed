@@ -46,11 +46,15 @@ export async function Leaderboard({ period }: { period: "week" | "month" | "allt
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                {(leader.badges as string[])?.slice(0, 3).map((badgeId: string) => (
-                                    <span key={badgeId} className="text-lg" title={BADGES[badgeId as keyof typeof BADGES]?.name}>
-                                        {BADGES[badgeId as keyof typeof BADGES]?.icon}
-                                    </span>
-                                ))}
+                                {Array.isArray(leader.badges) && leader.badges.slice(0, 3).map((badgeId: string) => {
+                                    const badge = BADGES[badgeId as keyof typeof BADGES];
+                                    if (!badge) return null;
+                                    return (
+                                        <span key={badgeId} className="text-lg" title={badge.name}>
+                                            {badge.icon}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
