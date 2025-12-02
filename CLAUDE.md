@@ -656,13 +656,17 @@ When working in this repo:
 - **Phase 4.1 (PostGIS):** Native spatial queries & duplicate detection
 
 **🚧 In Progress:**
-- **Phase 4.2 (Redis):** Caching layer
-- **Phase 4.3 (Pagination):** Enforce limits
+- **Phase 5 (Community Engagement):** ACTIVE - 1/12 subphases complete
+  - ✅ 5.1a: Gamification database indices (migration 0009)
+  - 🔄 5.1b: Points integration into API routes (NEXT)
+  - See `context/state.md` for full breakdown
+- **Phase 4.2 (Redis):** Caching layer (paused)
+- **Phase 4.3 (Pagination):** Enforce limits (paused)
 - **Admin Verification UX Redesign** (Refining table view)
 
 **📋 Pending / Future:**
 - **Phase 3 Wrap-up:** User contribution flows (suggestions), Mobile card optimization
-- **Community Engagement (Phase 5):** Gamification, provider claims, leaderboards
+- **Phase 5 remaining:** Badge system, leaderboards, provider claims (5.1c-5.2f)
 - Deeper discovery (map overlays, calendar entry points everywhere)
 - Enhanced signup sheet UI (Phase 3C)
 - Host tools and event management dashboard
