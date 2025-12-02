@@ -30,7 +30,11 @@
       "Bash(pnpm exec mcp__copilotkit-mcp__search-docs:*)",
       "Bash(npx shadcn@latest add:*)",
       "WebSearch",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(CI=true pnpm install:*)",
+      "Bash(pnpm dev:*)",
+      "WebFetch(domain:openrouter.ai)",
+      "WebFetch(domain:ai-sdk.dev)"
     ],
     "additionalDirectories": [
       "C:\\c\\Projects\\nextjs-better-auth-postgresql-starter-kit"
