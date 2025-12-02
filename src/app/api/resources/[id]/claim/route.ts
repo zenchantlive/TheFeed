@@ -12,7 +12,7 @@ import { randomUUID } from "crypto";
 import { hasPendingClaim } from "@/lib/provider-queries";
 
 type RouteContext = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
 
 interface ClaimSubmissionBody {
@@ -27,7 +27,7 @@ interface ClaimSubmissionBody {
  * POST /api/resources/[id]/claim
  * Submit a provider claim for a resource
  */
-export async function POST(req: NextRequest, context: RouteContext) {
+export async function POST(req: NextRequest, { params }: RouteContext) {
   try {
     // Authenticate user
     const session = await auth.api.getSession({ headers: req.headers });
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = await context.params;
+    const { id: resourceId } = params;
     const body = (await req.json()) as ClaimSubmissionBody;
     const { claimReason, verificationInfo } = body;
 
@@ -101,9 +101,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
         resourceId,
         userId: session.user.id,
         claimReason: claimReason.trim(),
-        verificationInfo: verificationInfo
-          ? JSON.stringify(verificationInfo)
-          : null,
+        verificationInfo: verificationInfo || null,
         status: "pending",
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -134,7 +132,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
  * GET /api/resources/[id]/claim
  * Check claim status for current user on this resource
  */
-export async function GET(req: NextRequest, context: RouteContext) {
+export async function GET(req: NextRequest, { params }: RouteContext) {
   try {
     // Authenticate user
     const session = await auth.api.getSession({ headers: req.headers });
@@ -142,7 +140,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = await context.params;
+    const { id: resourceId } = params;
 
     // Get user's most recent claim for this resource
     const claim = await db.query.providerClaims.findFirst({
@@ -179,7 +177,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
  * DELETE /api/resources/[id]/claim
  * Withdraw a pending claim (user can only withdraw their own pending claims)
  */
-export async function DELETE(req: NextRequest, context: RouteContext) {
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
   try {
     // Authenticate user
     const session = await auth.api.getSession({ headers: req.headers });
@@ -187,7 +185,7 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = await context.params;
+    const { id: resourceId } = params;
 
     // Find user's pending claim for this resource
     const claim = await db.query.providerClaims.findFirst({

@@ -10,6 +10,7 @@ import {
     geometry,
     index,
     decimal,
+    pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -22,6 +23,13 @@ export type HoursType = Record<
         closed?: boolean;
     }
 >;
+
+export const providerRoleEnum = pgEnum("provider_role_enum", [
+    "owner",
+    "manager",
+    "staff",
+    "volunteer",
+]);
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -106,7 +114,7 @@ export const foodBanks = pgTable("food_banks", {
     // Provider Ownership (Phase 5.2)
     claimedBy: text("claimed_by").references(() => user.id),
     claimedAt: timestamp("claimed_at"),
-    providerRole: text("provider_role"), // "owner" | "manager" | "staff" | "volunteer"
+    providerRole: providerRoleEnum("provider_role"),
     providerVerified: boolean("provider_verified").default(false),
     providerCanEdit: boolean("provider_can_edit").default(true),
     createdAt: timestamp("created_at").defaultNow(),
@@ -481,15 +489,15 @@ export const providerClaims = pgTable("provider_claims", {
     status: text("status").notNull().default("pending"), // "pending" | "approved" | "rejected" | "withdrawn"
     // User-provided claim justification
     claimReason: text("claim_reason"),
-    // Optional verification details (email, phone, etc.) as JSON string
-    verificationInfo: text("verification_info"),
+    // Optional verification details (email, phone, etc.)
+    verificationInfo: jsonb("verification_info"),
     // Admin review metadata
     reviewedBy: text("reviewed_by").references(() => user.id),
     reviewedAt: timestamp("reviewed_at"),
     reviewNotes: text("review_notes"),
     // Timestamps
     createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => ({
     // Performance indices
     resourceIdIdx: index("provider_claims_resource_id_idx").on(table.resourceId),

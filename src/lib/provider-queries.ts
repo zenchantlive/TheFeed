@@ -5,7 +5,7 @@
 
 import { db } from "./db";
 import { providerClaims, foodBanks, user } from "./schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export type ClaimStatus = "pending" | "approved" | "rejected" | "withdrawn";
 
@@ -160,19 +160,30 @@ export async function hasPendingClaim(
  * @returns Object with counts for each status
  */
 export async function getClaimCounts() {
-  const allClaims = await db.query.providerClaims.findMany({
-    columns: {
-      status: true,
-    },
-  });
+  const result = await db
+    .select({
+      status: providerClaims.status,
+      count: sql<number>`count(*)`.mapWith(Number),
+    })
+    .from(providerClaims)
+    .groupBy(providerClaims.status);
 
-  return {
-    pending: allClaims.filter((c) => c.status === "pending").length,
-    approved: allClaims.filter((c) => c.status === "approved").length,
-    rejected: allClaims.filter((c) => c.status === "rejected").length,
-    withdrawn: allClaims.filter((c) => c.status === "withdrawn").length,
-    total: allClaims.length,
+  const counts = {
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    withdrawn: 0,
+    total: 0,
   };
+
+  for (const row of result) {
+    if (row.status in counts) {
+      counts[row.status as ClaimStatus] = row.count;
+    }
+    counts.total += row.count;
+  }
+
+  return counts;
 }
 
 /**
