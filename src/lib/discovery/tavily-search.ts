@@ -260,8 +260,8 @@ async function extractResourcesFromContent(
     throw new DiscoveryConfigError("OPENROUTER_API_KEY is not set in environment variables.");
   }
 
-  const currentDate = new Date().toLocaleDateString("en-US", { 
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   });
 
   const { object } = await generateObject({
@@ -354,7 +354,7 @@ async function extractResourcesFromContent(
         hours: res.hours ?? null,
         sourceUrl,
       });
-      
+
       return {
         ...normalized,
         phone: normalized.phone ?? undefined,
@@ -379,15 +379,18 @@ function deduplicateResults(results: DiscoveryResult[]): DiscoveryResult[] {
     // Fallback to Name + Zip if address is weird
     const addressKey = getAddressFingerprint(res.address);
     const zipKey = res.zipCode.trim();
-    
-    // Primary Key: Address + Zip (Very strong signal)
-    let key = `${addressKey}|${zipKey}`;
 
+    // Primary Key: Address + Zip (Very strong signal)
+    let key: string;
+
+    if (addressKey && addressKey.length >= 5) {
+      key = `${addressKey}|${zipKey}`;
+    }
     // Secondary Key: Lat/Lng (if available and precise)
-    if (res.latitude && res.longitude && res.latitude !== 0) {
+    else if (res.latitude && res.longitude && res.latitude !== 0) {
       // Round to ~11m precision to catch slightly different geocodes
       key = `geo:${res.latitude.toFixed(4)},${res.longitude.toFixed(4)}`;
-    } else if (!addressKey || addressKey.length < 5) {
+    } else {
       // Fallback: Name + Zip (Weaker but handles missing street numbers)
       key = `name:${getAddressFingerprint(res.name)}|${zipKey}`;
     }
@@ -404,8 +407,8 @@ function deduplicateResults(results: DiscoveryResult[]): DiscoveryResult[] {
     const isExistingTrusted = isTrustedSource(existing.sourceUrl);
 
     // Prefer trusted source, then higher confidence
-    const preferNew = (isResTrusted && !isExistingTrusted) || 
-                      (!isExistingTrusted && res.confidence > existing.confidence);
+    const preferNew = (isResTrusted && !isExistingTrusted) ||
+      (!isExistingTrusted && res.confidence > existing.confidence);
 
     const target = preferNew ? res : existing;
     const source = preferNew ? existing : res;
@@ -415,8 +418,8 @@ function deduplicateResults(results: DiscoveryResult[]): DiscoveryResult[] {
       ...target,
       phone: target.phone || source.phone,
       website: target.website || source.website,
-      description: (target.description && target.description.length > (source.description?.length || 0)) 
-        ? target.description 
+      description: (target.description && target.description.length > (source.description?.length || 0))
+        ? target.description
         : source.description,
       services: Array.from(new Set([...target.services, ...source.services])),
       hours: target.hours || source.hours, // Keep existing hours if target has them, else take source

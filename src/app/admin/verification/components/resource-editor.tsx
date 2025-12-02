@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Save, X } from "lucide-react";
+import { Loader2, Sparkles, Save, X, Plus } from "lucide-react";
 import { ConfidenceBadge } from "./confidence-badge";
+import { Badge } from "@/components/ui/badge";
 import type { VerificationResource } from "../types";
 
 interface ResourceEditorProps {
@@ -49,9 +50,11 @@ export function ResourceEditor({
     phone: initialResource.phone || "",
     website: initialResource.website || "",
     description: initialResource.description || "",
-    services: initialResource.services?.join(", ") || "",
+    services: initialResource.services || [],
     hours: initialResource.hours,
   });
+
+  const [newService, setNewService] = useState("");
 
   // Loading states
   const [isSaving, setIsSaving] = useState(false);
@@ -61,8 +64,26 @@ export function ResourceEditor({
   /**
    * Handle field change
    */
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddService = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const trimmed = newService.trim();
+      if (trimmed && !formData.services.includes(trimmed)) {
+        handleChange("services", [...formData.services, trimmed]);
+        setNewService("");
+      }
+    }
+  };
+
+  const removeService = (serviceToRemove: string) => {
+    handleChange(
+      "services",
+      formData.services.filter((s) => s !== serviceToRemove)
+    );
   };
 
   /**
@@ -139,9 +160,7 @@ export function ResourceEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          services: formData.services
-            ? formData.services.split(",").map((s) => s.trim()).filter(Boolean)
-            : null,
+          services: formData.services,
           hours: formData.hours,
         }),
       });
@@ -172,7 +191,8 @@ export function ResourceEditor({
       formData.phone !== (initialResource.phone || "") ||
       formData.website !== (initialResource.website || "") ||
       formData.description !== (initialResource.description || "") ||
-      formData.services !== (initialResource.services?.join(", ") || "") ||
+      formData.description !== (initialResource.description || "") ||
+      JSON.stringify(formData.services) !== JSON.stringify(initialResource.services || []) ||
       JSON.stringify(formData.hours) !== JSON.stringify(initialResource.hours)
     );
   };
@@ -203,19 +223,6 @@ export function ResourceEditor({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="name">Resource Name *</Label>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleEnhanceField("name")}
-              disabled={enhancing !== null}
-            >
-              {enhancing === "name" ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Sparkles className="h-3 w-3" />
-              )}
-              <span className="ml-1 text-xs">Enhance</span>
-            </Button>
           </div>
           <Input
             id="name"
@@ -228,19 +235,6 @@ export function ResourceEditor({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="address">Address *</Label>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => handleEnhanceField("address")}
-              disabled={enhancing !== null}
-            >
-              {enhancing === "address" ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Sparkles className="h-3 w-3" />
-              )}
-              <span className="ml-1 text-xs">Enhance</span>
-            </Button>
           </div>
           <Input
             id="address"
@@ -418,12 +412,43 @@ export function ResourceEditor({
               <span className="ml-1 text-xs">Enhance</span>
             </Button>
           </div>
-          <Input
-            id="services"
-            value={formData.services}
-            onChange={(e) => handleChange("services", e.target.value)}
-            placeholder="Food pantry, Hot meals, Emergency assistance"
-          />
+          <div className="flex flex-wrap gap-2 mb-2">
+            {formData.services.map((service) => (
+              <Badge key={service} variant="secondary" className="gap-1">
+                {service}
+                <button
+                  onClick={() => removeService(service)}
+                  className="ml-1 hover:text-destructive focus:outline-none"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              id="services"
+              value={newService}
+              onChange={(e) => setNewService(e.target.value)}
+              onKeyDown={handleAddService}
+              placeholder="Add a service (press Enter)..."
+              className="flex-1"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const trimmed = newService.trim();
+                if (trimmed && !formData.services.includes(trimmed)) {
+                  handleChange("services", [...formData.services, trimmed]);
+                  setNewService("");
+                }
+              }}
+              disabled={!newService.trim()}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

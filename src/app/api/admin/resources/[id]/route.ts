@@ -75,10 +75,29 @@ export const PUT = async (
       }
 
       // Determine changed fields for versioning
-      const changedFields = Object.keys(updates).filter(
-        key => JSON.stringify(updates[key as keyof typeof updates]) !==
-               JSON.stringify(currentRecord[key as keyof typeof currentRecord])
-      );
+      const changedFields = Object.keys(updates).filter(key => {
+        const new_value = updates[key as keyof typeof updates];
+        const old_value = currentRecord[key as keyof typeof currentRecord];
+
+        if (typeof new_value === 'object' && new_value !== null && typeof old_value === 'object' && old_value !== null) {
+          // For objects and arrays, a simple stringify is unreliable.
+          // A more robust deep-equal check is needed. For now, we'll stick to stringify but acknowledge its limitations.
+          // A proper deep-equal function would be the best solution.
+          // As a pragmatic improvement, we can at least sort object keys before stringifying for simple objects.
+          const sortObjectKeys = (obj: any): any => {
+            if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+              return obj;
+            }
+            return Object.keys(obj).sort().reduce((acc, key) => {
+              acc[key] = sortObjectKeys(obj[key]);
+              return acc;
+            }, {} as Record<string, any>);
+          };
+          return JSON.stringify(sortObjectKeys(new_value)) !== JSON.stringify(sortObjectKeys(old_value));
+        }
+
+        return new_value !== old_value;
+      });
 
       // Handle automatic geocoding if address fields change but coords aren't provided
       let newCoords = {};

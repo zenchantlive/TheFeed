@@ -69,7 +69,7 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
   ]
     .filter(Boolean)
     .join(", ");
-  
+
   // Improved query: strictly look for food-related services to avoid church/childcare confusion
   const query = `"${resource.name}" "food pantry" OR "food bank" OR "soup kitchen" OR "food distribution" hours services ${locationContext || "Sacramento, CA"}`;
 
@@ -97,7 +97,7 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
         clearTimeout(timeoutId);
 
         if (res.ok) return res;
-        
+
         // If 429 or 5xx, retry. If 400, fail.
         if (res.status === 429 || res.status >= 500) {
           console.warn(`Tavily fetch failed (attempt ${i + 1}/${retries}): ${res.status}`);
@@ -301,7 +301,7 @@ export async function enhanceResource(
 
   // Try to find JSON object if there's extra text
   if (!jsonString.startsWith('{')) {
-    const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+    const jsonMatch = jsonString.match(/\{[\s\S]*?\}$/);
     if (jsonMatch) {
       jsonString = jsonMatch[0];
       console.log("[Enhancement] Extracted JSON object from text");

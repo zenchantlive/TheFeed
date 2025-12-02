@@ -44,7 +44,9 @@ export function calculateConfidence(
     if (value != null && value !== "") {
       if (field === "services" && Array.isArray(value) && value.length > 0) {
         factors.fieldCompleteness += points;
-      } else if (field !== "services") {
+      } else if (field === "hours" && typeof value === 'object' && Object.keys(value).length > 0) {
+        factors.fieldCompleteness += points;
+      } else if (field !== "services" && field !== "hours") {
         factors.fieldCompleteness += points;
       }
     }
@@ -117,8 +119,9 @@ export function shouldAutoApprove(
 
   try {
     const domain = new URL(sourceUrl).hostname.toLowerCase();
+    // Anchor the regex to the end of the string to match main domain and subdomains correctly.
     return domain.endsWith('.gov') ||
-           domain.match(/feedingamerica\.org|211\.org|fns\.usda\.gov/) !== null;
+      /(^|\.)(feedingamerica\.org|211\.org|fns\.usda\.gov)$/.test(domain);
   } catch {
     return false;
   }

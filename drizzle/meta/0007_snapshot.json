@@ -1941,7 +1941,17 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_verifications_unique_vote": {
+          "name": "user_verifications_unique_vote",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "resource_id",
+            "field"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
