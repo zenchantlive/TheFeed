@@ -3,11 +3,13 @@ Last updated: 2025-12-02
 
 ## Current Focus: Phase 5 - Community Engagement (ACTIVE)
 
-**Status**: Phase 5 Gamification & Provider Claims implementation in progress.
+**Status**: Phase 5 Provider Claims implementation in progress.
 
 ### Active Work:
+- **Phase 5.2a-c ✅ Complete**: Provider claims schema, admin UI, query layer, submission API
+- **Phase 5.2d In Progress**: Admin review UI (approve/reject endpoints + dialog)
 - **Phase 5.1a ✅ Complete**: Database indices for gamification (points_history, user_profiles)
-- **Phase 5.1b Next**: Gamification integration into existing API routes (posts, events, RSVPs)
+- **Phase 5.1b Deferred**: Gamification integration (deferred for Phase 5.2 priority)
 - **Phase 4.1 Complete**: PostGIS integration finished and verified.
 - **Phase 4.2 Paused**: Redis caching layer (deferred for Phase 5 priority)
 
@@ -15,7 +17,25 @@ Last updated: 2025-12-02
 
 ## Recent Deliverables (December 2025)
 
-### Phase 5: Community Engagement - Gamification ✅ (Subphase 5.1a)
+### Phase 5.2: Provider Claims (Subphases 5.2a-c) ✅
+- **Database Schema**: Created `providerClaims` table with status tracking and review metadata
+  - Added provider ownership fields to `foodBanks` (claimedBy, claimedAt, providerRole, etc.)
+  - Proper indices for performance (resourceId, userId, status, createdAt)
+  - Full Drizzle relations for type-safe queries
+- **Admin UI**: Complete claims management interface
+  - GET /api/admin/claims with pagination and status filtering
+  - Claims table with search, sorting, and pagination
+  - "Provider Claims" added to admin sidebar navigation
+  - Tabs for pending/approved/rejected/all claims
+- **Query Layer**: Reusable provider-queries.ts with 8+ helper functions
+- **Submission API**: Complete claim workflow
+  - POST /api/resources/[id]/claim - Submit claim with validation
+  - GET /api/resources/[id]/claim - Check claim status
+  - DELETE /api/resources/[id]/claim - Withdraw pending claim
+- **Branch**: `feat/phase-5.2-provider-claims`
+- **Commits**: fa09fb3, c50a67e, 43f0524, (pending)
+
+### Phase 5.1a: Gamification Indices ✅
 - **Gamification Indices Migration**: Created migration 0009_gamification_indices.sql
   - `idx_points_history_user_id`: Fast user points lookup
   - `idx_points_history_created_at`: Chronological queries (DESC)
@@ -74,21 +94,21 @@ Last updated: 2025-12-02
 - **Batch Optimization**: Parallel processing for admin tasks.
 
 ### Phase 5: Community Engagement (ACTIVE - 12 Subphases)
-**Status**: 1/12 complete (5.1a ✅)
+**Status**: 4/12 complete (5.1a ✅, 5.2a ✅, 5.2b ✅, 5.2c ✅)
 
 **5.1 Gamification System (6 subphases):**
 - ✅ 5.1a: Database indices for performance
-- 🔄 5.1b: Points integration (posts, events, RSVPs)
+- ⏳ 5.1b: Points integration (posts, events, RSVPs) - DEFERRED
 - ⏳ 5.1c: Badge system & level-ups
 - ⏳ 5.1d: Resource verification integration
 - ⏳ 5.1e: Leaderboard & header badge notifications
 - ⏳ 5.1f: User profile display
 
 **5.2 Provider Claims (6 subphases):**
-- ⏳ 5.2a: Admin approval workflow setup
-- ⏳ 5.2b: Provider claims database schema
-- ⏳ 5.2c: Claim submission API
-- ⏳ 5.2d: Admin review UI
+- ✅ 5.2a: Admin approval workflow setup (schema + admin UI)
+- ✅ 5.2b: Provider claims database schema & query layer
+- ✅ 5.2c: Claim submission API (POST/GET/DELETE)
+- 🔄 5.2d: Admin review UI (approve/reject endpoints + dialog) - IN PROGRESS
 - ⏳ 5.2e: Claim button UI component
 - ⏳ 5.2f: Provider dashboard (full implementation)
 

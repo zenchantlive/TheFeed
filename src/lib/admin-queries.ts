@@ -24,7 +24,15 @@ export type GetUnverifiedResourcesOptions = {
 };
 
 export type AdminResourceRecord = {
-  resource: typeof foodBanks.$inferSelect;
+  resource: Omit<
+    typeof foodBanks.$inferSelect,
+    | "geom"
+    | "claimedBy"
+    | "claimedAt"
+    | "providerRole"
+    | "providerVerified"
+    | "providerCanEdit"
+  >;
   missingHours: boolean;
   missingPhone: boolean;
   missingWebsite: boolean;

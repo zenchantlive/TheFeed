@@ -183,6 +183,17 @@ Required environment variables (copy from `.env.example` if it exists):
 - `eventRecurrence`: Recurring event patterns
 - `eventAttendance`: Actual attendance tracking
 
+**Provider Claims Tables (Phase 5.2):**
+- `providerClaims`: Resource ownership claims with admin approval workflow
+  - Tracks status (pending/approved/rejected/withdrawn)
+  - Includes claim reason, verification info, review metadata
+  - Links to resource and user (claimer/reviewer)
+- `foodBanks` (extended): Added provider ownership fields
+  - `claimedBy`: User who claimed the resource
+  - `providerRole`: owner/manager/staff/volunteer
+  - `providerVerified`: Admin approval status
+  - `providerCanEdit`: Permission to edit resource
+
 **Configuration:**
 - Drizzle config: `drizzle.config.ts`
 - Uses PostgreSQL dialect
@@ -211,6 +222,13 @@ Required environment variables (copy from `.env.example` if it exists):
   - Signup sheet operations
   - Calendar queries with filters
   - Attendance tracking
+- `src/lib/provider-queries.ts`: Provider claims management (Phase 5.2)
+  - `getClaimsByStatus()`: Filter claims by status
+  - `getClaimById()`: Get single claim with full details
+  - `getClaimsByResource()`: All claims for a resource
+  - `getClaimsByUser()`: All claims by a user
+  - `hasPendingClaim()`: Check for pending claim
+  - `getUserClaimedResources()`: User's approved resources
 - `src/lib/geolocation.ts`: Geolocation utilities
   - Distance calculations
   - Coordinate validation
@@ -242,12 +260,23 @@ src/app/api/
 │               └── claim/route.ts     # Claim a signup slot
 ├── locations/
 │   └── route.ts                       # Food bank locations search
-└── posts/
-    ├── route.ts                       # List/create posts
+├── posts/
+│   ├── route.ts                       # List/create posts
+│   └── [id]/
+│       ├── route.ts                   # Get/update/delete post
+│       ├── comments/route.ts          # Post comments
+│       └── helpful/route.ts           # Mark post as helpful
+├── admin/
+│   ├── claims/
+│   │   └── route.ts                   # List provider claims (Phase 5.2)
+│   └── resources/
+│       ├── route.ts                   # Admin resource management
+│       └── [id]/
+│           └── enhance/route.ts       # AI resource enhancement
+└── resources/
     └── [id]/
-        ├── route.ts                   # Get/update/delete post
-        ├── comments/route.ts          # Post comments (missing from docs)
-        └── helpful/route.ts           # Mark post as helpful (missing from docs)
+        └── claim/
+            └── route.ts               # Submit/check/withdraw provider claim (Phase 5.2)
 ```
 
 **Additional routes not yet implemented but referenced:**
@@ -656,17 +685,21 @@ When working in this repo:
 - **Phase 4.1 (PostGIS):** Native spatial queries & duplicate detection
 
 **🚧 In Progress:**
-- **Phase 5 (Community Engagement):** ACTIVE - 1/12 subphases complete
-  - ✅ 5.1a: Gamification database indices (migration 0009)
-  - 🔄 5.1b: Points integration into API routes (NEXT)
+- **Phase 5 (Community Engagement):** ACTIVE - 4/12 subphases complete
+  - ✅ 5.1a: Gamification database indices
+  - ✅ 5.2a: Provider claims schema + admin UI
+  - ✅ 5.2b: Provider query layer
+  - ✅ 5.2c: Claim submission API
+  - 🔄 5.2d: Admin review UI (approve/reject) - NEXT
   - See `context/state.md` for full breakdown
 - **Phase 4.2 (Redis):** Caching layer (paused)
 - **Phase 4.3 (Pagination):** Enforce limits (paused)
-- **Admin Verification UX Redesign** (Refining table view)
 
 **📋 Pending / Future:**
 - **Phase 3 Wrap-up:** User contribution flows (suggestions), Mobile card optimization
-- **Phase 5 remaining:** Badge system, leaderboards, provider claims (5.1c-5.2f)
+- **Phase 5 remaining:**
+  - 5.2d-f: Admin review UI, claim button, provider dashboard
+  - 5.1b-f: Points integration, badges, leaderboards
 - Deeper discovery (map overlays, calendar entry points everywhere)
 - Enhanced signup sheet UI (Phase 3C)
 - Host tools and event management dashboard

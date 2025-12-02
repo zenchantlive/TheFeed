@@ -4,11 +4,13 @@ import {
     timestamp,
     boolean,
     json,
+    jsonb,
     real,
     integer,
     geometry,
     index,
     decimal,
+    pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -21,6 +23,13 @@ export type HoursType = Record<
         closed?: boolean;
     }
 >;
+
+export const providerRoleEnum = pgEnum("provider_role_enum", [
+    "owner",
+    "manager",
+    "staff",
+    "volunteer",
+]);
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -102,11 +111,18 @@ export const foodBanks = pgTable("food_banks", {
     rawHours: text("raw_hours"),
     aiSummary: text("ai_summary"),
     potentialDuplicates: text("potential_duplicates").array(), // IDs of potential duplicate resources
+    // Provider Ownership (Phase 5.2)
+    claimedBy: text("claimed_by").references(() => user.id),
+    claimedAt: timestamp("claimed_at"),
+    providerRole: providerRoleEnum("provider_role"),
+    providerVerified: boolean("provider_verified").default(false),
+    providerCanEdit: boolean("provider_can_edit").default(true),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => {
     return {
         geomIndex: index("geom_idx").on(table.geom),
+        claimedByIdx: index("food_banks_claimed_by_idx").on(table.claimedBy),
     };
 });
 
@@ -455,6 +471,41 @@ export const eventAttendance = pgTable("event_attendance", {
     notes: text("notes"),
 });
 
+/**
+ * Provider Claims (Phase 5.2) - Resource ownership claims for admin approval
+ * Allows food bank staff/volunteers to claim ownership of their organization's listing
+ */
+export const providerClaims = pgTable("provider_claims", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => randomUUID()),
+    resourceId: text("resource_id")
+        .notNull()
+        .references(() => foodBanks.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+    // Claim lifecycle: pending → approved/rejected/withdrawn
+    status: text("status").notNull().default("pending"), // "pending" | "approved" | "rejected" | "withdrawn"
+    // User-provided claim justification
+    claimReason: text("claim_reason"),
+    // Optional verification details (email, phone, etc.)
+    verificationInfo: jsonb("verification_info"),
+    // Admin review metadata
+    reviewedBy: text("reviewed_by").references(() => user.id),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewNotes: text("review_notes"),
+    // Timestamps
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({
+    // Performance indices
+    resourceIdIdx: index("provider_claims_resource_id_idx").on(table.resourceId),
+    userIdIdx: index("provider_claims_user_id_idx").on(table.userId),
+    statusIdx: index("provider_claims_status_idx").on(table.status),
+    createdAtIdx: index("provider_claims_created_at_idx").on(table.createdAt.desc()),
+}));
+
 // Type exports - inferred from table schemas
 export type FoodBank = typeof foodBanks.$inferSelect;
 export type DiscoveryEvent = typeof discoveryEvents.$inferSelect;
@@ -474,6 +525,7 @@ export type SignUpClaim = typeof signUpClaims.$inferSelect;
 export type EventRecurrence = typeof eventRecurrence.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type PointsHistory = typeof pointsHistory.$inferSelect;
+export type ProviderClaim = typeof providerClaims.$inferSelect;
 
 // Relations
 export const savedLocationsRelations = relations(savedLocations, ({ one }) => ({
@@ -506,6 +558,8 @@ export const userRelations = relations(user, ({ one, many }) => ({
     // Verification relations
     verifications: many(userVerifications),
     triggeredDiscoveries: many(discoveryEvents),
+    // Provider claims relations
+    providerClaims: many(providerClaims), // Claims submitted by this user
 }));
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
@@ -646,6 +700,24 @@ export const eventAttendanceRelations = relations(eventAttendance, ({ one }) => 
     // The user who attended
     user: one(user, {
         fields: [eventAttendance.userId],
+        references: [user.id],
+    }),
+}));
+
+export const providerClaimsRelations = relations(providerClaims, ({ one }) => ({
+    // The resource being claimed
+    resource: one(foodBanks, {
+        fields: [providerClaims.resourceId],
+        references: [foodBanks.id],
+    }),
+    // The user submitting the claim
+    claimer: one(user, {
+        fields: [providerClaims.userId],
+        references: [user.id],
+    }),
+    // The admin who reviewed the claim
+    reviewer: one(user, {
+        fields: [providerClaims.reviewedBy],
         references: [user.id],
     }),
 }));
