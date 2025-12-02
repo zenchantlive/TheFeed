@@ -1,17 +1,29 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-12-01
+Last updated: 2025-12-02
 
-## Current Focus: Phase 4 Preparation & Phase 3 Wrap-up
+## Current Focus: Phase 5 - Community Engagement (ACTIVE)
 
-**Status**: Transitioning from Phase 3 (Trust & UX) to Phase 4 (Performance & Scale).
+**Status**: Phase 5 Gamification & Provider Claims implementation in progress.
 
 ### Active Work:
+- **Phase 5.1a ✅ Complete**: Database indices for gamification (points_history, user_profiles)
+- **Phase 5.1b Next**: Gamification integration into existing API routes (posts, events, RSVPs)
 - **Phase 4.1 Complete**: PostGIS integration finished and verified.
-- **Phase 4.2 Active**: Implementing Redis caching layer.
+- **Phase 4.2 Paused**: Redis caching layer (deferred for Phase 5 priority)
 
 ---
 
 ## Recent Deliverables (December 2025)
+
+### Phase 5: Community Engagement - Gamification ✅ (Subphase 5.1a)
+- **Gamification Indices Migration**: Created migration 0009_gamification_indices.sql
+  - `idx_points_history_user_id`: Fast user points lookup
+  - `idx_points_history_created_at`: Chronological queries (DESC)
+  - `idx_user_profiles_points`: Leaderboard rankings (DESC)
+  - `idx_user_profiles_level`: Level-based queries (DESC)
+- **Schema Updates**: Added index definitions to `pointsHistory` and `userProfiles` tables
+- **Branch**: `feat/phase-5.1a-points-indices`
+- **Commit**: 44d8611
 
 ### Phase 4: Performance & Scale - PostGIS ✅
 - **Native Spatial Queries**: Replaced in-memory filtering with `ST_DWithin`.
@@ -61,12 +73,35 @@ Last updated: 2025-12-01
 - **Pagination**: Enforce pagination everywhere.
 - **Batch Optimization**: Parallel processing for admin tasks.
 
-### Phase 5: Community Engagement (Future)
-- Gamification, provider claims, leaderboards.
+### Phase 5: Community Engagement (ACTIVE - 12 Subphases)
+**Status**: 1/12 complete (5.1a ✅)
+
+**5.1 Gamification System (6 subphases):**
+- ✅ 5.1a: Database indices for performance
+- 🔄 5.1b: Points integration (posts, events, RSVPs)
+- ⏳ 5.1c: Badge system & level-ups
+- ⏳ 5.1d: Resource verification integration
+- ⏳ 5.1e: Leaderboard & header badge notifications
+- ⏳ 5.1f: User profile display
+
+**5.2 Provider Claims (6 subphases):**
+- ⏳ 5.2a: Admin approval workflow setup
+- ⏳ 5.2b: Provider claims database schema
+- ⏳ 5.2c: Claim submission API
+- ⏳ 5.2d: Admin review UI
+- ⏳ 5.2e: Claim button UI component
+- ⏳ 5.2f: Provider dashboard (full implementation)
+
+**Plan**: `/home/zenchant/.claude/plans/purrfect-forging-avalanche.md`
 
 ---
 
 ## Known Issues / Alerts
+- **TypeScript Errors**: Pre-existing typecheck errors (7 errors) - not blocking Phase 5 work:
+  - admin/layout.tsx headers issue
+  - Missing select component import
+  - Event card prop mismatches
+  - Admin queries geom field
 - **Phase 3 Pending**: User suggestion flow (`suggest-update` API) and Mobile-first card optimization are pending.
 - **CopilotKit**: Blank assistant bubbles still appear occasionally.
 - **Supabase Warning**: `supautils.disable_program` warning is harmless.

@@ -1,4 +1,16 @@
-## PHASE 5: COMMUNITY ENGAGEMENT (Optional - Week 9-10)
+## PHASE 5: COMMUNITY ENGAGEMENT (ACTIVE - December 2025)
+
+**Status:** 1/12 subphases complete ✅
+**Branch:** `feat/phase-5.1a-points-indices` (current), merging to `phase-5`
+**Detailed Plan:** `/home/zenchant/.claude/plans/purrfect-forging-avalanche.md`
+
+**Progress Tracker:**
+- ✅ 5.1a: Database indices for gamification (commit 44d8611)
+- 🔄 5.1b: Points integration (NEXT)
+- ⏳ 5.1c-5.1f: Badge system, verification, leaderboard, profile
+- ⏳ 5.2a-5.2f: Provider claims workflow (admin approval, no email)
+
+---
 
 **Goal:** Incentivize quality contributions
 **Success Metrics:**
