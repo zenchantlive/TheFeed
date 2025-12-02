@@ -104,19 +104,19 @@ export function calculateLevel(points: number): number {
 
 export async function awardBadge(userId: string, badgeId: string) {
     const [profile] = await db
-        .select()
+        .select({ badges: userProfiles.badges })
         .from(userProfiles)
         .where(eq(userProfiles.userId, userId));
 
     if (!profile) return;
 
-    const badges = (profile.badges as string[]) || [];
-    if (badges.includes(badgeId)) return; // Already has badge
+    const currentBadges = Array.isArray(profile.badges) ? profile.badges : [];
+    if (currentBadges.includes(badgeId)) return; // Already has badge
 
     await db
         .update(userProfiles)
         .set({
-            badges: [...badges, badgeId],
+            badges: [...currentBadges, badgeId],
         })
         .where(eq(userProfiles.userId, userId));
 
