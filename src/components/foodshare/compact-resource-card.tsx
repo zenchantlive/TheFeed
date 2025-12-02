@@ -31,7 +31,7 @@ export function CompactResourceCard({
 }: CompactResourceCardProps) {
     // Calculate completeness if not provided (simple heuristic or passed prop)
     // For now, let's assume it's passed or we calculate a simple one
-    const completeness = resource.dataCompleteness || 75; // Default/Placeholder
+    const completeness = resource.dataCompleteness || 0; // Default/Placeholder
 
     return (
         <Card className={cn("group relative overflow-hidden rounded-xl border border-border/60 transition-all hover:border-primary/50 hover:shadow-md", className)}>
