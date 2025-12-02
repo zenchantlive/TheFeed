@@ -46,21 +46,25 @@ export async function searchFoodBanks({
 
   // Use PostGIS for spatial query
   // We use ST_DWithin for efficient index usage
+  // We reuse the point construction for readability and performance
   const query = sql`
+    WITH user_point AS (
+      SELECT ST_SetSRID(ST_MakePoint(${userLocation.lng}, ${userLocation.lat}), 4326)::geography AS point
+    )
     SELECT
       *,
       ST_Distance(
         geom::geography,
-        ST_SetSRID(ST_MakePoint(${userLocation.lng}, ${userLocation.lat}), 4326)::geography
+        (SELECT point FROM user_point)
       ) as distance_meters
     FROM food_banks
     WHERE 
-      latitude != 0 AND longitude != 0
-      AND ST_DWithin(
+      ST_DWithin(
         geom::geography,
-        ST_SetSRID(ST_MakePoint(${userLocation.lng}, ${userLocation.lat}), 4326)::geography,
+        (SELECT point FROM user_point),
         ${maxDistanceMeters}
       )
+    ORDER BY distance_meters ASC
   `;
 
   // Add service filtering if needed (done in memory for now as services are arrays)
@@ -98,7 +102,6 @@ export async function searchFoodBanks({
       }
       return true;
     })
-    .sort((a, b) => a.distance - b.distance)
     .slice(0, limit);
 }
 

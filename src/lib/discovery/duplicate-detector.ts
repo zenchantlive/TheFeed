@@ -111,11 +111,18 @@ export async function detectDuplicates(
     LIMIT 10
   `);
 
-  const rows = (nearbyCandidates as any).rows || nearbyCandidates;
+  type NearbyCandidate = {
+    id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    website: string | null;
+    distance_meters: number;
+  };
 
-  for (const row of rows) {
-    const candidate = row as any;
+  const rows = ((nearbyCandidates as any).rows || nearbyCandidates) as NearbyCandidate[];
 
+  for (const candidate of rows) {
     // Skip if already matched exactly
     if (duplicates.some(d => d.matchedResource?.id === candidate.id)) continue;
 
