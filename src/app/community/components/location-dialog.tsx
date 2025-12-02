@@ -57,7 +57,7 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
     // We need a mapping or extract the code. 
     // Mapbox context looks like: [{id: "region.123", text: "California", short_code: "US-CA"}]
     const region = suggestion.context?.find((c) => c.id.startsWith("region"));
-    let state = "CA"; // Default
+    let state = ""; // Default
 
     if (region) {
       // Mapbox often provides short_code like "US-CA"
