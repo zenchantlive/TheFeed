@@ -202,7 +202,7 @@ export const userProfiles = pgTable("user_profiles", {
     // Gamification
     points: integer("points").notNull().default(0),
     level: integer("level").notNull().default(1),
-    badges: json("badges").$type<string[]>().default([]),
+    badges: jsonb("badges").$type<string[]>().default([]),
     verificationCount: integer("verification_count").notNull().default(0),
     accuracyScore: decimal("accuracy_score", { precision: 5, scale: 2 }).default("0.00"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
