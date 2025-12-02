@@ -20,14 +20,22 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const focusField = request.nextUrl.searchParams.get("field");
 
     try {
+      console.log(`[API] Starting enhancement for resource ${resourceId}, field: ${focusField || 'all'}`);
       const proposal = await enhanceResource(resourceId, focusField);
+      console.log(`[API] Enhancement successful, confidence: ${proposal.confidence}`);
       return NextResponse.json(proposal);
     } catch (error) {
       if (error instanceof EnhancementError) {
+        console.error(`[API] EnhancementError: ${error.message} (${error.status})`);
         return NextResponse.json({ error: error.message }, { status: error.status });
       }
 
-      console.error("Enhance resource failed:", error);
+      console.error("[API] Enhance resource failed:", error);
+      console.error("[API] Error details:", {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return NextResponse.json(
         { error: "Enhancement request failed. Please try again later." },
         { status: 500 }

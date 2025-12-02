@@ -1,12 +1,12 @@
 /**
  * Admin Verification Page - Client Component
  *
- * Main orchestrator for the redesigned verification workspace.
+ * Main orchestrator for the redesigned verification workspace with DATA TABLE.
  * Responsibilities:
- * - Manage filter state
+ * - Manage filter state and table state (pagination, sorting, selection)
  * - Apply filters to resources
  * - Handle resource actions (verify, enhance, reject)
- * - Show resource detail panel
+ * - Show resource detail panel (side sheet)
  *
  * This is a CLEAN orchestrator - all complex logic is delegated to child components.
  */
@@ -17,8 +17,24 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { VerificationSearchBar } from "./components/verification-search-bar";
-import { QueueBoard } from "./components/queue-board";
-import type { VerificationResource, VerificationFilters } from "./types";
+import { VerificationTable } from "./components/verification-table";
+import { ArchiveFilter } from "./components/archive-filter";
+import { ScanDialog } from "./components/scan-dialog";
+import { ResourceEditor } from "./components/resource-editor";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import type {
+  VerificationResource,
+  VerificationFilters,
+  SortColumn,
+  SortDirection,
+  ArchiveMode,
+} from "./types";
 
 interface VerificationPageClientProps {
   /** Initial resources from server */
@@ -41,14 +57,32 @@ export function VerificationPageClient({
     sources: [],
   });
 
+  // Archive filter state
+  const [archiveMode, setArchiveMode] = useState<ArchiveMode>("active");
+
+  // Table state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("confidence");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   // Loading states for async actions
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // Side panel state
+  const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
+
   // Apply filters to resources
   const filteredResources = useMemo(() => {
-    return applyFilters(initialResources, filters);
-  }, [initialResources, filters]);
+    return applyFilters(initialResources, filters, archiveMode);
+  }, [initialResources, filters, archiveMode]);
+
+  // Reset page when filters change
+  useMemo(() => {
+    setPage(1);
+  }, [filters, archiveMode]);
 
   /**
    * Handle verifying one or more resources
@@ -72,6 +106,9 @@ export function VerificationPageClient({
           resourceIds.length === 1 ? "resource" : "resources"
         } verified`
       );
+
+      // Clear selection
+      setSelectedIds([]);
 
       // Refresh page data
       router.refresh();
@@ -110,6 +147,9 @@ export function VerificationPageClient({
           data.enhanced === 1 ? "resource" : "resources"
         } enhanced`
       );
+
+      // Clear selection
+      setSelectedIds([]);
 
       // Refresh page data
       router.refresh();
@@ -151,6 +191,9 @@ export function VerificationPageClient({
         } rejected`
       );
 
+      // Clear selection
+      setSelectedIds([]);
+
       // Refresh page data
       router.refresh();
     } catch (error) {
@@ -183,6 +226,9 @@ export function VerificationPageClient({
         } flagged for review`
       );
 
+      // Clear selection
+      setSelectedIds([]);
+
       // Refresh page data
       router.refresh();
     } catch (error) {
@@ -192,23 +238,33 @@ export function VerificationPageClient({
   };
 
   /**
-   * Handle clicking on a resource card (show detail panel)
+   * Handle clicking edit button (show detail panel)
    */
-  const handleResourceClick = (resourceId: string) => {
-    // For now, just log - we'll implement detail panel next
-    console.log("Resource clicked:", resourceId);
-    // TODO: Open detail panel with resource details
+  const handleEdit = (resourceId: string) => {
+    setSelectedResourceId(resourceId);
   };
 
   /**
-   * Handle scanning for new resources in an area
+   * Handle scan complete - refresh data
    */
-  const handleScanArea = () => {
-    // Navigate to existing scan dialog
-    // We can trigger the scan dialog here or navigate to a dedicated page
-    console.log("Opening scan dialog...");
-    // For now, just show a message
-    // TODO: Integrate with existing ScanDialog component
+  const handleScanComplete = () => {
+    router.refresh();
+  };
+
+  /**
+   * Handle sort change
+   */
+  const handleSortChange = (column: SortColumn, direction: SortDirection) => {
+    setSortColumn(column);
+    setSortDirection(direction);
+  };
+
+  /**
+   * Handle page size change
+   */
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1); // Reset to first page
   };
 
   return (
@@ -217,44 +273,139 @@ export function VerificationPageClient({
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">Verification Workspace</h1>
         <p className="text-sm text-muted-foreground">
-          Review and verify discovered food bank resources. Resources are
-          organized by priority—start with Quick Wins for easy completions.
+          Review and verify discovered food bank resources. Default sort: lowest
+          confidence first (easiest to improve).
         </p>
       </div>
+
+      {/* Archive filter */}
+      <ArchiveFilter
+        value={archiveMode}
+        onChange={setArchiveMode}
+        counts={{
+          active: initialResources.filter((r) => r.verificationStatus !== "archived")
+            .length,
+          archived: initialResources.filter((r) => r.verificationStatus === "archived")
+            .length,
+          all: initialResources.length,
+        }}
+      />
 
       {/* Search and filters */}
       <VerificationSearchBar
         filters={filters}
         onFiltersChange={setFilters}
-        onScanArea={handleScanArea}
         resultCount={filteredResources.length}
+        scanDialogSlot={<ScanDialog onScanComplete={handleScanComplete} />}
       />
 
-      {/* Queue board */}
+      {/* Bulk actions bar (shown when items selected) */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border">
+          <span className="text-sm font-medium">
+            {selectedIds.length} selected
+          </span>
+          <div className="flex-1" />
+          <button
+            onClick={() => handleVerify(selectedIds)}
+            disabled={isVerifying}
+            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            Verify
+          </button>
+          <button
+            onClick={() => handleEnhance(selectedIds)}
+            disabled={isEnhancing}
+            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          >
+            Enhance
+          </button>
+          <button
+            onClick={() => handleReject(selectedIds)}
+            className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Reject
+          </button>
+          <button
+            onClick={() => handleFlagDuplicate(selectedIds)}
+            className="px-3 py-1.5 text-sm border rounded hover:bg-muted"
+          >
+            Flag
+          </button>
+        </div>
+      )}
+
+      {/* Verification table */}
       <div className="flex-1 min-h-0">
-        <QueueBoard
+        <VerificationTable
           resources={filteredResources}
-          isLoading={isEnhancing || isVerifying}
-          onResourceClick={handleResourceClick}
-          onVerify={handleVerify}
-          onEnhance={handleEnhance}
-          onReject={handleReject}
-          onFlagDuplicate={handleFlagDuplicate}
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          onEdit={handleEdit}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
         />
       </div>
+
+      {/* Edit Side Panel */}
+      <Sheet
+        open={selectedResourceId !== null}
+        onOpenChange={(open) => !open && setSelectedResourceId(null)}
+      >
+        <SheetContent side="right" className="w-[40%] sm:max-w-none overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit Resource</SheetTitle>
+            <SheetDescription>
+              Make changes to the resource details. AI can help fill missing information.
+            </SheetDescription>
+          </SheetHeader>
+
+          {selectedResourceId && (() => {
+            const resource = initialResources.find((r) => r.id === selectedResourceId);
+            if (!resource) return null;
+
+            return (
+              <ResourceEditor
+                resourceId={selectedResourceId}
+                initialResource={resource}
+                onSave={() => {
+                  setSelectedResourceId(null);
+                  router.refresh();
+                }}
+                onClose={() => setSelectedResourceId(null)}
+              />
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
 /**
  * Apply filters to resources
- * Filters by search query, location, confidence range, and missing fields
+ * Filters by search query, location, confidence range, missing fields, and archive status
  */
 function applyFilters(
   resources: VerificationResource[],
-  filters: VerificationFilters
+  filters: VerificationFilters,
+  archiveMode: ArchiveMode
 ): VerificationResource[] {
   return resources.filter((resource) => {
+    // Archive filter
+    if (archiveMode === "active" && resource.verificationStatus === "archived") {
+      return false;
+    }
+    if (archiveMode === "archived" && resource.verificationStatus !== "archived") {
+      return false;
+    }
+    // "all" shows everything
+
     // Search query filter (name, address, city)
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();

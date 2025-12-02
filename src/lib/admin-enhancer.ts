@@ -73,6 +73,9 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
   // Improved query: strictly look for food-related services to avoid church/childcare confusion
   const query = `"${resource.name}" "food pantry" OR "food bank" OR "soup kitchen" OR "food distribution" hours services ${locationContext || "Sacramento, CA"}`;
 
+  console.log(`[Tavily] Searching for: ${resource.name}`);
+  console.log(`[Tavily] Query: ${query}`);
+
   const fetchWithRetry = async (retries = 3, delay = 1000) => {
     for (let i = 0; i < retries; i++) {
       try {
@@ -122,6 +125,10 @@ async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) 
   }
 
   const data = (await response.json()) as TavilyResponse;
+  console.log(`[Tavily] Found ${data.results?.length || 0} results`);
+  if (data.results?.length > 0) {
+    console.log(`[Tavily] First result: ${data.results[0].title} - ${data.results[0].url}`);
+  }
   return data.results ?? [];
 }
 
@@ -144,79 +151,184 @@ export async function enhanceResource(
   focusField?: string | null
 ): Promise<EnhancementProposal> {
   const resource = await fetchResource(resourceId);
-  const documents = await searchResourceDocuments(resource);
-  if (!documents.length) {
-    throw new EnhancementError("No additional information found for this resource", 404);
-  }
 
-  const { content, sources } = truncateContent(documents);
-
-  const model = process.env.OPENROUTER_MODEL || "anthropic/claude-haiku-4.5";
+  // Use Claude Haiku 4.5 specifically for web search (web_search_options requires Anthropic models)
+  const model = "anthropic/claude-haiku-4.5";
   const openrouterKey = process.env.OPENROUTER_API_KEY;
   if (!openrouterKey) {
     throw new EnhancementError("OpenRouter API key missing from configuration", 500);
   }
 
   const focusInstruction = focusField
-    ? `Focus primarily on confirming or updating the "${focusField}" field.`
-    : "Focus on any missing or incomplete details.";
+    ? `Focus primarily on finding and confirming the "${focusField}" field.`
+    : "Focus on finding any missing or incomplete details.";
 
-  // Use generateObject with Zod schema for type-safe structured output
-  const { object } = await generateObject({
-    model: openrouter(model),
-    schema: z.object({
-      updates: z.object({
-        phone: z.string().nullable().optional(),
-        website: z.string().url().nullable().optional(),
-        description: z.string().nullable().optional(),
-        services: z.array(z.string()).nullable().optional(),
-        raw_hours: z.string().nullable().optional(),
-        hours: z.record(z.string(), z.object({
-          open: z.string(),
-          close: z.string(),
-          closed: z.boolean().optional()
-        }).nullable()).nullable().optional()
-      }),
-      summary: z.string(),
-      confidence: z.number().min(0).max(1),
-      sources: z.array(z.string().url()).optional()
+  console.log(`[Enhancement] Using Claude with native web search for: ${resource.name}`);
+
+  // Define the schema for response validation
+  const responseSchema = z.object({
+    updates: z.object({
+      phone: z.string().nullable().optional(),
+      website: z.string().url().nullable().optional(),
+      description: z.string().nullable().optional(),
+      services: z.array(z.string()).nullable().optional(),
+      raw_hours: z.string().nullable().optional(),
+      hours: z.record(z.string(), z.object({
+        open: z.string(),
+        close: z.string(),
+        closed: z.boolean().optional()
+      }).nullable()).nullable().optional()
     }),
-    prompt: `
-      You are an expert data analyst verifying food bank information.
+    summary: z.string(),
+    confidence: z.number().min(0).max(1),
+    sources: z.array(z.string().url()).optional()
+  });
 
-      Goal: Extract specific contact info and operating hours for the "Food Pantry" or "Food Distribution" service.
+  const prompt = `
+      You are an expert data analyst verifying food bank information. You have web search enabled - use it to find current, accurate information.
 
-      CRITICAL RULES:
-      1. IGNORE non-food services. If the entity is a church, do NOT extract Sunday Worship hours or Office hours. Look ONLY for "Pantry", "Distribution", "Soup Kitchen".
-      2. If you cannot find specific food distribution hours, leave 'hours' as null. Do NOT guess office hours.
-      3. Return structured data matching the schema exactly.
+      SEARCH QUERY TO USE:
+      "${resource.name}" food bank ${resource.city} ${resource.state} hours phone website services
 
-      Current Data:
+      RESOURCE TO VERIFY:
       Name: ${resource.name}
       Address: ${resource.address}, ${resource.city}, ${resource.state}
-      Phone: ${resource.phone ?? "Unknown"}
+      Current Phone: ${resource.phone ?? "Unknown"}
+      Current Website: ${resource.website ?? "Unknown"}
 
-      Instructions:
-      - Extract phone, website, description, and services if found
-      - raw_hours: The raw text description of hours found (e.g. 'Mon-Fri 9am-12pm')
+      CRITICAL RULES:
+      1. **Use web search** to find the official website and current information for this specific food bank
+      2. IGNORE non-food services. If the entity is a church, do NOT extract Sunday Worship hours or Office hours. Look ONLY for "Food Pantry", "Food Distribution", or "Soup Kitchen" hours
+      3. If you cannot find specific food distribution hours, leave 'hours' as null. Do NOT guess office hours
+      4. Verify the address matches before extracting data (avoid similar-named organizations in the same city)
+      5. Return structured data matching the schema exactly
+      6. Include the URLs you found in the 'sources' array
+
+      TASK: ${focusInstruction}
+
+      EXTRACT AND RETURN:
+      - phone: Phone number for the food pantry/distribution program (not general church office)
+      - website: Official website URL
+      - description: Brief description of services offered (focus on food assistance)
+      - services: Array of services (e.g., ["Food Pantry", "Hot Meals", "Emergency Food"])
+      - raw_hours: The raw text description of FOOD PANTRY hours (e.g. 'Mon-Fri 9am-12pm')
       - hours: Structured hours object with all 7 days (monday through sunday)
         Each day should be { open: "HH:MM", close: "HH:MM", closed: boolean } or null
-      - summary: Brief human-readable summary of what you found
-      - confidence: 0.0 to 1.0 (Low confidence if only office hours found, high if food pantry hours confirmed)
+      - summary: Brief summary of what you found and confidence level (explain if you couldn't find something)
+      - confidence: 0.0 to 1.0 (Low if uncertain or no web results, high if confirmed from official sources)
+      - sources: Array of URLs where you found this information (empty array if no results)
 
-      Documents:
-      ${content}
+      Return ONLY a JSON object matching this schema, no markdown formatting:
+      {
+        "updates": {
+          "phone": "string or null",
+          "website": "string or null",
+          "description": "string or null",
+          "services": ["array", "of", "strings"] or null,
+          "raw_hours": "string or null",
+          "hours": { "monday": { "open": "HH:MM", "close": "HH:MM" }, ... } or null
+        },
+        "summary": "string",
+        "confidence": 0.0,
+        "sources": ["https://url1.com", "https://url2.com"]
+      }
+    `;
 
-      ${focusInstruction}
-    `,
-    temperature: 0.3, // Add for consistency as recommended in plan
+  // Direct API call to OpenRouter with plugins
+  console.log("[Enhancement] Making direct OpenRouter API call with web search plugin");
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${openrouterKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "TheFeed Admin Enhancement",
+    },
+    body: JSON.stringify({
+      model,
+      plugins: [
+        {
+          id: "web",
+          engine: "native",
+          max_results: 5,
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+    }),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("[Enhancement] OpenRouter API error:", {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText,
+    });
+    throw new EnhancementError(
+      `OpenRouter API error: ${response.status} ${response.statusText}`,
+      response.status
+    );
+  }
+
+  const data = await response.json();
+  console.log("[Enhancement] OpenRouter response received:", {
+    model: data.model,
+    usage: data.usage,
+  });
+
+  // Extract the JSON from the response
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new EnhancementError("No content in OpenRouter response", 500);
+  }
+
+  // Extract JSON from potential markdown code blocks or plain text
+  let jsonString = content.trim();
+
+  // Remove markdown code blocks if present
+  const codeBlockMatch = jsonString.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (codeBlockMatch) {
+    jsonString = codeBlockMatch[1].trim();
+    console.log("[Enhancement] Extracted JSON from markdown code block");
+  }
+
+  // Try to find JSON object if there's extra text
+  if (!jsonString.startsWith('{')) {
+    const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonString = jsonMatch[0];
+      console.log("[Enhancement] Extracted JSON object from text");
+    }
+  }
+
+  // Parse and validate the JSON response
+  let parsedContent;
+  try {
+    parsedContent = JSON.parse(jsonString);
+  } catch (err) {
+    console.error("[Enhancement] Failed to parse JSON response. Raw content:", content);
+    console.error("[Enhancement] Extracted string:", jsonString);
+    console.error("[Enhancement] Parse error:", err);
+    throw new EnhancementError("Invalid JSON response from AI", 500);
+  }
+
+  // Validate against schema
+  const object = responseSchema.parse(parsedContent);
 
   const updates = object.updates || {};
   const normalizedHours = updates.hours ? normalizeHours(updates.hours).hours : null;
   const normalizedServices = normalizeServices(updates.services || []);
   const normalizedPhone = normalizePhone(updates.phone);
   const normalizedWebsite = normalizeWebsite(updates.website);
+
+  console.log(`[Enhancement] Claude found confidence: ${object.confidence}, sources: ${object.sources?.length || 0}`);
 
   return {
     resourceId,
@@ -229,7 +341,7 @@ export async function enhanceResource(
     },
     summary: object.summary || "AI enhancement complete.",
     confidence: object.confidence || 0.5,
-    sources,
+    sources: object.sources || [],
     focusField: focusField ?? null,
     rawHours: updates.raw_hours ?? null,
   };

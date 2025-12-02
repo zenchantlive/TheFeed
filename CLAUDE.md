@@ -644,25 +644,21 @@ When working in this repo:
 - RSVP and signup sheet functionality
 - Full-page chat layout fixes
 - **Data Quality Phase 1 (Critical Fixes):** Enhancement API, pagination, geocoding, indices, timeouts
-
-**✅ Completed:**
-- Core map discovery with Mapbox GL
-- **Admin Discovery Workflow:** Scan new areas + deduplication logic
-- AI chat with CopilotKit v2 and tool renderers
-- Better Auth with Google OAuth
-- Phase 1 community social (posts, comments, follows, karma)
-- Phase 3A/3B event backend + creation + detail UI
-- Event calendar discovery with filters
-- Mode-based community layout refactor
-- RSVP and signup sheet functionality
-- Full-page chat layout fixes
-- **Data Quality Phase 1 (Critical Fixes):** Enhancement API, pagination, geocoding, indices, timeouts
 - **Data Quality Phase 2 (Data Integrity):** Confidence scoring, duplicate detection, validation, versioning
 
 **🚧 In Progress:**
-- Migrate remaining features from `/chat` to `/chat-v2`
-- User profile management enhancements
-- Follow/unfollow API routes
+- **Admin Verification UX Redesign** - ✅ COMPLETE (December 2025):
+  - **Replaced Kanban with data table**: Sortable columns (name, location, confidence, queue)
+  - **Side panel editor (40% width)**: Inline editing with AI enhancement buttons
+  - **Archive system**: Active/Archived/All radio buttons with counts
+  - **Full resource names**: NOT truncated (max-width with overflow)
+  - **Default sort**: Confidence ascending (lowest first - easiest to improve)
+  - **Pagination**: 25/50/100 per page with First/Prev/Next/Last
+  - **Row selection**: Checkboxes for bulk actions (Verify, Enhance, Reject, Flag)
+  - **Hours editor**: Day-by-day display with "Find Hours" AI button
+  - **Scan Area**: Fully functional dialog with Tavily search integration
+  - **AI Enhancement**: Uses Claude Haiku 4.5 with native web search (NO Tavily dependency)
+  - **Status**: Working, needs OPENROUTER_API_KEY in .env for enhancements
 
 **📋 Pending / Future:**
 - **Trust & UX (Phase 3):** Verification badges, source attribution, user contribution flows

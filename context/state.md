@@ -1,7 +1,44 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-01-30
+Last updated: 2025-02-01
 
-## Current Focus: Data Quality & UX Improvements (Phase 1 & 2 Complete)
+## Current Focus: Admin Verification UX Redesign
+
+Branch: `feat/verification-table-view` (in progress)
+
+### Active Work: Admin Verification Workspace Redesign
+
+**Context**: The admin verification page (`/admin/verification`) launched with a Kanban-style card layout that has proven unscalable for production use:
+- 4-column layout creates "ridiculously long lists" with hundreds of resources
+- Resource names get truncated in cards
+- No functioning editor (click handlers only log to console)
+- Cards too large for efficient scanning
+- Poor responsiveness at desktop/widescreen sizes
+
+**Solution**: Complete redesign replacing Kanban cards with data table + side panel architecture (see `/home/zenchant/.claude/plans/dreamy-wondering-glacier.md`)
+
+**Key Design Decisions**:
+- **View**: Data table with sortable columns (replacing Kanban entirely)
+- **Default sort**: Confidence score lowest first (prioritize problem resources)
+- **Table columns**: Checkbox, Full Name (NOT truncated), Location, Confidence %, Missing Fields, Edit button
+- **Side panel**: 40% viewport width, opens on row click, stays open when switching resources
+- **Archive system**: Radio buttons above table (Active / Archived / All)
+- **Bulk workflow**: Sequential edit mode (auto-advances to next resource after save)
+- **Pagination**: 25 resources per page (client-side for 500-resource dataset)
+- **Shortcuts**: Cmd+S / Ctrl+S to save
+- **Focus**: Desktop/widescreen optimization (mobile deprioritized)
+
+**Implementation Phases**:
+1. Core table with sorting/pagination ⏳
+2. Side panel editor with inline editing
+3. Archive system and sequential edit workflow
+4. API endpoint for single resource updates (PATCH `/api/admin/resources/[id]`)
+5. Polish (keyboard shortcuts, loading states, error handling)
+
+**Why This Matters**: Admin verification is the gateway for all discovered resources to reach production. Current workflow is broken (no editing possible), making it impossible to improve low-confidence resources (38-60%) or fix missing data. This redesign unblocks the entire data quality improvement pipeline.
+
+---
+
+## Recent Deliverables (January 2025)
 
 Branch: `feat/batch-update-verify` (clean)
 
@@ -79,7 +116,10 @@ All 4 data integrity improvements from Phase 2 have been implemented:
    - User contribution tracking for community verification
    - **Impact**: Full accountability and change tracking
 
-**Next Steps: Phase 3 - Trust & UX (Weeks 5-6)**
+**Next Steps: Phase 3 - Trust & UX (Weeks 5-6) - PAUSED**
+
+*Note: Phase 3 work temporarily paused to address critical admin verification UX issues. Will resume after verification workflow is production-ready.*
+
 - Verification badges and source attribution
 - User contribution workflows
 - Community trust scoring
@@ -109,12 +149,12 @@ All 4 data integrity improvements from Phase 2 have been implemented:
 - `/map` now hosts three synchronized layers: food banks, events, and posts. It shares filters with Community via `DiscoveryFiltersProvider`, and popups keep users within discovery surfaces (RSVP, map view, view in community).
 - `/community/events/calendar` (auth-guarded) remains the canonical calendar view; next steps are shared filter state + nav entry.
 
-### Active Work / Next Steps
-- **Admin Discovery Workflow** — Completed "Scan Area" integration in `/admin/verification` with real-time streaming and soft duplicate detection.
+### Next Steps (Post-Verification Redesign)
+- **Admin Discovery Workflow** — ✅ Completed "Scan Area" integration with real-time streaming and soft duplicate detection.
+- Resume Phase 3 (Trust & UX): verification badges, source attribution, community trust scoring
 - Expand shared discovery filters (type/date/radius) so map, feed, and calendar stay consistent.
 - Hook `/chat-v2` into the main nav and keep `/chat` as the fallback until CopilotKit streaming issues are resolved.
 - Continue hardening TypeScript around CopilotKit render props and remove temporary logging once intent automation ships.
-- Resolve AI enhancement schema errors: OpenRouter currently rejects `/api/admin/resources/[id]/enhance?field=phone`.
 
 ### Known Issues / Alerts
 - **2025-01-30** — ✅ RESOLVED: `/api/admin/resources/[id]/enhance` schema error fixed by migrating to `generateObject()` with Zod schema

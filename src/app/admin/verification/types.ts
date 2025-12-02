@@ -138,3 +138,44 @@ export interface QueueStats {
   verified: number;
   verifiedPercent: number;
 }
+
+/**
+ * Archive filter mode
+ * - active: Show only non-archived resources (default)
+ * - archived: Show only archived resources
+ * - all: Show all resources regardless of archive status
+ */
+export type ArchiveMode = "active" | "archived" | "all";
+
+/**
+ * Table sort column types
+ */
+export type SortColumn = "name" | "location" | "confidence" | "queue";
+
+/**
+ * Table sort direction
+ */
+export type SortDirection = "asc" | "desc";
+
+/**
+ * Table state for managing pagination and sorting
+ */
+export interface TableState {
+  /** Current page (1-indexed) */
+  page: number;
+
+  /** Items per page (25, 50, or 100) */
+  pageSize: number;
+
+  /** Sort column */
+  sortColumn: SortColumn;
+
+  /** Sort direction */
+  sortDirection: SortDirection;
+
+  /** Selected resource IDs for bulk actions */
+  selectedIds: string[];
+
+  /** Archive filter mode */
+  archiveMode: ArchiveMode;
+}

@@ -41,8 +41,8 @@ interface VerificationSearchBarProps {
   /** Filter change callback */
   onFiltersChange: (filters: VerificationFilters) => void;
 
-  /** Optional: Show "Scan Area" button */
-  onScanArea?: () => void;
+  /** Optional: Scan dialog component to render */
+  scanDialogSlot?: React.ReactNode;
 
   /** Number of results matching current filters */
   resultCount?: number;
@@ -51,7 +51,7 @@ interface VerificationSearchBarProps {
 export function VerificationSearchBar({
   filters,
   onFiltersChange,
-  onScanArea,
+  scanDialogSlot,
   resultCount,
 }: VerificationSearchBarProps) {
   // Track if filter popover is open
@@ -231,13 +231,8 @@ export function VerificationSearchBar({
           </PopoverContent>
         </Popover>
 
-        {/* Scan area button */}
-        {onScanArea && (
-          <Button onClick={onScanArea} className="gap-2">
-            <Sparkles size={16} />
-            <span className="hidden sm:inline">Scan Area</span>
-          </Button>
-        )}
+        {/* Scan area dialog */}
+        {scanDialogSlot}
       </div>
 
       {/* Active filters display */}
