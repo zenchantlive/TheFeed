@@ -120,7 +120,7 @@ export async function detectDuplicates(
     distance_meters: number;
   };
 
-  const rows = ((nearbyCandidates as any).rows || nearbyCandidates) as NearbyCandidate[];
+  const rows = nearbyCandidates as unknown as NearbyCandidate[];
 
   for (const candidate of rows) {
     // Skip if already matched exactly
@@ -171,34 +171,34 @@ export async function detectDuplicates(
   }
 
   return duplicates.sort((a, b) => b.score - a.score);
-}
 
-/**
- * Calculates similarity between two strings (0.0 to 1.0).
- * Uses Levenshtein distance normalized by string length.
- */
-function calculateStringSimilarity(str1: string, str2: string): number {
-  const s1 = str1.toLowerCase().trim();
-  const s2 = str2.toLowerCase().trim();
+  /**
+   * Calculates similarity between two strings (0.0 to 1.0).
+   * Uses Levenshtein distance normalized by string length.
+   */
+  function calculateStringSimilarity(str1: string, str2: string): number {
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
 
-  if (s1 === s2) return 1.0;
-  if (!s1 || !s2) return 0.0;
+    if (s1 === s2) return 1.0;
+    if (!s1 || !s2) return 0.0;
 
-  const distance = levenshteinDistance(s1, s2);
-  const maxLen = Math.max(s1.length, s2.length);
+    const distance = levenshteinDistance(s1, s2);
+    const maxLen = Math.max(s1.length, s2.length);
 
-  return 1 - (distance / maxLen);
-}
+    return 1 - (distance / maxLen);
+  }
 
-/**
- * Normalizes an address string for better comparison.
- * Removes common suffixes and non-alphanumeric characters.
- */
-function normalizeAddress(address: string): string {
-  if (!address) return "";
-  return address
-    .toLowerCase()
-    .trim()
-    .replace(/\b(street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct)\b/g, "")
-    .replace(/[^a-z0-9]/g, "");
+  /**
+   * Normalizes an address string for better comparison.
+   * Removes common suffixes and non-alphanumeric characters.
+   */
+  function normalizeAddress(address: string): string {
+    if (!address) return "";
+    return address
+      .toLowerCase()
+      .trim()
+      .replace(/\b(street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct)\b/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
 }
