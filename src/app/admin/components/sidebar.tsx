@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { CheckCircle, Home, Settings, Users } from "lucide-react";
+import { CheckCircle, Home, Settings, Users, UserCheck } from "lucide-react";
 
 type AdminSidebarProps = {
   userName: string;
@@ -12,6 +12,7 @@ type AdminSidebarProps = {
 const navItems = [
   { href: "/admin", label: "Overview", icon: Home },
   { href: "/admin/verification", label: "Verification", icon: CheckCircle },
+  { href: "/admin/claims", label: "Provider Claims", icon: UserCheck },
   { href: "/admin/users", label: "Users", icon: Users, disabled: true },
   { href: "/admin/settings", label: "Settings", icon: Settings, disabled: true },
 ];
