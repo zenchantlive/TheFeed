@@ -55,28 +55,29 @@ export async function awardPoints(
     const points = POINTS[action];
 
     await db.transaction(async (tx) => {
-        const [profile] = await tx
-            .update(userProfiles)
-            .set({
-                points: sql`${userProfiles.points} + ${points}`,
-            })
-            .where(eq(userProfiles.userId, userId))
-            .returning({ points: userProfiles.points, level: userProfiles.level });
+        // We select the current points and level first to determine the new level.
+        const [currentProfile] = await tx
+            .select({ points: userProfiles.points, level: userProfiles.level })
+            .from(userProfiles)
+            .where(eq(userProfiles.userId, userId));
 
-        if (!profile) {
+        if (!currentProfile) {
+            // Optionally, handle case where user profile doesn't exist, maybe create it.
+            // For now, we'll exit if no profile is found.
+            console.warn(`User profile not found for userId: ${userId}. Skipping point award.`);
             return;
         }
 
-        const newLevel = calculateLevel(profile.points);
-        if (newLevel > profile.level) {
-            await tx
-                .update(userProfiles)
-                .set({ level: newLevel })
-                .where(eq(userProfiles.userId, userId));
+        const newPoints = currentProfile.points + points;
+        const newLevel = calculateLevel(newPoints);
 
-            // Award level-up badge (optional, can implement specific level badges)
-            // await awardBadge(userId, `level_${newLevel}`);
-        }
+        await tx
+            .update(userProfiles)
+            .set({
+                points: newPoints,
+                level: newLevel > currentProfile.level ? newLevel : currentProfile.level,
+            })
+            .where(eq(userProfiles.userId, userId));
 
         // Log points transaction
         await tx.insert(pointsHistory).values({
@@ -102,25 +103,22 @@ export function calculateLevel(points: number): number {
 }
 
 export async function awardBadge(userId: string, badgeId: string) {
-    await db.transaction(async (tx) => {
-        const [profile] = await tx
-            .select({ badges: userProfiles.badges })
-            .from(userProfiles)
-            .where(eq(userProfiles.userId, userId))
-            .for("update");
+    const [profile] = await db
+        .select({ badges: userProfiles.badges })
+        .from(userProfiles)
+        .where(eq(userProfiles.userId, userId));
 
-        if (!profile) return;
+    if (!profile) return;
 
-        const badges = (profile.badges as string[]) || [];
-        if (badges.includes(badgeId)) return; // Already has badge
+    const currentBadges = Array.isArray(profile.badges) ? profile.badges : [];
+    if (currentBadges.includes(badgeId)) return; // Already has badge
 
-        await tx
-            .update(userProfiles)
-            .set({
-                badges: [...badges, badgeId],
-            })
-            .where(eq(userProfiles.userId, userId));
-    });
+    await db
+        .update(userProfiles)
+        .set({
+            badges: [...currentBadges, badgeId],
+        })
+        .where(eq(userProfiles.userId, userId));
 
     // TODO: Send notification
 }
