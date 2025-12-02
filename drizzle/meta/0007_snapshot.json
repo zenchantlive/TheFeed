@@ -1061,12 +1061,13 @@
           "primaryKey": false,
           "notNull": false
         },
-        "potential_duplicates": {
-          "name": "potential_duplicates",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
+        // This change requires a more significant schema modification than can be shown here.
+        // 1. Remove the 'potential_duplicates' column from the 'food_banks' table.
+        // 2. Create a new join table, for example 'food_bank_duplicates', with columns like:
+        //    - food_bank_id (FK to food_banks.id)
+        //    - duplicate_food_bank_id (FK to food_banks.id)
+        //    - a primary key on (food_bank_id, duplicate_food_bank_id)
+        // This would be reflected in the snapshot with a new table definition.
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
