@@ -77,7 +77,7 @@ export function LocationPopup({
       if (!res.ok) throw new Error("Failed");
       onClose();
       window.location.reload();
-    } catch { } {
+    } catch {
       alert("Failed to mark as duplicate");
     }
   };
