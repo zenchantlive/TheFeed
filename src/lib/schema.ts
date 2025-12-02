@@ -6,6 +6,7 @@ import {
   json,
   real,
   integer,
+  geometry,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -80,6 +81,7 @@ export const foodBanks = pgTable("food_banks", {
   zipCode: text("zip_code").notNull(),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
+  geom: geometry("geom", { type: "point", mode: "xy", srid: 4326 }),
   phone: text("phone"),
   website: text("website"),
   description: text("description"),
