@@ -80,7 +80,7 @@ export async function getNormalizedResources(
       ...normalized,
       id: row.id,
       verificationStatus: row.verificationStatus ?? null,
-      lastVerified: row.communityVerifiedAt ?? row.updatedAt ?? null,
+      lastVerified: row.adminVerifiedAt ?? row.communityVerifiedAt ?? row.updatedAt ?? null,
       aiSummary: row.aiSummary ?? null,
     };
   });
