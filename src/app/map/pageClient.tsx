@@ -22,6 +22,7 @@ import {
   DiscoveryFiltersProvider,
   useDiscoveryFilters,
 } from "@/app/community/discovery-context";
+import type { Source } from "@/components/foodshare/sources-section";
 
 type MapPageClientProps = {
   foodBanks: NormalizedResourceWithMeta[];
@@ -39,6 +40,7 @@ type EnrichedFoodBank = Omit<NormalizedResourceWithMeta, "phone" | "website" | "
   lastVerified: Date | null;
   distanceMiles: number | null;
   isOpen: boolean;
+  sources?: Source[];
 };
 
 type MapEventPin = {
@@ -541,6 +543,18 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
           )
           : null;
 
+      const sources: Source[] = [];
+
+      if (bank.provenance?.sources && bank.provenance.sources.length > 0) {
+        bank.provenance.sources.forEach(url => {
+          sources.push({
+            type: "aggregator",
+            label: "External Source",
+            url: url,
+          });
+        });
+      }
+
       return {
         ...bank,
         phone: bank.phone ?? null,
@@ -550,6 +564,7 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
         lastVerified: bank.lastVerified,
         distanceMiles: distance,
         isOpen: hours ? isCurrentlyOpen(hours) : false,
+        sources,
       };
     });
   }, [foodBanks, userLocation]);

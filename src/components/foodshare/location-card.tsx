@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Globe, Navigation2 } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 import { VerificationBadge } from "./verification-badge";
+import { SourcesSection, type Source } from "./sources-section";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ type LocationCardProps = {
     hours: Record<string, { open: string; close: string; closed?: boolean }> | null;
     verificationStatus?: string;
     lastVerified?: Date | string | null;
+    sources?: Source[];
   };
   distanceMiles?: number;
   isOpen?: boolean;
@@ -69,6 +71,9 @@ export function LocationCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {location.sources && location.sources.length > 0 && (
+          <SourcesSection sources={location.sources} className="mb-4" />
+        )}
         {location.description ? (
           <p className="text-sm text-muted-foreground">{location.description}</p>
         ) : null}

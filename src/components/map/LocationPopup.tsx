@@ -7,6 +7,7 @@ import type { HoursType } from "@/lib/schema";
 import { X, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSavedLocation } from "@/hooks/use-saved-locations";
+import type { Source } from "@/components/foodshare/sources-section";
 
 export type LocationPopupProps = {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export type LocationPopupProps = {
     hours: HoursType | null;
     verificationStatus?: string;
     lastVerified?: Date | string | null;
+    sources?: Source[];
   };
   distanceMiles?: number | null;
   currentlyOpen?: boolean;
