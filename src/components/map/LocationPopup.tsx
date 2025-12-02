@@ -23,6 +23,8 @@ export type LocationPopupProps = {
     description: string | null;
     services: string[] | null;
     hours: HoursType | null;
+    verificationStatus?: string;
+    lastVerified?: Date | string | null;
   };
   distanceMiles?: number | null;
   currentlyOpen?: boolean;
@@ -73,7 +75,7 @@ export function LocationPopup({
       if (!res.ok) throw new Error("Failed");
       onClose();
       window.location.reload();
-    } catch {} {
+    } catch { } {
       alert("Failed to mark as duplicate");
     }
   };

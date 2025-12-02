@@ -77,6 +77,7 @@ const resourceSelection = {
   autoDiscoveredAt: foodBanks.autoDiscoveredAt,
   communityVerifiedAt: foodBanks.communityVerifiedAt,
   adminVerifiedBy: foodBanks.adminVerifiedBy,
+  adminVerifiedAt: foodBanks.adminVerifiedAt,
   // Pipeline Fields
   confidenceScore: foodBanks.confidenceScore,
   sourceUrl: foodBanks.sourceUrl,
@@ -113,8 +114,8 @@ export async function getUnverifiedResources(
     requestedFields && requestedFields.length > 0
       ? requestedFields
       : options.requireMissingInfo
-      ? DEFAULT_MISSING_FIELDS
-      : [];
+        ? DEFAULT_MISSING_FIELDS
+        : [];
 
   if (missingFiltersToUse.length > 0) {
     whereConditions.push(

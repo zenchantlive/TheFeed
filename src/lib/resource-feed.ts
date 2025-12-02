@@ -13,6 +13,7 @@ type FeedOptions = {
 export type NormalizedResourceWithMeta = NormalizedResource & {
   id: string;
   verificationStatus: string | null;
+  lastVerified: Date | null;
 };
 
 /**
@@ -74,6 +75,7 @@ export async function getNormalizedResources(
       ...normalized,
       id: row.id,
       verificationStatus: row.verificationStatus ?? null,
+      lastVerified: row.communityVerifiedAt ?? row.updatedAt ?? null,
     };
   });
 }

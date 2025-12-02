@@ -91,6 +91,7 @@ export const foodBanks = pgTable("food_banks", {
   autoDiscoveredAt: timestamp("auto_discovered_at"),
   communityVerifiedAt: timestamp("community_verified_at"),
   adminVerifiedBy: text("admin_verified_by").references(() => user.id),
+  adminVerifiedAt: timestamp("admin_verified_at"),
   // Pipeline Fields
   confidenceScore: real("confidence_score").default(0),
   sourceUrl: text("source_url"),

@@ -31,8 +31,12 @@ type MapPageClientProps = {
 
 type VerificationStatus = "unverified" | "community_verified" | "official" | "rejected" | "duplicate";
 
-type EnrichedFoodBank = NormalizedResourceWithMeta & {
+type EnrichedFoodBank = Omit<NormalizedResourceWithMeta, "phone" | "website" | "description"> & {
+  phone: string | null;
+  website: string | null;
+  description: string | null;
   verificationStatus: VerificationStatus;
+  lastVerified: Date | null;
   distanceMiles: number | null;
   isOpen: boolean;
 };
@@ -532,14 +536,18 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
       const distance =
         userLocation !== null
           ? calculateDistance(
-              userLocation,
-              { lat: bank.latitude, lng: bank.longitude }
-            )
+            userLocation,
+            { lat: bank.latitude, lng: bank.longitude }
+          )
           : null;
 
       return {
         ...bank,
+        phone: bank.phone ?? null,
+        website: bank.website ?? null,
+        description: bank.description ?? null,
         verificationStatus,
+        lastVerified: bank.lastVerified,
         distanceMiles: distance,
         isOpen: hours ? isCurrentlyOpen(hours) : false,
       };
@@ -643,8 +651,8 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
                 {type === "all"
                   ? "All"
                   : type === "potluck"
-                  ? "Potluck"
-                  : "Volunteer"}
+                    ? "Potluck"
+                    : "Volunteer"}
               </Button>
             ))}
           </div>
