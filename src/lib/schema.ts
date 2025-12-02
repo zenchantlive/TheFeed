@@ -8,6 +8,7 @@ import {
     integer,
     geometry,
     index,
+    decimal,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -198,9 +199,18 @@ export const userProfiles = pgTable("user_profiles", {
     bio: text("bio"),
     postsCount: integer("posts_count").notNull().default(0),
     helpfulMarksReceived: integer("helpful_marks_received").notNull().default(0),
+    // Gamification
+    points: integer("points").notNull().default(0),
+    level: integer("level").notNull().default(1),
+    badges: json("badges").$type<string[]>().default([]),
+    verificationCount: integer("verification_count").notNull().default(0),
+    accuracyScore: decimal("accuracy_score", { precision: 5, scale: 2 }).default("0.00"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+    pointsIdx: index("idx_user_profiles_points").on(table.points.desc()),
+    levelIdx: index("idx_user_profiles_level").on(table.level.desc()),
+}));
 
 export const posts = pgTable("posts", {
     id: text("id")
@@ -262,9 +272,24 @@ export const helpfulMarks = pgTable("helpful_marks", {
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
     targetType: text("target_type").notNull(), // "post" | "comment"
-    targetId: text("target_id").notNull(), // ID of post or comment
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const pointsHistory = pgTable("points_history", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    points: integer("points").notNull(),
+    metadata: json("metadata"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+    userIdIdx: index("idx_points_history_user_id").on(table.userId),
+    createdAtIdx: index("idx_points_history_created_at").on(table.createdAt.desc()),
+}));
 
 // Community Event Hosting Tables (Phase 3)
 
@@ -447,6 +472,7 @@ export type SignUpSlot = typeof signUpSlots.$inferSelect;
 export type SignUpClaim = typeof signUpClaims.$inferSelect;
 export type EventRecurrence = typeof eventRecurrence.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
+export type PointsHistory = typeof pointsHistory.$inferSelect;
 
 // Relations
 export const savedLocationsRelations = relations(savedLocations, ({ one }) => ({
