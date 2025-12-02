@@ -16,12 +16,12 @@ type LocationCardProps = {
     city: string;
     state: string;
     zipCode: string;
-    phone: string | null;
-    website: string | null;
-    description: string | null;
-    services: string[] | null;
-    hours: Record<string, { open: string; close: string; closed?: boolean }> | null;
-    verificationStatus?: string;
+    phone?: string | null;
+    website?: string | null;
+    description?: string | null;
+    services?: string[] | null;
+    hours?: Record<string, { open: string; close: string; closed?: boolean }> | null;
+    verificationStatus?: string | null;
     lastVerified?: Date | string | null;
     sources?: Source[];
   };
