@@ -1,64 +1,54 @@
-# Contributing to FoodShare
+# Contributing to TheFeed
 
-Thanks for helping build FoodShare! This project extends the Agentic Coding Starter Kit, so we follow the same conventions with a few additions for the FoodShare roadmap.
+Thank you for helping build TheFeed! This project extends the Agentic Coding Starter Kit. We prioritize dignity, safety, and strict typing across the codebase.
 
-## Development Workflow
+## Workflow
 
-1. **Fork / clone** the repo.
-2. **Create a feature branch** from `main`.
+1. **Fork or clone** the repo and create a feature branch from `main`.
    ```bash
-   git checkout -b feat/map-search
+   git checkout -b feat/short-title
    ```
-3. **Install dependencies** and sync the database if you haven't already:
-   ```bash
+2. **Install dependencies** from **PowerShell** (see DEVELOPMENT.md for Windows/WSL guidance).
+   ```powershell
    pnpm install
-   pnpm run db:migrate
-   pnpm exec tsx scripts/seed-food-banks.ts
    ```
-4. **Develop & test locally**:
+3. **Sync the database** if you are working on data, auth, or community features:
+   ```bash
+   pnpm run db:migrate
+   pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts
+   ```
+4. **Develop and verify locally**:
    - `pnpm dev` to run the app.
-   - `pnpm typecheck` before committing.
-   - `pnpm lint` (fix issues or run `pnpm lint --fix`).
-5. **Commit with context**. Use short, descriptive messages, e.g. `fix: handle empty search results`.
-6. **Push and open a Pull Request** against `main`, referencing any related GitHub issues.
+   - `pnpm lint` and `pnpm typecheck` before opening a PR.
+5. **Commit with context** using concise, conventional messages (e.g., `feat: add RSVP quick action`).
+6. **Open a Pull Request** against `main` and link relevant issues.
 
-## Pull Request Checklist
+## Lightweight governance (subject to change)
 
-- [ ] Feature branch is up to date with `main`.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
-- [ ] New env vars or scripts are documented in `README.md`.
-- [ ] UI changes include screenshots or GIFs in the PR description.
-- [ ] Linked to the relevant GitHub issue(s).
+- **Reviews**: At least one maintainer review is required before merge. For risky changes (data model, auth, payments), seek two reviewers when possible.
+- **Issue-first**: For substantial features or refactors, open an issue or draft PR to align on scope before implementation.
+- **Decision logs**: If you change architecture or flows, update context files (`context/state.md`, `context/decisions.md`).
+- **Release style**: Trunk-based with small, incremental PRs preferred over large drops.
 
-## Commit Message Conventions
+## Pull Request checklist
 
-Use a simplified conventional commits style when possible:
+- [ ] Branch is up to date with `main`.
+- [ ] `pnpm lint` and `pnpm typecheck` pass (or failures are explained).
+- [ ] Tests or screenshots added when UI changes are visible.
+- [ ] New env vars, scripts, or migrations are documented (README/DEVELOPMENT/context files).
+- [ ] Linked to related issues and follows the Code of Conduct.
 
-- `feat: add saved locations list`
-- `fix: prevent blank AI responses`
-- `docs: update map troubleshooting`
-- `chore: bump drizzle version`
+## Code style and safety
 
-## Reporting Issues
+- Use TypeScript strictly; avoid `any` and prefer shared types.
+- Follow shadcn/ui + Tailwind patterns with accessible defaults.
+- Keep server components by default; add `"use client"` only when state or effects are required.
+- Handle secrets responsibly—do not commit `.env*` or API keys.
 
-Before opening a new issue:
+## Reporting issues and asking questions
 
-1. Search the existing issues.
-2. Provide clear reproduction steps and environment info.
-3. Attach logs or screenshots when relevant.
-
-Use our GitHub issue templates to keep reports consistent.
-
-## Code Style
-
-- Follow existing Tailwind & shadcn patterns.
-- Keep React components typed (`FC` is optional, but use explicit prop interfaces).
-- Prefer server components unless client state is required.
-- Avoid committing `.env*` files or secrets.
-
-## Community Guidelines
-
-We enforce our [Code of Conduct](CODE_OF_CONDUCT.md). Please be respectful and inclusive.
+- Search existing issues first.
+- Provide reproduction steps, environment info, and relevant logs/screenshots.
+- Use the issue templates where available; for conduct concerns, see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 Thanks again for contributing! 🚀

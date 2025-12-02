@@ -1,37 +1,27 @@
 # Code of Conduct
 
-FoodShare is dedicated to providing a welcoming, supportive environment for everyone. We expect contributors, maintainers, and users to follow this code whenever interacting with the project.
+TheFeed is a community committed to dignity, safety, and inclusion. Everyone interacting with the project—contributors, maintainers, and users—must follow this code in issues, discussions, code reviews, and any other project space.
 
-## Our Standards
+## Expected behavior
 
-Examples of behavior that contributes to a positive environment include:
+- Use welcoming and inclusive language.
+- Be respectful of differing viewpoints and experiences.
+- Offer constructive feedback, and assume good intent while addressing impact.
+- Prioritize community benefit over personal preference.
+- Support those experiencing food insecurity with empathy and care.
 
-- Using inclusive and respectful language.
-- Being mindful of differing experiences and backgrounds.
-- Giving and gracefully accepting constructive feedback.
-- Focusing on what is best for the community.
-- Showing empathy towards other community members.
+## Unacceptable behavior
 
-Examples of unacceptable behavior include:
+- Harassment, discrimination, or abusive conduct of any kind.
+- Doxxing or publishing private information without consent.
+- Sexualized language, imagery, or unwelcome advances.
+- Sustained disruption of discussions or reviews.
+- Any behavior that would be considered inappropriate in a professional setting.
 
-- Harassment, intimidation, or discrimination of any kind.
-- Disrespectful, offensive, or sexualized comments.
-- Public or private harassment.
-- Publishing others’ private information (doxxing).
-- Any conduct that could reasonably be considered inappropriate in a professional setting.
+## Reporting and enforcement
 
-## Reporting
-
-If you witness or experience behavior that violates this code, please report it by emailing **zenchantlive@gmail.com** (or the current project maintainers). All reports will be reviewed and handled confidentially.
-
-## Enforcement
-
-- Complaints will be reviewed promptly and fairly.
-- Maintainers are obligated to maintain confidentiality with regard to the reporter.
-- Appropriate action will be taken based on the severity and context, which may include warnings or removal from the community.
+If you experience or witness a violation, contact the maintainers at **zenchantlive@gmail.com** or alert a maintainer privately. Reports are handled confidentially. Maintainers may take actions proportionate to the impact, including warnings, content removal, or removal from the community. Repeat or severe violations may result in a project ban.
 
 ## Attribution
 
-This Code of Conduct is adapted from the Contributor Covenant, version 2.1.
-
-For more information, please visit [https://www.contributor-covenant.org](https://www.contributor-covenant.org).
+Adapted from the [Contributor Covenant v2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).

@@ -1,28 +1,35 @@
-# FoodShare
+# TheFeed (formerly FoodShare)
 
-FoodShare is a mobile‑first Next.js application that helps people discover nearby food assistance, chat with an AI guide, and stay connected to community programs. It extends the Agentic Coding Starter Kit with map discovery, FoodShare branding, and a Supabase‑backed data layer.
+TheFeed is a hyperlocal food-sharing network for neighbors to discover trusted resources, coordinate community events, and receive empathetic AI guidance. It is built with Next.js 15 (App Router), React 19, TypeScript, Tailwind v4, Drizzle ORM, Supabase Postgres, Mapbox GL, and the Vercel AI SDK (via OpenRouter).
+
+The project is currently in **Phase 5: Community Engagement** with provider claims tooling in active development, following completed map/chat foundations, the social feed, and the event hosting system.
 
 ## Highlights
 
-- **Guided assistance** – AI chat tuned for food insecurity scenarios, complete with quick actions and intents.
-- **Interactive map** – Mapbox GL map that lists seeded Bay Area food banks with hours, services, and directions.
-- **Community stories** – Curated stories and programs to showcase future social features.
-- **Account experience** – Better Auth + Google OAuth with saved locations and onboarding tips.
-- **Modern stack** – Next.js 15, React 19, TypeScript, Tailwind, Drizzle ORM, Vercel AI SDK.
+- **Interactive discovery map** powered by Mapbox GL, PostGIS geometry, and deep links (`/map?resource=ID`).
+- **AI sous-chef chat** with OpenRouter models, tool calling (search, directions, hours), and CopilotKit UI renderers (`/chat-v2`).
+- **Community feed & profiles** with posts, comments, follows, karma scaffolding, and saved locations.
+- **Event hosting** including creation wizard, RSVPs, waitlists, sign-up slots, calendar view (`/community/events/calendar`), and quick map RSVP.
+- **Admin & trust layer** with verification badges, data completeness indicators, and in-progress provider claims workflow (schema, submission API, admin tables).
 
 ## Getting Started
 
-### 1. Clone & Install
+### Prerequisites
+
+- Node.js 18+
+- pnpm 9+
+- Postgres (local or Supabase)
+- Mapbox public access token (for map tiles)
+
+### 1) Clone & Install
 
 ```bash
 git clone https://github.com/zenchantlive/TheFeed.git
-cd TheFeed/foodshare
+cd TheFeed
 pnpm install
 ```
 
-> **Prereqs**: Node 18+, pnpm 9+, Git.
-
-### 2. Environment Variables
+### 2) Configure Environment
 
 Copy the template and fill in secrets:
 
@@ -30,71 +37,79 @@ Copy the template and fill in secrets:
 cp env.example .env
 ```
 
-Required values:
+Key variables:
 
-| Key | Description |
-| --- | --- |
-| `POSTGRES_URL` | Supabase (or Postgres) connection string. Keep `sslmode=require` if using Supabase. |
-| `BETTER_AUTH_SECRET` | 32+ char random string (`openssl rand -hex 32`). |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth credentials for Google sign‑in. |
-| `NEXT_PUBLIC_APP_URL` | Usually `http://localhost:3000` in development. |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | Public Mapbox access token for the map UI. |
-| `OPENROUTER_API_KEY` | API key for chat (or swap to another provider in `src/app/api/chat/route.ts`). |
-| `OPENROUTER_MODEL` | Optional override (defaults to `openai/gpt-4.1-mini`). |
-| `POLAR_WEBHOOK_SECRET` | Only needed if enabling Polar billing webhooks. |
+- `POSTGRES_URL` – Postgres/Supabase connection string (keep `sslmode=require` for Supabase).
+- `BETTER_AUTH_SECRET` – 32+ character secret for Better Auth.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` – OAuth credentials.
+- `NEXT_PUBLIC_APP_URL` – Usually `http://localhost:3000` in development.
+- `NEXT_PUBLIC_MAPBOX_TOKEN` – Mapbox public token for the map UI.
+- `OPENROUTER_API_KEY` (and optional `OPENROUTER_MODEL`) – AI chat provider.
+- `POLAR_*` – Only required if enabling Polar billing/webhooks.
 
-### 3. Database
+### 3) Database & Seed Data
 
-We use Drizzle ORM. Once `POSTGRES_URL` is set:
+We use Drizzle ORM migrations. After setting `POSTGRES_URL`:
 
 ```bash
 pnpm run db:generate   # when schema changes
-pnpm run db:migrate    # applies migrations
-pnpm exec tsx scripts/seed-food-banks.ts   # optional, loads sample Bay Area food banks
+pnpm run db:migrate    # apply migrations
+pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts   # optional: seed sample Bay Area food banks
 ```
 
-### 4. Run the App
+### 4) Run the App
 
 ```bash
 pnpm dev
 ```
 
-Visit `http://localhost:3000`, sign in with Google, and explore:
+Visit `http://localhost:3000` and explore:
 
-- `/chat` – try the intents or type “I’m hungry and in San Jose”.
-- `/map` – inspect seeded food banks, toggle filters, open the popup.
-- `/community` – view Phase 1 story/program cards.
-- `/profile` – review saved locations (seed script adds demo data).
+- `/map` – resource discovery with deep links, popups, and quick RSVP for events.
+- `/chat-v2` – CopilotKit-powered sous-chef with streaming tool renderers.
+- `/community` – event-first layout with posts always visible and map deep links.
+- `/community/events/calendar` – month view with type filters.
+- `/profile` – saved locations and onboarding tips.
 
-## Scripts
+### Production Build
 
-| Script | Description |
-| --- | --- |
-| `pnpm dev` | Start the development server (Turbopack). |
-| `pnpm build` | Production build; runs migrations first. |
-| `pnpm start` | Launch the production server. |
-| `pnpm lint` | Run ESLint. |
-| `pnpm typecheck` | Run TypeScript checks. |
-| `pnpm run db:*` | Drizzle helper scripts (generate / migrate / studio / reset). |
+```bash
+pnpm build
+pnpm start
+```
 
-## Git Workflow
+## Quality Gates
 
-1. Create a branch for each fix or feature (`git checkout -b feat/map-fixes`).
-2. Run `pnpm typecheck` and `pnpm lint` before committing.
-3. Submit PRs against `main`, referencing the relevant GitHub issue.
+Before merging changes, run:
 
-## Current Focus & Known Issues
+```bash
+pnpm lint
+pnpm typecheck
+```
 
-- Map markers and search need refinement with live Supabase data.
-- AI chat occasionally returns an empty response after zip-code prompts.
-- Community feed is still static; real social features are scoped for later phases.
+## Project Structure
 
-Track progress in GitHub issues and update this section as we close items.
+- `src/app/map/` – server/client map pages, filters, popups, sidebar resource detail, map event/post layers.
+- `src/components/map/` – Mapbox view and search UI.
+- `src/app/chat/` & `src/app/chat-v2/` – AI chat experiences (Vercel AI SDK + CopilotKit).
+- `src/app/community/` – event-first community layout, composer, post feed, discovery context, calendar view.
+- `src/lib/schema.ts` – single source of truth for database schema (auth, resources, social, events, claims).
+- `src/lib/*-queries.ts` – Drizzle query helpers for food banks, posts, events, providers.
+- `scripts/` – tooling, seeding, and debug helpers for chat/tools.
+- `context/` – roadmap, state, and decisions (keep in sync for architecture or workflow changes).
+
+## Current Status
+
+- **Phase 5 (Community Engagement):** Provider claims schema, submission API, query layer, and admin tables are complete; admin review UI is in progress. Gamification indices shipped; broader gamification integration deferred.
+- **Phase 4:** PostGIS spatial queries live; Redis caching deferred.
+- **Phase 3:** Event hosting, RSVP flows, and calendar view are shipped; sign-up sheet UI and host tools are upcoming.
+- Known issues: a handful of pre-existing typecheck warnings (admin layout headers, select component import, event card props, admin geom field).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for our branching, linting, and PR guidelines. Please respect the [Code of Conduct](CODE_OF_CONDUCT.md).
+We are preparing the project for open source. Please review [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [DEVELOPMENT.md](DEVELOPMENT.md), and [SECURITY.md](SECURITY.md) before opening a PR. Favor pnpm commands, maintain strict typing, and keep context files updated for meaningful architectural changes.
 
 ## License
 
-FoodShare builds on the Agentic Coding Starter Kit (MIT licensed). Unless stated otherwise, contributions are released under MIT. See [LICENSE](LICENSE) for details.
+Unless noted otherwise, TheFeed is released under the MIT License. See [LICENSE](LICENSE).
+

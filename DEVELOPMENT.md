@@ -1,155 +1,83 @@
 # Development Guide - TheFeed
 
-## Critical: Windows/WSL Hybrid Setup
+This guide keeps local environments consistent while we prepare the project for open source. It balances the required Windows/WSL workflow with a predictable pnpm + Next.js toolchain.
 
-This project uses a **Windows + WSL hybrid setup**:
-- **PowerShell**: Run dev server and package management
-- **WSL**: Claude Code runs here for file operations
+## Platform setup
 
----
+- **PowerShell (Windows)**: Use for package management and running the dev server. This avoids native dependency issues noted in AGENT.md.
+- **WSL/Linux**: Safe for editing files, running lint/typecheck/tests, git operations, and database commands.
 
-## Package Management Rules
+## Quick start
 
-### ⚠️ ALWAYS run from PowerShell (Windows):
-```powershell
-pnpm install
-pnpm install <package-name>
-pnpm add <package-name>
-pnpm update
-```
-
-### ❌ NEVER run from WSL/Linux terminal:
-```bash
-# DON'T DO THIS - causes permission errors!
-pnpm install
-```
-
----
-
-## If You Get 500 Errors After Reinstalling
-
-If you accidentally deleted `pnpm-lock.yaml` and get 500 errors:
-
-1. **Restore lock file** (from PowerShell or WSL):
-   ```bash
-   git checkout HEAD -- pnpm-lock.yaml
-   ```
-
-2. **Clean install** (PowerShell ONLY):
-   ```powershell
-   rm -rf node_modules, .next
-   pnpm install --frozen-lockfile
-   ```
-
-3. **Restart dev server**:
-   ```powershell
-   pnpm dev
-   ```
-
----
-
-## When to Delete Build Artifacts
-
-**Safe to delete** (forces fresh build):
-- `.next` - Next.js build cache (always safe)
-
-**Only delete if needed**:
-- `node_modules` - Only if you have dependency issues
-- `pnpm-lock.yaml` - **NEVER** unless intentionally upgrading all packages
-
-**Quick clean build**:
-```powershell
-rm -rf .next
-pnpm dev
-```
-
----
-
-## Daily Development Workflow
-
-1. **Morning**: Pull latest code (PowerShell or WSL)
-   ```bash
-   git pull
-   ```
-
-2. **Check for dependency changes**:
-   ```bash
-   git diff HEAD@{1} pnpm-lock.yaml
-   ```
-
-3. **If lock file changed**, reinstall (PowerShell):
+1. Copy `.env.example` to `.env` and fill in secrets (Supabase, Mapbox, OpenRouter, Better Auth). Keep secrets out of git.
+2. Install dependencies **from PowerShell only**:
    ```powershell
    pnpm install
    ```
-
-4. **Start dev server** (PowerShell):
+3. Run migrations and seed sample data (WSL or PowerShell):
+   ```bash
+   pnpm run db:migrate
+   pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts
+   ```
+4. Start the app (PowerShell):
    ```powershell
    pnpm dev
    ```
-
-5. **Code changes**: Claude Code (WSL) handles file edits ✅
-
-6. **Before committing**:
+5. Before committing, verify locally (WSL or PowerShell):
    ```bash
-   pnpm lint && pnpm typecheck
+   pnpm lint
+   pnpm typecheck
    ```
 
----
+## Package management rules
 
-## Troubleshooting
+- ✅ Run `pnpm install`, `pnpm add`, `pnpm update` **only from PowerShell**.
+- ❌ Do **not** run those commands from WSL/Linux. It can corrupt native dependencies or the lockfile.
+- Keep `pnpm-lock.yaml` under version control; never delete it unless intentionally upgrading all deps.
 
-### Dev server won't start
-1. Check `.env` exists and has all required vars
-2. Check database connection (POSTGRES_URL)
-3. Delete `.next` and restart
+## Database operations
 
-### TypeScript errors after pull
-```bash
-rm -rf .next
-# Restart dev server
-```
+Safe from either PowerShell or WSL:
 
-### Permission errors during install
-- You're running `pnpm install` from WSL instead of PowerShell
-- Solution: Run from PowerShell
-
-### 500 errors on all pages
-- Lock file was deleted or wrong versions installed
-- Solution: Restore lock file + clean install (see above)
-
----
-
-## Database Operations
-
-**Safe from either WSL or PowerShell**:
 ```bash
 pnpm run db:generate   # Create migration files
 pnpm run db:migrate    # Apply migrations
+pnpm run db:push       # Push schema to the database
 pnpm run db:studio     # Open Drizzle Studio
+pnpm run db:reset      # Reset dev database (use with care)
 ```
 
----
+## Day-to-day workflow
 
-## Git Operations
+1. Pull latest changes: `git pull`.
+2. Check if `pnpm-lock.yaml` changed. If yes, reinstall deps from PowerShell: `pnpm install --frozen-lockfile`.
+3. Run `pnpm dev` from PowerShell and iterate in your editor (WSL is fine for file edits).
+4. Keep branches small and focused; update context files when architecture or flows change.
+5. Run `pnpm lint && pnpm typecheck` before pushing. Add screenshots when UI is visibly different.
 
-**Safe from either WSL or PowerShell**:
-```bash
-git status
-git add .
-git commit -m "message"
-git push
-```
+## Troubleshooting
 
----
+- **Dev server fails to start**: Ensure `.env` is present, database URL is reachable, and try clearing `.next`.
+  ```bash
+  rm -rf .next
+  pnpm dev   # run from PowerShell
+  ```
+- **TypeScript errors after pulling**: Clear `.next` and restart the dev server.
+- **Permission/native errors during install**: You probably ran `pnpm install` from WSL. Delete `node_modules`, restore `pnpm-lock.yaml`, then reinstall from PowerShell.
+  ```powershell
+  rm -rf node_modules .next
+  pnpm install --frozen-lockfile
+  ```
+- **Unexpected 500s everywhere**: Restore `pnpm-lock.yaml` and reinstall from PowerShell.
 
-## Claude Code Configuration
+## Git and review hygiene
 
-Claude Code runs in WSL and can safely:
-- Read/write source files
-- Run git commands
-- Run typecheck/lint
-- Generate/apply database migrations
+- Use concise, conventional commit messages.
+- Keep PRs small and linked to issues. Include a summary of behavior and testing steps.
+- Do not commit `.env*`, secrets, or generated artifacts from `.next`.
 
-Claude Code should NOT:
-- Run `pnpm install` (permission issues)
-- Modify `pnpm-lock.yaml` directly
+## Tooling reminders
+
+- Use pnpm exclusively.
+- Prefer server components; add `"use client"` only when needed.
+- Keep types strict; avoid `any` and reuse shared schema/types.
