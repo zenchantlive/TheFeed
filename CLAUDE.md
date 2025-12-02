@@ -632,6 +632,8 @@ When working in this repo:
 
 ## Known Completed vs Pending
 
+## Known Completed vs Pending
+
 **✅ Completed:**
 - Core map discovery with Mapbox GL
 - **Admin Discovery Workflow:** Scan new areas + deduplication logic
@@ -645,24 +647,19 @@ When working in this repo:
 - Full-page chat layout fixes
 - **Data Quality Phase 1 (Critical Fixes):** Enhancement API, pagination, geocoding, indices, timeouts
 - **Data Quality Phase 2 (Data Integrity):** Confidence scoring, duplicate detection, validation, versioning
+- **Trust & UX (Phase 3 Core):**
+  - Verification badges & source attribution
+  - Data completeness indicators
+  - Map deep linking & auto-centering
+  - Sidebar resource details
+  - Community "Resources Near You" widget
 
 **🚧 In Progress:**
-- **Admin Verification UX Redesign** - ✅ COMPLETE (December 2025):
-  - **Replaced Kanban with data table**: Sortable columns (name, location, confidence, queue)
-  - **Side panel editor (40% width)**: Inline editing with AI enhancement buttons
-  - **Archive system**: Active/Archived/All radio buttons with counts
-  - **Full resource names**: NOT truncated (max-width with overflow)
-  - **Default sort**: Confidence ascending (lowest first - easiest to improve)
-  - **Pagination**: 25/50/100 per page with First/Prev/Next/Last
-  - **Row selection**: Checkboxes for bulk actions (Verify, Enhance, Reject, Flag)
-  - **Hours editor**: Day-by-day display with "Find Hours" AI button
-  - **Scan Area**: Fully functional dialog with Tavily search integration
-  - **AI Enhancement**: Uses Claude Haiku 4.5 with native web search (NO Tavily dependency)
-  - **Status**: Working, needs OPENROUTER_API_KEY in .env for enhancements
+- **Phase 4 (Performance & Scale):** PostGIS, Redis, Pagination, Batch Ops
+- **Admin Verification UX Redesign** (Refining table view)
 
 **📋 Pending / Future:**
-- **Trust & UX (Phase 3):** Verification badges, source attribution, user contribution flows
-- **Performance & Scale (Phase 4):** PostGIS queries, Redis caching, pagination enforcement
+- **Phase 3 Wrap-up:** User contribution flows (suggestions), Mobile card optimization
 - **Community Engagement (Phase 5):** Gamification, provider claims, leaderboards
 - Deeper discovery (map overlays, calendar entry points everywhere)
 - Enhanced signup sheet UI (Phase 3C)

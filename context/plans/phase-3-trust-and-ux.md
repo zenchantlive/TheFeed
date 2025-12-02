@@ -24,11 +24,11 @@
 - `/src/app/map/pageClient.tsx` - Pass verification status to components
 
 **Acceptance Criteria:**
-- [ ] Badge shows on location cards
-- [ ] Badge shows on map popup
-- [ ] Tooltip explains verification level
-- [ ] Badge color matches verification tier
-- [ ] Mobile-friendly badge sizing
+- [x] Badge shows on location cards
+- [x] Badge shows on map popup
+- [x] Tooltip explains verification level
+- [x] Badge color matches verification tier
+- [x] Mobile-friendly badge sizing
 
 ---
 
@@ -60,11 +60,11 @@ await db.insert(foodBanks).values({
 ```
 
 **Acceptance Criteria:**
-- [ ] Sources visible in accordion on resource detail
-- [ ] Source URLs clickable and open in new tab
-- [ ] Friendly names for known sources (Feeding America, 211, etc.)
-- [ ] Last updated timestamp shown
-- [ ] Discovery method indicated
+- [x] Sources visible in accordion on resource detail
+- [x] Source URLs clickable and open in new tab
+- [x] Friendly names for known sources (Feeding America, 211, etc.)
+- [x] Last updated timestamp shown
+- [x] Discovery method indicated
 
 ---
 
@@ -99,10 +99,10 @@ export function calculateResourceCompleteness(resource: {
 ```
 
 **Acceptance Criteria:**
-- [ ] Completeness bar shows on resource cards
-- [ ] Percentage accurate (0-100%)
-- [ ] Color-coded (green >80%, yellow >50%, gray <50%)
-- [ ] Optional detailed view shows missing fields
+- [x] Completeness bar shows on resource cards
+- [x] Percentage accurate (0-100%)
+- [x] Color-coded (green >80%, yellow >50%, gray <50%)
+- [x] Optional detailed view shows missing fields
 - [ ] Admin dashboard can filter by completeness
 
 ---
@@ -399,9 +399,9 @@ export function LocationCard(props: LocationCardProps) {
 
 ### Phase 3 Deliverables Checklist
 
-- [ ] **3.1** Verification badges visible on all resources
-- [ ] **3.2** Source attribution shown
-- [ ] **3.3** Completeness indicator added
+- [x] **3.1** Verification badges visible on all resources
+- [x] **3.2** Source attribution shown
+- [x] **3.3** Completeness indicator added
 - [ ] **3.4** User suggestion flow working
 - [ ] **3.5** Mobile progressive disclosure implemented
 - [ ] User testing completed

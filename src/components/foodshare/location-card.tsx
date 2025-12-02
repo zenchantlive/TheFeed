@@ -2,6 +2,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Globe, Navigation2 } from "lucide-react";
 import { StatusBadge } from "./status-badge";
+import { VerificationBadge } from "./verification-badge";
+import { SourcesSection, type Source } from "./sources-section";
+import { DataCompleteness } from "./data-completeness";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
 
@@ -13,15 +16,19 @@ type LocationCardProps = {
     city: string;
     state: string;
     zipCode: string;
-    phone: string | null;
-    website: string | null;
-    description: string | null;
-    services: string[] | null;
-    hours: Record<string, { open: string; close: string; closed?: boolean }> | null;
+    phone?: string | null;
+    website?: string | null;
+    description?: string | null;
+    services?: string[] | null;
+    hours?: Record<string, { open: string; close: string; closed?: boolean }> | null;
+    verificationStatus?: string | null;
+    lastVerified?: Date | string | null;
+    sources?: Source[];
   };
   distanceMiles?: number;
   isOpen?: boolean;
   onDirections?: () => void;
+  onImprove?: () => void;
   actionSlot?: React.ReactNode;
   className?: string;
 };
@@ -31,6 +38,7 @@ export function LocationCard({
   distanceMiles,
   isOpen = false,
   onDirections,
+  onImprove,
   actionSlot,
   className,
 }: LocationCardProps) {
@@ -38,8 +46,17 @@ export function LocationCard({
     <Card className={cn("rounded-2xl border border-border/80 shadow-md", className)}>
       <CardHeader className="space-y-3 pb-0">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-xl font-semibold">{location.name}</CardTitle>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <CardTitle className="text-xl font-semibold">{location.name}</CardTitle>
+              {location.verificationStatus && (
+                <VerificationBadge
+                  status={location.verificationStatus}
+                  lastVerified={location.lastVerified}
+                  size="sm"
+                />
+              )}
+            </div>
             <p className="flex items-center text-sm text-muted-foreground">
               <MapPin className="mr-1.5 h-4 w-4 shrink-0 text-primary" />
               <span>
@@ -57,9 +74,18 @@ export function LocationCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {location.sources && location.sources.length > 0 && (
+          <SourcesSection sources={location.sources} className="mb-4" />
+        )}
         {location.description ? (
           <p className="text-sm text-muted-foreground">{location.description}</p>
         ) : null}
+
+        <DataCompleteness
+          location={location}
+          onImprove={onImprove}
+          className="mt-4"
+        />
 
         {location.services && location.services.length > 0 ? (
           <div className="flex flex-wrap gap-2">

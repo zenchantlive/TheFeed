@@ -6,9 +6,15 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { getNormalizedResources } from "@/lib/resource-feed";
 
-export default async function MapPage() {
+export default async function MapPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
-  
+  const params = await searchParams;
+  const resourceId = (params.resource || params.foodBankId) as string | undefined;
+
   let isAdmin = false;
   if (session?.user) {
     const profile = await db.query.userProfiles.findFirst({
@@ -17,7 +23,19 @@ export default async function MapPage() {
     isAdmin = profile?.role === "admin";
   }
 
-  const normalizedBanks = await getNormalizedResources();
+  // Fetch main list (increased limit)
+  const normalizedBanks = await getNormalizedResources({ limit: 200 });
+
+  // If a specific resource is requested, ensure it's in the list
+  if (resourceId) {
+    const alreadyExists = normalizedBanks.some(b => b.id === resourceId);
+    if (!alreadyExists) {
+      const specificResource = await getNormalizedResources({ id: resourceId });
+      if (specificResource.length > 0) {
+        normalizedBanks.push(specificResource[0]);
+      }
+    }
+  }
 
   const services = Array.from(
     new Set(

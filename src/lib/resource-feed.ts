@@ -1,18 +1,21 @@
 import { db } from "./db";
 import { foodBanks } from "./schema";
 import { normalizeResource, type NormalizedResource } from "./resource-normalizer";
-import { notInArray, inArray } from "drizzle-orm";
+import { notInArray, inArray, eq } from "drizzle-orm";
 
 type FeedOptions = {
   limit?: number;
   offset?: number;
   includeStatuses?: string[];
   excludeRejected?: boolean;
+  id?: string;
 };
 
 export type NormalizedResourceWithMeta = NormalizedResource & {
   id: string;
   verificationStatus: string | null;
+  lastVerified: Date | null;
+  aiSummary: string | null;
 };
 
 /**
@@ -26,7 +29,8 @@ export async function getNormalizedResources(
     limit = 100,
     offset = 0,
     includeStatuses,
-    excludeRejected = true
+    excludeRejected = true,
+    id
   } = options;
 
   const excludedStatuses = ["rejected", "duplicate"];
@@ -35,7 +39,9 @@ export async function getNormalizedResources(
   const baseQuery = db.select().from(foodBanks);
 
   let rows;
-  if (includeStatuses && includeStatuses.length > 0) {
+  if (id) {
+    rows = await baseQuery.where(eq(foodBanks.id, id));
+  } else if (includeStatuses && includeStatuses.length > 0) {
     rows = await baseQuery
       .where(inArray(foodBanks.verificationStatus, includeStatuses))
       .limit(limit)
@@ -74,6 +80,8 @@ export async function getNormalizedResources(
       ...normalized,
       id: row.id,
       verificationStatus: row.verificationStatus ?? null,
+      lastVerified: row.adminVerifiedAt ?? row.communityVerifiedAt ?? row.updatedAt ?? null,
+      aiSummary: row.aiSummary ?? null,
     };
   });
 }

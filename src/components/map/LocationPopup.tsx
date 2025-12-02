@@ -7,6 +7,7 @@ import type { HoursType } from "@/lib/schema";
 import { X, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSavedLocation } from "@/hooks/use-saved-locations";
+import type { Source } from "@/components/foodshare/sources-section";
 
 export type LocationPopupProps = {
   isOpen: boolean;
@@ -23,6 +24,9 @@ export type LocationPopupProps = {
     description: string | null;
     services: string[] | null;
     hours: HoursType | null;
+    verificationStatus?: string;
+    lastVerified?: Date | string | null;
+    sources?: Source[];
   };
   distanceMiles?: number | null;
   currentlyOpen?: boolean;
@@ -73,9 +77,14 @@ export function LocationPopup({
       if (!res.ok) throw new Error("Failed");
       onClose();
       window.location.reload();
-    } catch {} {
+    } catch {
       alert("Failed to mark as duplicate");
     }
+  };
+
+  const handleImprove = () => {
+    // TODO: Implement edit/suggestion flow
+    alert("Thank you for your interest! Community editing features are coming soon.");
   };
 
   const directionsAction = useMemo(() => {
@@ -114,6 +123,7 @@ export function LocationPopup({
             distanceMiles={typeof distanceMiles === "number" ? distanceMiles : undefined}
             isOpen={Boolean(currentlyOpen)}
             onDirections={onDirections}
+            onImprove={handleImprove}
             actionSlot={
               <>
                 {isSignedIn && (

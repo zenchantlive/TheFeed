@@ -9,6 +9,7 @@ import { PostComposer } from "./components/composer";
 import { EventsSection } from "./components/events-section";
 import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
+import { ResourcesNearYou } from "./components/resources-near-you";
 import { ScannerNotification } from "@/components/discovery/scanner-notification";
 import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
@@ -41,9 +42,12 @@ function CommunityPageView({
     setActiveMode(activeMode === mode ? null : mode);
   };
 
-  const handleLocationChange = (city: string, state: string) => {
+  const handleLocationChange = (city: string, state: string, coords?: { lat: number; lng: number }) => {
     setUserLocation(city);
     setUserState(state);
+    if (coords) {
+      setUserCoords(coords);
+    }
   };
 
   // Detect user location on mount
@@ -60,6 +64,26 @@ function CommunityPageView({
 
         if (ipData.city) {
           setUserLocation(ipData.city);
+
+          // Try to get coordinates for this city so ResourcesNearYou works
+          try {
+            // Use Nominatim for consistency with the GPS fallback
+            const geoRes = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ipData.city)}&limit=1`,
+              { headers: { "User-Agent": "TheFeed Community App" }, signal: controller.signal }
+            );
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              if (geoData && geoData.length > 0) {
+                setUserCoords({
+                  lat: parseFloat(geoData[0].lat),
+                  lng: parseFloat(geoData[0].lon)
+                });
+              }
+            }
+          } catch (e) {
+            console.warn("Failed to geocode IP city", e);
+          }
           return;
         }
       } catch (error) {
@@ -243,7 +267,7 @@ function CommunityPageView({
             {userLocation && userLocation !== "Set your location" && (
               <ScannerNotification
                 city={userLocation}
-                state={userState}
+                state={userState || ""}
                 className="w-full"
               />
             )}
@@ -298,11 +322,14 @@ function CommunityPageView({
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
           {/* LEFT: Events + Posts */}
           <div className="flex flex-col gap-4">
+            {/* Resources Near You */}
+            <ResourcesNearYou userCoords={userCoords} />
+
             {/* Events Section */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground">
-                  {activeMode === "hungry" && "Food & resources near you"}
+                  {activeMode === "hungry" && "Food Distributions & Events"}
                   {activeMode === "full" && "Ways to help"}
                   {!activeMode && "Upcoming events"}
                 </h2>

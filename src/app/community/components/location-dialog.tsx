@@ -7,7 +7,7 @@ import { MapPin, X } from "lucide-react";
 
 interface LocationDialogProps {
   currentLocation: string | null;
-  onLocationChange: (city: string, state: string) => void;
+  onLocationChange: (city: string, state: string, coords?: { lat: number; lng: number }) => void;
 }
 
 type Suggestion = {
@@ -15,6 +15,7 @@ type Suggestion = {
   place_name: string;
   text: string; // City
   context?: { id: string; text: string; short_code?: string }[]; // Contains region (state)
+  center?: [number, number]; // [lng, lat]
 };
 
 export function LocationDialog({ currentLocation, onLocationChange }: LocationDialogProps) {
@@ -51,13 +52,13 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
     // Mapbox 'region' context usually gives full state name. We need code for Tavily.
     // For simplicity MVP, we'll try to find a 2-letter code in the context or just pass the full name
     // and let the backend/Tavily handle it (Tavily is flexible).
-    
+
     // Actually, route.ts validation expects 2 chars for state.
     // We need a mapping or extract the code. 
     // Mapbox context looks like: [{id: "region.123", text: "California", short_code: "US-CA"}]
     const region = suggestion.context?.find((c) => c.id.startsWith("region"));
-    let state = "CA"; // Default
-    
+    let state = ""; // Default
+
     if (region) {
       // Mapbox often provides short_code like "US-CA"
       const shortCode = region.short_code || "";
@@ -69,7 +70,10 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
       }
     }
 
-    onLocationChange(city, state);
+    const center = suggestion.center;
+    const coords = center ? { lat: center[1], lng: center[0] } : undefined;
+
+    onLocationChange(city, state, coords);
     setIsOpen(false);
     setQuery(suggestion.place_name);
   };
@@ -123,7 +127,7 @@ export function LocationDialog({ currentLocation, onLocationChange }: LocationDi
               autoFocus
               autoComplete="off"
             />
-            
+
             {/* Suggestions List */}
             {suggestions.length > 0 && (
               <ul className="mt-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card shadow-sm">

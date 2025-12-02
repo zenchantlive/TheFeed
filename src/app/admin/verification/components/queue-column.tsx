@@ -304,7 +304,18 @@ export function CompactQueueColumn({
 
       <div className="space-y-3">
         {resources.map((resource) => (
-          <ResourceCard key={resource.id} resource={resource} {...props} />
+          <ResourceCard
+            key={resource.id}
+            resource={resource}
+            {...props}
+            onSelect={props.onSelect ? (selected) => props.onSelect?.(resource.id, selected) : undefined}
+            onVerify={props.onVerify ? () => props.onVerify?.(resource.id) : undefined}
+            onEnhance={props.onEnhance ? () => props.onEnhance?.(resource.id) : undefined}
+            onReject={props.onReject ? () => props.onReject?.(resource.id) : undefined}
+            onFlagDuplicate={props.onFlagDuplicate ? () => props.onFlagDuplicate?.(resource.id) : undefined}
+            onClick={() => props.onResourceClick?.(resource.id)}
+            isSelected={props.selectedIds?.has(resource.id)}
+          />
         ))}
       </div>
     </div>

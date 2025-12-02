@@ -76,19 +76,20 @@ export function MapView({
 }: MapViewProps) {
   const [viewState, setViewState] = useState<ViewState | null>(null);
 
+  // Initial View State
   useEffect(() => {
     if (!viewState) {
       const initial: ViewState = userLocation
         ? {
-            latitude: userLocation.lat,
-            longitude: userLocation.lng,
-            zoom: 12,
-            bearing: 0,
-            pitch: 0,
-            padding: { top: 0, bottom: 0, left: 0, right: 0 },
-          }
+          latitude: userLocation.lat,
+          longitude: userLocation.lng,
+          zoom: 12,
+          bearing: 0,
+          pitch: 0,
+          padding: { top: 0, bottom: 0, left: 0, right: 0 },
+        }
         : foodBanks.length > 0
-        ? {
+          ? {
             latitude: foodBanks[0].latitude,
             longitude: foodBanks[0].longitude,
             zoom: 11,
@@ -96,7 +97,7 @@ export function MapView({
             pitch: 0,
             padding: { top: 0, bottom: 0, left: 0, right: 0 },
           }
-        : {
+          : {
             latitude: 37.7749,
             longitude: -122.4194,
             zoom: 10,
@@ -107,6 +108,27 @@ export function MapView({
       setViewState(initial);
     }
   }, [foodBanks, userLocation, viewState]);
+
+  // Fly to selected food bank
+  useEffect(() => {
+    if (selectedFoodBankId && foodBanks.length > 0) {
+      const selected = foodBanks.find((b) => b.id === selectedFoodBankId);
+      if (selected) {
+        setViewState((prev) => ({
+          ...(prev || {
+            zoom: 14,
+            bearing: 0,
+            pitch: 0,
+            padding: { top: 0, bottom: 0, left: 0, right: 0 },
+          }),
+          latitude: selected.latitude,
+          longitude: selected.longitude,
+          zoom: 15,
+          transitionDuration: 1000,
+        }));
+      }
+    }
+  }, [selectedFoodBankId, foodBanks]);
 
   const selected = useMemo(
     () => foodBanks.find((bank) => bank.id === selectedFoodBankId) ?? null,
@@ -180,8 +202,8 @@ export function MapView({
                   bank.verificationStatus === "unverified"
                     ? "border-yellow-400 bg-gray-400 text-white"
                     : bank.isOpen
-                    ? "border-white bg-primary"
-                    : "border-white bg-muted text-muted-foreground"
+                      ? "border-white bg-primary"
+                      : "border-white bg-muted text-muted-foreground"
                 )}
               >
                 <MapPin className="h-4 w-4 text-white" />
