@@ -3,6 +3,8 @@
  *
  * Multi-strategy duplicate detection with scoring.
  * Catches duplicates through exact address matching and geo-spatial + name similarity.
+ *
+ * Optimized for PostGIS (Phase 4.1).
  */
 
 import { db } from "@/lib/db";
@@ -27,8 +29,16 @@ export type DuplicateScore = {
   };
 };
 
+/**
+ * Detects potential duplicates for a given resource using PostGIS.
+ *
+ * Strategies:
+ * 1. Exact address match (fastest)
+ * 2. PostGIS ST_DWithin (spatial proximity) + Name Similarity
+ */
 export async function detectDuplicates(
   resource: {
+    id?: string; // Optional ID to exclude self
     name: string;
     address: string;
     city: string;
@@ -43,13 +53,15 @@ export async function detectDuplicates(
   const duplicates: DuplicateScore[] = [];
 
   // Strategy 1: Exact address match
+  // This is the most reliable signal and should be checked first.
   const exactMatches = await db
     .select()
     .from(foodBanks)
     .where(
       sql`LOWER(${foodBanks.address}) = LOWER(${resource.address})
           AND LOWER(${foodBanks.city}) = LOWER(${resource.city})
-          AND LOWER(${foodBanks.state}) = LOWER(${resource.state})`
+          AND LOWER(${foodBanks.state}) = LOWER(${resource.state})
+          ${resource.id ? sql`AND ${foodBanks.id} != ${resource.id}` : sql``}`
     );
 
   for (const match of exactMatches) {
@@ -71,30 +83,48 @@ export async function detectDuplicates(
     });
   }
 
-  // Strategy 2: Geo-spatial + name similarity
-  const latBuffer = 0.005; // ~555m
-  const lngBuffer = 0.005;
+  // Strategy 2: PostGIS Spatial Query
+  // Find resources within 200 meters using ST_DWithin.
+  // This replaces the manual bounding box + Haversine calculation.
+  const SEARCH_RADIUS_METERS = 200;
 
-  const nearbyCandidates = await db
-    .select()
-    .from(foodBanks)
-    .where(
-      sql`${foodBanks.latitude} BETWEEN ${resource.latitude - latBuffer} AND ${resource.latitude + latBuffer}
-          AND ${foodBanks.longitude} BETWEEN ${resource.longitude - lngBuffer} AND ${resource.longitude + lngBuffer}`
-    );
+  // Note: We cast to geography for accurate meter-based distance calculations
+  const nearbyCandidates = await db.execute(sql`
+    SELECT
+      id,
+      name,
+      address,
+      phone,
+      website,
+      ST_Distance(
+        geom::geography,
+        ST_SetSRID(ST_MakePoint(${resource.longitude}, ${resource.latitude}), 4326)::geography
+      ) as distance_meters
+    FROM food_banks
+    WHERE ST_DWithin(
+      geom::geography,
+      ST_SetSRID(ST_MakePoint(${resource.longitude}, ${resource.latitude}), 4326)::geography,
+      ${SEARCH_RADIUS_METERS}
+    )
+    ${resource.id ? sql`AND id != ${resource.id}` : sql``}
+    ORDER BY distance_meters ASC
+    LIMIT 10
+  `);
 
-  for (const candidate of nearbyCandidates) {
+  type NearbyCandidate = {
+    id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    website: string | null;
+    distance_meters: number;
+  };
+
+  const rows = nearbyCandidates as unknown as NearbyCandidate[];
+
+  for (const candidate of rows) {
     // Skip if already matched exactly
     if (duplicates.some(d => d.matchedResource?.id === candidate.id)) continue;
-
-    const distance = haversineDistance(
-      resource.latitude,
-      resource.longitude,
-      candidate.latitude,
-      candidate.longitude
-    );
-
-    if (distance > 200) continue; // Only consider within 200m
 
     const nameSim = calculateStringSimilarity(resource.name, candidate.name);
     const addressSim = calculateStringSimilarity(
@@ -104,19 +134,21 @@ export async function detectDuplicates(
 
     const phoneMatch = resource.phone === candidate.phone && resource.phone != null;
     const websiteMatch = resource.website === candidate.website && resource.website != null;
+    const distance = candidate.distance_meters;
 
-    // Weighted scoring
+    // Weighted scoring logic
+    // Address: 30%, Name: 20%, Distance: 10%, Phone: 20%, Website: 20%
     let score = 0;
-    score += addressSim * 30;  // 30% weight
-    score += nameSim * 20;     // 20% weight
-    score += ((200 - Math.min(distance, 200)) / 200) * 10; // 10% weight (closer = higher)
-    score += phoneMatch ? 20 : 0;    // 20% weight
-    score += websiteMatch ? 20 : 0;  // 20% weight
+    score += addressSim * 30;
+    score += nameSim * 20;
+    score += ((SEARCH_RADIUS_METERS - Math.min(distance, SEARCH_RADIUS_METERS)) / SEARCH_RADIUS_METERS) * 10;
+    score += phoneMatch ? 20 : 0;
+    score += websiteMatch ? 20 : 0;
 
     const confidence: "high" | "medium" | "low" =
       score > 80 ? "high" :
-      score > 50 ? "medium" :
-      "low";
+        score > 50 ? "medium" :
+          "low";
 
     if (score > 50) { // Only flag if medium or high confidence
       duplicates.push({
@@ -139,44 +171,34 @@ export async function detectDuplicates(
   }
 
   return duplicates.sort((a, b) => b.score - a.score);
-}
 
-function calculateStringSimilarity(str1: string, str2: string): number {
-  const s1 = str1.toLowerCase().trim();
-  const s2 = str2.toLowerCase().trim();
+  /**
+   * Calculates similarity between two strings (0.0 to 1.0).
+   * Uses Levenshtein distance normalized by string length.
+   */
+  function calculateStringSimilarity(str1: string, str2: string): number {
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
 
-  if (s1 === s2) return 1.0;
+    if (s1 === s2) return 1.0;
+    if (!s1 || !s2) return 0.0;
 
-  const distance = levenshteinDistance(s1, s2);
-  const maxLen = Math.max(s1.length, s2.length);
+    const distance = levenshteinDistance(s1, s2);
+    const maxLen = Math.max(s1.length, s2.length);
 
-  return 1 - (distance / maxLen);
-}
+    return 1 - (distance / maxLen);
+  }
 
-function normalizeAddress(address: string): string {
-  return address
-    .toLowerCase()
-    .trim()
-    .replace(/\b(street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct)\b/g, "")
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function haversineDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
-  const R = 6371e3; // Earth radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c;
+  /**
+   * Normalizes an address string for better comparison.
+   * Removes common suffixes and non-alphanumeric characters.
+   */
+  function normalizeAddress(address: string): string {
+    if (!address) return "";
+    return address
+      .toLowerCase()
+      .trim()
+      .replace(/\b(street|st|avenue|ave|boulevard|blvd|road|rd|drive|dr|lane|ln|court|ct)\b/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
 }

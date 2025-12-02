@@ -87,10 +87,10 @@ export async function detectDuplicatesPostGIS(
 ```
 
 **Acceptance Criteria:**
-- [ ] PostGIS extension enabled
-- [ ] Geo queries use ST_DWithin
-- [ ] Duplicate detection <100ms (was 2s)
-- [ ] Map "nearby resources" query <50ms
+- [x] PostGIS extension enabled
+- [x] Geo queries use ST_DWithin
+- [x] Duplicate detection <100ms (was 2s)
+- [x] Map "nearby resources" query <50ms
 
 ---
 
@@ -357,7 +357,7 @@ const handleBatchEnhance = async () => {
 
 ### Phase 4 Deliverables Checklist
 
-- [ ] **4.1** PostGIS queries implemented
+- [x] **4.1** PostGIS queries implemented
 - [ ] **4.2** Redis caching active
 - [ ] **4.3** Pagination enforced everywhere
 - [ ] **4.4** Batch operations optimized

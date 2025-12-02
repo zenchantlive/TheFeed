@@ -653,9 +653,11 @@ When working in this repo:
   - Map deep linking & auto-centering
   - Sidebar resource details
   - Community "Resources Near You" widget
+- **Phase 4.1 (PostGIS):** Native spatial queries & duplicate detection
 
 **🚧 In Progress:**
-- **Phase 4 (Performance & Scale):** PostGIS, Redis, Pagination, Batch Ops
+- **Phase 4.2 (Redis):** Caching layer
+- **Phase 4.3 (Pagination):** Enforce limits
 - **Admin Verification UX Redesign** (Refining table view)
 
 **📋 Pending / Future:**

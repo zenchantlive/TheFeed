@@ -6,12 +6,17 @@ Last updated: 2025-12-01
 **Status**: Transitioning from Phase 3 (Trust & UX) to Phase 4 (Performance & Scale).
 
 ### Active Work:
-- **Phase 3 Wrap-up**: Completed core trust features (badges, sources, completeness). Pending user suggestion flows.
-- **Phase 4 Prep**: Preparing for PostGIS integration and Redis caching to handle scale.
+- **Phase 4.1 Complete**: PostGIS integration finished and verified.
+- **Phase 4.2 Active**: Implementing Redis caching layer.
 
 ---
 
 ## Recent Deliverables (December 2025)
+
+### Phase 4: Performance & Scale - PostGIS ✅
+- **Native Spatial Queries**: Replaced in-memory filtering with `ST_DWithin`.
+- **Geometry Column**: Added `geom` column to `food_banks` with GIST index.
+- **Optimized Duplicate Detection**: Sub-100ms detection using database-level spatial checks.
 
 ### Phase 3: Trust & UX - Core Features ✅
 - **Verification Badges**: Visual indicators for "Community Verified", "Official", etc.

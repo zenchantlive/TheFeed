@@ -1,6 +1,6 @@
 {
-  "id": "c8c28c65-36c3-4f9f-bde2-94692d9a0c47",
-  "prevId": "add-performance-indices-2025-01-30",
+  "id": "15903e82-b7e4-4fc9-909e-b3905a36d747",
+  "prevId": "3fac4b0b-2af5-4845-b879-0f7fb285c854",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -975,6 +975,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "phone": {
           "name": "phone",
           "type": "text",
@@ -1036,6 +1042,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "admin_verified_at": {
+          "name": "admin_verified_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
         "confidence_score": {
           "name": "confidence_score",
           "type": "real",
@@ -1061,13 +1073,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        // This change requires a more significant schema modification than can be shown here.
-        // 1. Remove the 'potential_duplicates' column from the 'food_banks' table.
-        // 2. Create a new join table, for example 'food_bank_duplicates', with columns like:
-        //    - food_bank_id (FK to food_banks.id)
-        //    - duplicate_food_bank_id (FK to food_banks.id)
-        //    - a primary key on (food_bank_id, duplicate_food_bank_id)
-        // This would be reflected in the snapshot with a new table definition.
+        "potential_duplicates": {
+          "name": "potential_duplicates",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -1083,7 +1094,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "geom_idx": {
+          "name": "geom_idx",
+          "columns": [
+            {
+              "expression": "geom",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "food_banks_admin_verified_by_user_id_fk": {
           "name": "food_banks_admin_verified_by_user_id_fk",
@@ -1942,17 +1969,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_verifications_unique_vote": {
-          "name": "user_verifications_unique_vote",
-          "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "resource_id",
-            "field"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
