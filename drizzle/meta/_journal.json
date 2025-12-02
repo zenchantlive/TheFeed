@@ -71,6 +71,13 @@
       "when": 1764654431890,
       "tag": "0009_bent_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1764655879886,
+      "tag": "0010_black_sunspot",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,3 @@
+CREATE TYPE "public"."provider_role_enum" AS ENUM('owner', 'manager', 'staff', 'volunteer');--> statement-breakpoint
+ALTER TABLE "food_banks" ALTER COLUMN "provider_role" SET DATA TYPE "public"."provider_role_enum" USING "provider_role"::"public"."provider_role_enum";--> statement-breakpoint
+ALTER TABLE "provider_claims" ALTER COLUMN "verification_info" SET DATA TYPE jsonb USING "verification_info"::jsonb;
