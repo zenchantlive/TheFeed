@@ -4,6 +4,7 @@ import { MapPin, Phone, Globe, Navigation2 } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 import { VerificationBadge } from "./verification-badge";
 import { SourcesSection, type Source } from "./sources-section";
+import { DataCompleteness } from "./data-completeness";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ type LocationCardProps = {
   distanceMiles?: number;
   isOpen?: boolean;
   onDirections?: () => void;
+  onImprove?: () => void;
   actionSlot?: React.ReactNode;
   className?: string;
 };
@@ -36,6 +38,7 @@ export function LocationCard({
   distanceMiles,
   isOpen = false,
   onDirections,
+  onImprove,
   actionSlot,
   className,
 }: LocationCardProps) {
@@ -77,6 +80,12 @@ export function LocationCard({
         {location.description ? (
           <p className="text-sm text-muted-foreground">{location.description}</p>
         ) : null}
+
+        <DataCompleteness
+          location={location}
+          onImprove={onImprove}
+          className="mt-4"
+        />
 
         {location.services && location.services.length > 0 ? (
           <div className="flex flex-wrap gap-2">

@@ -82,6 +82,11 @@ export function LocationPopup({
     }
   };
 
+  const handleImprove = () => {
+    // TODO: Implement edit/suggestion flow
+    alert("Thank you for your interest! Community editing features are coming soon.");
+  };
+
   const directionsAction = useMemo(() => {
     if (!onDirections) {
       const destination = encodeURIComponent(
@@ -118,6 +123,7 @@ export function LocationPopup({
             distanceMiles={typeof distanceMiles === "number" ? distanceMiles : undefined}
             isOpen={Boolean(currentlyOpen)}
             onDirections={onDirections}
+            onImprove={handleImprove}
             actionSlot={
               <>
                 {isSignedIn && (
