@@ -8,11 +8,11 @@ import { isCurrentlyOpen } from "@/lib/geolocation";
 import { Badge } from "@/components/ui/badge";
 
 interface PageProps {
-    params: Promise<{ id: string }>;
+    params: { id: string };
 }
 
 export default async function ResourcePage({ params }: PageProps) {
-    const { id } = await params;
+    const { id } = params;
     const resources = await getNormalizedResources({ id });
     const resource = resources[0];
 
