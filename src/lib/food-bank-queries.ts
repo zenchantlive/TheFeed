@@ -67,7 +67,7 @@ export async function searchFoodBanks({
   // Note: For 50k+ scale, we should move services to a separate table or use GIN index on array
 
   const result = await db.execute(query);
-  const rows = ((result as any).rows || result) as (FoodBankRecord & { distance_meters: number })[];
+  const rows = ("rows" in result ? result.rows : result) as (FoodBankRecord & { distance_meters: number })[];
 
   return rows
     .map((row) => {
