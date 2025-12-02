@@ -46,7 +46,7 @@ export async function Leaderboard({ period }: { period: "week" | "month" | "allt
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                {(leader.badges as string[])?.slice(0, 3).map((badgeId: string) => (
+                                {((leader.badges as string[]) || []).slice(0, 3).map((badgeId: string) => (
                                     <span key={badgeId} className="text-lg" title={BADGES[badgeId as keyof typeof BADGES]?.name}>
                                         {BADGES[badgeId as keyof typeof BADGES]?.icon}
                                     </span>

@@ -272,6 +272,7 @@ export const helpfulMarks = pgTable("helpful_marks", {
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
     targetType: text("target_type").notNull(), // "post" | "comment"
+    targetId: text("target_id").notNull(), // ID of post or comment
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
