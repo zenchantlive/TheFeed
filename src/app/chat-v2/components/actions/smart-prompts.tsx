@@ -124,7 +124,7 @@ export function EnhancedSmartPrompts({
         className
       )}
     >
-      {prompts.map((prompt, index) => (
+      {prompts.map((prompt) => (
         <SmartPrompt
           key={prompt.text}
           text={prompt.text}

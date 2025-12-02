@@ -2,7 +2,7 @@
  * Post filtering utilities
  */
 
-import type { FeedPost, FeedFilter, kindToFilter } from "../../../types";
+import type { FeedPost, FeedFilter } from "../../../types";
 
 /**
  * Filter posts by type

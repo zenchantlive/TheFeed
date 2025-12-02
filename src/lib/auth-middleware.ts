@@ -50,3 +50,6 @@ export async function withAuth<T extends NextRequest | Request>(
 
   return handler(req, sessionData);
 }
+
+export type { validateAdminSession as ValidateAdminSession } from "./auth/admin";
+export { withAdminAuth } from "./auth/admin";

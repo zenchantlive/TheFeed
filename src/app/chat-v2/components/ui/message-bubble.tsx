@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { getChatStyles } from "../../lib/theme-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Copy, Check } from "lucide-react";
@@ -41,7 +40,6 @@ export function MessageBubble({
   className,
   ...props
 }: MessageBubbleProps) {
-  const styles = getChatStyles();
   const [copied, setCopied] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -103,6 +101,7 @@ export function MessageBubble({
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      {...props}
     >
       {/* Avatar */}
       {role === "assistant" && (

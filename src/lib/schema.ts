@@ -85,8 +85,70 @@ export const foodBanks = pgTable("food_banks", {
   description: text("description"),
   services: text("services").array(),
   hours: json("hours").$type<HoursType>(),
+  // Verification & Discovery Fields
+  verificationStatus: text("verification_status").notNull().default("unverified"), // "unverified" | "community_verified" | "official" | "rejected" | "duplicate"
+  importSource: text("import_source"), // e.g., "tavily", "manual", "seed"
+  autoDiscoveredAt: timestamp("auto_discovered_at"),
+  communityVerifiedAt: timestamp("community_verified_at"),
+  adminVerifiedBy: text("admin_verified_by").references(() => user.id),
+  // Pipeline Fields
+  confidenceScore: real("confidence_score").default(0),
+  sourceUrl: text("source_url"),
+  rawHours: text("raw_hours"),
+  aiSummary: text("ai_summary"),
+  potentialDuplicates: text("potential_duplicates").array(), // IDs of potential duplicate resources
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/**
+ * Discovery Events - Tracks search attempts to prevent duplicate runs
+ * Implements the "Circuit Breaker" logic (cooldowns on specific areas)
+ */
+export const discoveryEvents = pgTable("discovery_events", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  locationHash: text("location_hash").notNull(), // e.g. "sacramento-ca-95814" or "lat:38.5,lng:-121.4"
+  status: text("status").notNull(), // "completed", "failed", "no_results"
+  provider: text("provider").notNull().default("tavily"),
+  resourcesFound: integer("resources_found").notNull().default(0),
+  triggeredByUserId: text("triggered_by_user_id").references(() => user.id, { onDelete: "set null" }),
+  metadata: json("metadata"), // Store search query details
+  searchedAt: timestamp("searched_at").notNull().defaultNow(),
+});
+
+/**
+ * Tombstone - Blacklist for resources that should not be re-discovered
+ * (e.g., permanently closed locations that LLMs keep finding)
+ */
+export const tombstone = pgTable("tombstone", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  resourceName: text("resource_name").notNull(),
+  address: text("address").notNull(),
+  reason: text("reason").notNull(), // "closed", "invalid", "duplicate"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * User Verifications - Tracks individual user votes on resources
+ * Used to promote "unverified" -> "community_verified"
+ */
+export const userVerifications = pgTable("user_verifications", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  resourceId: text("resource_id")
+    .notNull()
+    .references(() => foodBanks.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  vote: text("vote").notNull(), // "up", "down", "flag"
+  field: text("field"), // Optional: specific field verified (e.g., "hours", "location")
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const savedLocations = pgTable("saved_locations", {
@@ -361,6 +423,9 @@ export const eventAttendance = pgTable("event_attendance", {
 
 // Type exports - inferred from table schemas
 export type FoodBank = typeof foodBanks.$inferSelect;
+export type DiscoveryEvent = typeof discoveryEvents.$inferSelect;
+export type Tombstone = typeof tombstone.$inferSelect;
+export type UserVerification = typeof userVerifications.$inferSelect;
 export type SavedLocation = typeof savedLocations.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type UserProfile = typeof userProfiles.$inferSelect;
@@ -403,6 +468,9 @@ export const userRelations = relations(user, ({ one, many }) => ({
   eventRsvps: many(eventRsvps), // Events this user has RSVPed to
   signUpClaims: many(signUpClaims), // Sign-up slots this user has claimed
   eventAttendance: many(eventAttendance), // Events this user has attended
+  // Verification relations
+  verifications: many(userVerifications),
+  triggeredDiscoveries: many(discoveryEvents),
 }));
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
@@ -546,3 +614,77 @@ export const eventAttendanceRelations = relations(eventAttendance, ({ one }) => 
     references: [user.id],
   }),
 }));
+
+export const userVerificationsRelations = relations(userVerifications, ({ one }) => ({
+  resource: one(foodBanks, {
+    fields: [userVerifications.resourceId],
+    references: [foodBanks.id],
+  }),
+  user: one(user, {
+    fields: [userVerifications.userId],
+    references: [user.id],
+  }),
+}));
+
+export const discoveryEventsRelations = relations(discoveryEvents, ({ one }) => ({
+  triggeredBy: one(user, {
+    fields: [discoveryEvents.triggeredByUserId],
+    references: [user.id],
+  }),
+}));
+
+/**
+ * Resource Versions - Complete change history for every resource
+ * Enables rollback and audit trail functionality
+ */
+export const resourceVersions = pgTable("resource_versions", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  resourceId: text("resource_id")
+    .notNull()
+    .references(() => foodBanks.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(), // 1, 2, 3, etc.
+
+  // Snapshot of full resource at this version
+  snapshot: json("snapshot").notNull().$type<Record<string, any>>(),
+
+  // What changed
+  changedFields: json("changed_fields").$type<string[]>(),
+
+  // Who changed it
+  changedBy: text("changed_by").notNull(), // User ID or "system"
+  changeReason: text("change_reason"), // "ai_enhancement" | "admin_edit" | "provider_claim"
+
+  // Source attribution
+  sources: json("sources").$type<string[]>(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Admin Audit Log - Tracks all admin actions for security and compliance
+ */
+export const adminAuditLog = pgTable("admin_audit_log", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => randomUUID()),
+  adminId: text("admin_id")
+    .notNull()
+    .references(() => user.id),
+  action: text("action").notNull(), // "approve" | "reject" | "merge" | "edit" | "delete"
+  resourceId: text("resource_id").references(() => foodBanks.id, { onDelete: "set null" }),
+
+  // Batch operations
+  affectedIds: json("affected_ids").$type<string[]>(),
+
+  // Change details
+  changes: json("changes").$type<Record<string, { old: any; new: any }>>(),
+  reason: text("reason"),
+
+  // IP for security audit
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

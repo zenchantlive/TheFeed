@@ -9,6 +9,7 @@ import { PostComposer } from "./components/composer";
 import { EventsSection } from "./components/events-section";
 import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
+import { ScannerNotification } from "@/components/discovery/scanner-notification";
 import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
 
@@ -29,20 +30,20 @@ function CommunityPageView({
   posts,
   initialEvents,
   hotItems,
-  guideMoments,
-  vibeStats,
   user,
 }: CommunityPageClientProps) {
   const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
   const [userLocation, setUserLocation] = useState<string | null>(null);
+  const [userState, setUserState] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleModeToggle = (mode: "hungry" | "full") => {
     setActiveMode(activeMode === mode ? null : mode);
   };
 
-  const handleLocationChange = (newLocation: string) => {
-    setUserLocation(newLocation);
+  const handleLocationChange = (city: string, state: string) => {
+    setUserLocation(city);
+    setUserState(state);
   };
 
   // Detect user location on mount
@@ -237,7 +238,16 @@ function CommunityPageView({
           </div>
 
           {/* Right: Urgency Card - Show on mobile too */}
-          <div>
+          <div className="space-y-4">
+            {/* Discovery Scanner - Only show if we have a valid location */}
+            {userLocation && userLocation !== "Set your location" && (
+              <ScannerNotification
+                city={userLocation}
+                state={userState}
+                className="w-full"
+              />
+            )}
+
             {activeMode === "hungry" && (
               <div className="rounded-xl border border-hungry-end/30 bg-gradient-to-br from-hungry-start/5 to-hungry-end/5 p-4">
                 <h3 className="font-semibold text-hungry-end">Need help now?</h3>

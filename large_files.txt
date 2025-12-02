@@ -1,0 +1,24 @@
+
+Name                        Length FullName
+----                        ------ --------
+page-client.tsx              53300 C:\Users\Zenchant\thefeed\foodshare\src\app\admin\verification\page-client.tsx
+schema.ts                    24990 C:\Users\Zenchant\thefeed\foodshare\src\lib\schema.ts
+pageClient.tsx               23948 C:\Users\Zenchant\thefeed\foodshare\src\app\map\pageClient.tsx
+event-queries.ts             22184 C:\Users\Zenchant\thefeed\foodshare\src\lib\event-queries.ts
+event-detail-content.tsx     21718 C:\Users\Zenchant\thefeed\foodshare\src\components\events\event-detail-content.tsx
+route.ts                     16886 C:\Users\Zenchant\thefeed\foodshare\src\app\api\copilotkit\route.ts
+page-client.tsx              16826 C:\Users\Zenchant\thefeed\foodshare\src\app\community\page-client.tsx
+enhanced-chat-v2.tsx         16585 C:\Users\Zenchant\thefeed\foodshare\src\app\chat-v2\components\enhanced-chat-v2.tsx
+tavily-search.ts             15988 C:\Users\Zenchant\thefeed\foodshare\src\lib\discovery\tavily-search.ts
+ai-tools.ts                  12171 C:\Users\Zenchant\thefeed\foodshare\src\lib\ai-tools.ts
+input-area.tsx               11697 C:\Users\Zenchant\thefeed\foodshare\src\app\chat-v2\components\ui\input-area.tsx
+route.ts                     10900 C:\Users\Zenchant\thefeed\foodshare\src\app\api\discovery\trigger\route.ts
+page.tsx                     10880 C:\Users\Zenchant\thefeed\foodshare\src\app\profile\page.tsx
+post-preview-card.tsx        10800 C:\Users\Zenchant\thefeed\foodshare\src\app\chat-v2\components\cards\post-preview-ca…
+verification-search-bar.tsx  10436 C:\Users\Zenchant\thefeed\foodshare\src\app\admin\verification\components\verificati…
+event-card.tsx               10219 C:\Users\Zenchant\thefeed\foodshare\src\app\chat-v2\components\cards\event-card.tsx
+scanner-notification.tsx     10142 C:\Users\Zenchant\thefeed\foodshare\src\components\discovery\scanner-notification.tsx
+page.tsx                      9900 C:\Users\Zenchant\thefeed\foodshare\src\app\community\events\calendar\page.tsx
+resource-card.tsx             9681 C:\Users\Zenchant\thefeed\foodshare\src\app\chat-v2\components\cards\resource-card.t…
+starter-prompt-modal.tsx      8910 C:\Users\Zenchant\thefeed\foodshare\src\components\starter-prompt-modal.tsx
+

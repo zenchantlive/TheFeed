@@ -6,7 +6,7 @@ import { getChatStyles } from "../../lib/theme-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Users, Eye, ExternalLink, Loader2, Navigation } from "lucide-react";
+import { Calendar, MapPin, Users, Loader2, Navigation } from "lucide-react";
 import { format, isToday, isTomorrow } from "date-fns";
 
 interface EventCardProps {
@@ -283,14 +283,12 @@ const formatDate = (dateString: string) => {
 
 interface EventPreviewCardProps {
   event: EventCardProps["event"];
-  userLocation?: EventCardProps["userLocation"];
   className?: string;
   onClick?: () => void;
 }
 
 export function EventPreviewCard({ 
   event, 
-  userLocation,
   className,
   onClick 
 }: EventPreviewCardProps) {

@@ -52,9 +52,7 @@ export function getChatTheme(): ChatTheme {
 /**
  * Generate CSS classes for theme-aware styling
  */
-export function getChatStyles(theme: 'light' | 'dark' = 'light') {
-  const isDark = theme === 'dark';
-  
+export function getChatStyles() {
   return {
     // Container styles
     container: `

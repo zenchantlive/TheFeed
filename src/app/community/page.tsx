@@ -46,18 +46,12 @@ function formatUntil(expiresAt: Date): string {
     return `Available for ${minutes} more min`;
   }
   if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `Available until ${expiresAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+
   }
   return `Available until ${expiresAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
-const PROMPTS = [
-  "Need halal-friendly groceries tonight",
-  "Sharing leftover taco fillings for two",
-  "Looking for a produce box for my neighbor",
-  "Anyone know where to get baby formula today?",
-];
+
 
 const HOT_ITEMS: HotItem[] = [
   {

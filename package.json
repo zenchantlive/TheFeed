@@ -14,6 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "db:dev": "drizzle-kit push",
     "db:reset": "drizzle-kit drop && drizzle-kit push",
+    "nuke:discovery": "tsx --env-file=.env scripts/nuke-test-data.ts",
     "sync-template": "node create-agentic-app/scripts/sync-templates.js"
   },
   "dependencies": {
@@ -38,6 +39,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.7",
+    "fastest-levenshtein": "^1.0.16",
+    "libphonenumber-js": "^1.12.30",
     "lucide-react": "^0.538.0",
     "mapbox-gl": "^3.1.0",
     "next": "15.4.6",

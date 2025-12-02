@@ -14,7 +14,6 @@ type ActionTileProps = Action & {
  * Subtle rotation, warm color, prominent CTA.
  */
 export function ActionTile({
-  id,
   title,
   description,
   icon,

@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { SavedLocationsList } from "@/components/profile/SavedLocationsList";
+import { DeveloperInfo } from "@/components/profile/developer-info";
 import Link from "next/link";
 import {
   BookmarkPlus,
@@ -270,6 +271,8 @@ export default async function ProfilePage() {
           </Card>
         )}
       </section>
+
+      {user && <DeveloperInfo userId={user.id} />}
     </div>
   );
 }

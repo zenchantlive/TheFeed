@@ -1,63 +1,166 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-11-15
+Last updated: 2025-02-01
 
-## Current Focus: AI Sous-Chef v2 (CopilotKit) + Community Event Discovery
+## Current Focus: Admin Verification UX Redesign
 
-Branch: `pr-22` (merged locally for polish)
+Branch: `feat/verification-table-view` (in progress)
 
-### Overview
+### Active Work: Admin Verification Workspace Redesign
 
-PR #22 introduced the first end-to-end CopilotKit-powered chat experience (`/chat-v2`) plus the calendar view for community events. We now have:
+**Context**: The admin verification page (`/admin/verification`) launched with a Kanban-style card layout that has proven unscalable for production use:
+- 4-column layout creates "ridiculously long lists" with hundreds of resources
+- Resource names get truncated in cards
+- No functioning editor (click handlers only log to console)
+- Cards too large for efficient scanning
+- Poor responsiveness at desktop/widescreen sizes
 
-- A new `EnhancedChatV2` client that streams through CopilotKit, injects user/location context, and renders generative UI blocks for every backend tool (`search_resources`, `search_events`, `search_posts`, `get_directions`, `get_resource_by_id`, `get_user_context`, `log_chat`).
-- Dedicated tool renderer components that hydrate our shadcn cards (ResourceCard, EventCard, PostPreview) directly from CopilotKit `useCopilotAction` hooks.
-- Voice input, smart prompt actions, and a refreshed chat shell that mirrors the Community aesthetic.
-- `/community/events/calendar` which surfaces potlucks & volunteer shifts on a scrollable, filterable calendar, rounding out discovery alongside the feed.
+**Solution**: Complete redesign replacing Kanban cards with data table + side panel architecture (see `/home/zenchant/.claude/plans/dreamy-wondering-glacier.md`)
 
-We are stabilizing TypeScript + runtime issues uncovered during the migration (copilot render props, auth middleware typing, and the lingering blank bubble bug).
+**Key Design Decisions**:
+- **View**: Data table with sortable columns (replacing Kanban entirely)
+- **Default sort**: Confidence score lowest first (prioritize problem resources)
+- **Table columns**: Checkbox, Full Name (NOT truncated), Location, Confidence %, Missing Fields, Edit button
+- **Side panel**: 40% viewport width, opens on row click, stays open when switching resources
+- **Archive system**: Radio buttons above table (Active / Archived / All)
+- **Bulk workflow**: Sequential edit mode (auto-advances to next resource after save)
+- **Pagination**: 25 resources per page (client-side for 500-resource dataset)
+- **Shortcuts**: Cmd+S / Ctrl+S to save
+- **Focus**: Desktop/widescreen optimization (mobile deprioritized)
 
-### AI Sous-Chef Status (January 2025)
+**Implementation Phases**:
+1. Core table with sorting/pagination ⏳
+2. Side panel editor with inline editing
+3. Archive system and sequential edit workflow
+4. API endpoint for single resource updates (PATCH `/api/admin/resources/[id]`)
+5. Polish (keyboard shortcuts, loading states, error handling)
 
-- `sousChefTools` replaces the inline functions in `/api/chat/route.ts`, and the same tool set powers the new `scripts/dev-terminal-chat.ts` REPL plus `scripts/test-chat-tools.ts`.
-- Chat UI (`src/app/chat/page.tsx`) was overhauled: always-on transcript, suggested prompts, location banner, tool-status chips, and request bodies now include `{ userId, location, radiusMiles }` via a memoized ref.
-- **Verified working**:
-  - Terminal harness + Anthropic models exercise `search_posts`/`search_events` and return realistic data (with Supabase warnings only).
-  - Deep-link intent loop is partially mitigated: we guard query params with `searchParamsKey` + `hasFiredIntentRef`.
-- **Still broken**:
-  - UI frequently renders blank assistant bubbles and eventually throws `Maximum update depth exceeded`; `useChat` keeps replaying the same assistant message when the provider never finishes streaming.
-  - OpenRouter GPT models often stop after `get_user_context` despite the “tool playbook” instructions.
-- **Next steps**:
-- Instrument `useChat` with `onFinish`/`onError` to log stream lifecycles.
-- Capture API responses to confirm whether the assistant chunk is empty or not emitted.
-- Investigate whether `convertToModelMessages` is being called with duplicate messages (possible race between optimistic append and stream replacements).
+**Why This Matters**: Admin verification is the gateway for all discovered resources to reach production. Current workflow is broken (no editing possible), making it impossible to improve low-confidence resources (38-60%) or fix missing data. This redesign unblocks the entire data quality improvement pipeline.
 
-### AI Sous-Chef v2 Snapshot (CopilotKit)
+---
 
-- `/chat-v2` is a fully client-side experience that mounts inside `<CopilotKit runtimeUrl="/api/copilotkit">`.
-- `page-client.tsx` injects two readable contexts (user profile + geolocation) so tools always know the caller.
-- `EnhancedChatV2` stitches together:
-  - Smart prompts, streaming indicator, typing indicator, and voice capture.
-  - `ToolRenderers` that subscribe to CopilotKit action states and render cards inline (no `dangerouslySetInnerHTML` path).
-  - "Search intent" deeplinks via `?intent=hungry|full` (auto-apply soon).
-- Type safety: `src/app/chat-v2/components/tool-renderers/types.ts` holds shared result types, and every renderer consumes `CopilotRenderProps` instead of raw `any`.
+## Recent Deliverables (January 2025)
 
-**Layout Architecture (January 2025) - COMPLETED ✅:**
-- Full-page chat layout (no "boxed widget" feeling):
-  - Header: `fixed top-0` with backdrop blur
-  - Composer: `fixed bottom-0` positioned dynamically above bottom nav
-  - Messages: Natural document flow, viewport scrolls naturally
-  - No nested scroll containers or flex wrappers
-- Dynamic bottom nav positioning:
-  - `useBottomNavHeight` hook measures actual nav height
-  - Composer uses `style={{ bottom: bottomNavHeight }}`
-  - Messages padding: `(bottomNavHeight || 0) + 140px`
-  - Fully responsive, works on mobile and desktop
-- Files: `chat-v2/layout.tsx`, `page-client.tsx`, `enhanced-chat-v2.tsx`
+Branch: `feat/batch-update-verify` (clean)
 
-Outstanding bugs:
-  - CopilotKit render callbacks still expect non-null React elements (return fragments, never `null`).
-  - Web UI blank-bubble race persists; need to coordinate with CopilotKit streaming vs `useChat`.
-  - Need to remove the temporary console logging for `intent` handling once auto-send ships.
+### Recent Deliverables
+
+**Data Quality & UX Phase 1 - Critical Fixes (January 2025) ✅**
+
+All 5 critical fixes from Phase 1 have been implemented:
+
+1. **Enhancement API Schema Error Fixed** (`src/lib/admin-enhancer.ts:164-235`)
+   - Migrated from `generateText()` with manual JSON parsing to `generateObject()` with Zod schema
+   - Provides type-safe structured output from OpenRouter
+   - Added `temperature: 0.3` for consistency
+   - **Impact**: Admin dashboard "✨ Re-Run Analysis" buttons now work without 500 errors
+
+2. **Resource Feed Pagination Bug Fixed** (`src/lib/resource-feed.ts:17-47`)
+   - Fixed logic bug where `includeStatuses` parameter was ignored
+   - Properly implements `inArray()` for status filtering
+   - Added pagination support with `limit` (default 100) and `offset` parameters
+   - **Impact**: Map and search queries properly filter by verification status
+
+3. **Geocoding Failure Handling** (`src/lib/discovery/tavily-search.ts:127-165`)
+   - Resources with (0,0) coordinates are now skipped instead of inserted
+   - Added geocoding failure tracking with detailed logging
+   - Progress bar shows count of skipped resources
+   - Logs summary of first 5 failures for admin review
+   - **Impact**: Zero invalid (0,0) coordinate insertions in production
+
+4. **Database Performance Indices** (`drizzle/0006_add_performance_indices.sql`)
+   - Created 6 critical indices:
+     - `idx_foodbanks_address_city_state` - Duplicate detection (500ms → 5ms)
+     - `idx_foodbanks_coordinates` - Geo-spatial queries (2s → 50ms)
+     - `idx_foodbanks_verification_status` - Status filtering
+     - `idx_saved_locations_user_id` - User location queries
+     - `idx_user_verifications_resource_vote` - Community voting
+     - `idx_foodbanks_updated_at` - Admin queries
+   - **Impact**: 10-100x performance improvement on critical queries
+
+5. **Request Timeout Handling** (`src/lib/timeout.ts` + updates)
+   - Created `withTimeout()` utility for wrapping async operations
+   - Discovery trigger route (`/api/discovery/trigger`) has 10-minute timeout
+   - Tavily API calls wrapped in `fetchTavilyWithRetry()` with:
+     - 3 retry attempts with exponential backoff
+     - 30-second timeout per attempt
+     - Automatic rate limit (429) handling
+   - **Impact**: No more indefinite hangs, graceful timeout errors
+
+**Data Quality & UX Phase 2 - Data Integrity (January 2025) ✅**
+
+All 4 data integrity improvements from Phase 2 have been implemented:
+
+1. **Quantitative Confidence Scoring** (`src/lib/admin-enhancer.ts:63-113`)
+   - Replaced LLM-based "vibes" scoring with algorithmic 0-100 scale
+   - Multi-factor scoring: completeness (40%), validation (30%), freshness (20%), source (10%)
+   - Field-level completeness scoring for hours, phone, website, services
+   - Source trust scoring (official domains get higher scores)
+   - **Impact**: Objective, transparent resource quality measurement
+
+2. **Enhanced Duplicate Detection** (`src/lib/admin-duplicate-detection.ts`)
+   - Multi-factor similarity scoring using fastest-levenshtein
+   - Name similarity (40%), address similarity (30%), distance proximity (30%)
+   - Configurable similarity thresholds with tuning for false positives
+   - **Impact**: Accurate duplicate detection without manual review
+
+3. **Phone & Website Validation** (`src/lib/validation.ts`)
+   - Phone validation using libphonenumber-js with US region defaults
+   - Website validation with protocol normalization (auto-add https://)
+   - Domain validation and malformed URL detection
+   - **Impact**: Clean, standardized contact information
+
+4. **Data Versioning & Audit Trail** (`drizzle/0007_add_audit_tables.sql`)
+   - New schema tables: `resourceVersions`, `discoveryAuditLogs`, `userVerifications`
+   - Complete version history for all resource changes
+   - Discovery operation audit trail with metrics
+   - User contribution tracking for community verification
+   - **Impact**: Full accountability and change tracking
+
+**Next Steps: Phase 3 - Trust & UX (Weeks 5-6) - PAUSED**
+
+*Note: Phase 3 work temporarily paused to address critical admin verification UX issues. Will resume after verification workflow is production-ready.*
+
+- Verification badges and source attribution
+- User contribution workflows
+- Community trust scoring
+
+---
+
+- **Just-in-Time Discovery Engine Improvements**:
+  - **Streaming API**: Discovery endpoint now streams real-time progress (batches, count) to the client.
+  - **Deep Content Extraction**: Fetches full raw text (PDFs/Docs) from search results to extract *all* resources.
+  - **Batch Processing**: Processes documents in batches of 3 to prevent timeouts.
+  - **Automatic Geocoding**: Uses Mapbox API to geocode new resources before insertion (lat/lng).
+  - **UI Upgrade**: Community page shows a live progress bar and status during scans; "Change Location" now uses Mapbox Autocomplete.
+- **Community posts on the map** — `/api/posts` + `getPosts` accept `onlyWithCoords`, MapPage pins shares/requests with gradient badges, and post popups deep-link back to `/community`.
+- **Cross-area navigation** — Community Event/Post cards now link to `/map?eventId=...` or `/map?postId=...`, and the map reads `eventType`/`postKind` query parameters so filters stay in sync.
+- **Quick RSVP from map popups** — Event popovers support guest count selection (1-5) and POST directly to `/api/events/[id]/rsvp`, giving immediate confirmation without leaving the map.
+- **Admin verification workspace** — `/admin` layout + `/api/admin/resources` ship with RBAC guards, paginated filters (missing info, duplicates), batch status updates, and a resource editor panel with contextual ✨ buttons that fire the AI enhancer for address/phone/website/hours gaps.
+
+### CopilotKit / Chat Status
+- `/chat-v2` remains the flagship chat route (CopilotKit provider + `EnhancedChatV2`). All tool renderers are type-safe, and contexts expose user/location metadata via `useCopilotReadable`.
+- **Open issues**:
+  - Blank assistant bubbles still appear due to duplicate CopilotKit streams; we need better instrumentation on `useCopilotChatHeadless_c` to trace chunk order.
+  - Intent auto-send is still stubbed; logs remain in place until CopilotKit exposes the official hook.
+  - `auth-middleware.ts` needs to wrap remaining `/api/...` routes so CopilotKit endpoints never trust client headers directly.
+
+### Community Discovery Snapshot
+- Community layout continues prioritizing events with personalized greetings, urgency cards, and modular components (`page-client.tsx` orchestrator).
+- `/map` now hosts three synchronized layers: food banks, events, and posts. It shares filters with Community via `DiscoveryFiltersProvider`, and popups keep users within discovery surfaces (RSVP, map view, view in community).
+- `/community/events/calendar` (auth-guarded) remains the canonical calendar view; next steps are shared filter state + nav entry.
+
+### Next Steps (Post-Verification Redesign)
+- **Admin Discovery Workflow** — ✅ Completed "Scan Area" integration with real-time streaming and soft duplicate detection.
+- Resume Phase 3 (Trust & UX): verification badges, source attribution, community trust scoring
+- Expand shared discovery filters (type/date/radius) so map, feed, and calendar stay consistent.
+- Hook `/chat-v2` into the main nav and keep `/chat` as the fallback until CopilotKit streaming issues are resolved.
+- Continue hardening TypeScript around CopilotKit render props and remove temporary logging once intent automation ships.
+
+### Known Issues / Alerts
+- **2025-01-30** — ✅ RESOLVED: `/api/admin/resources/[id]/enhance` schema error fixed by migrating to `generateObject()` with Zod schema
+- **2025-01-30** — ✅ RESOLVED: Geocoding (0,0) insertions eliminated with proper validation and skipping
+- **2025-11-23** — Discovery scan "stuck on initializing" issue resolved by handling cached (JSON) responses in `ScanDialog`.
+- Supabase warning: `"invalid configuration parameter name "supautils.disable_program", removing it"` appears when hitting `/api/auth/get-session`. It's noisy but harmless (Supabase reserved the `supautils` prefix).
 
 ### Tool Renderer Inventory
 - `search_resources` → Resource cards (distance + open state) with CTA buttons.

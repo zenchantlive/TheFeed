@@ -70,11 +70,14 @@ export function ChatHeader({
   };
 
   return (
-    <div className={cn(
-      "px-4 py-3 border-b border-border/50 bg-card/50 backdrop-blur-sm",
-      styles.container,
-      className
-    )}>
+    <div
+      className={cn(
+        "px-4 py-3 border-b border-border/50 bg-card/50 backdrop-blur-sm",
+        styles.container,
+        className
+      )}
+      {...props}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-semibold text-foreground truncate">

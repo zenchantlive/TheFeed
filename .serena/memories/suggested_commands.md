@@ -1,0 +1,11 @@
+# Suggested commands
+- Install deps: `pnpm install`
+- Dev server: `pnpm dev`
+- Lint: `pnpm lint`
+- Type-check: `pnpm typecheck`
+- Build: `pnpm build` (runs migrations first)
+- Start production server: `pnpm start`
+- Drizzle: `pnpm run db:generate`, `pnpm run db:migrate`, `pnpm run db:push`, `pnpm run db:studio`, `pnpm run db:reset`
+- Seed sample data: `pnpm exec tsx scripts/seed-food-banks.ts`
+- Misc: `pnpm nuke:discovery` to clear discovery test data; `pnpm sync-template` for template sync.
+- Windows shell basics: list files `Get-ChildItem` (alias `ls`), change directory `cd <path>`, search `rg '<pattern>'`, view file head `Get-Content <file> | Select-Object -First N`.

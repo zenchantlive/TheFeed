@@ -6,16 +6,13 @@ import {
   getFoodBankById,
 } from "@/lib/food-bank-queries";
 import {
-  type FoodBank,
   type Post,
   type Event,
+  userProfiles,
+  savedLocations,
   foodBanks,
   posts,
   events,
-  userProfiles,
-  savedLocations,
-  type SavedLocation,
-  type UserProfile,
 } from "@/lib/schema";
 import { db } from "@/lib/db";
 
@@ -399,7 +396,6 @@ export const logChatTool = tool({
   }),
   execute: async ({ userId, summary, usedTools }) => {
     // For now, no-op or simple console log. Can be wired to chat_messages or observability later.
-    // eslint-disable-next-line no-console
     console.log("[AI LOG]", { userId: userId ?? null, summary, usedTools });
     return { ok: true };
   },

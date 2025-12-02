@@ -17,6 +17,9 @@ Last updated: 2025-11-07
 - **2025-11-15** — **Better Auth middleware helper**
   - Rationale: CopilotKit + new calendar routes call APIs frequently; we need a single helper to validate sessions via Better Auth headers to avoid duplicating logic and accidentally trusting client-provided IDs.
   - Implementation: `src/lib/auth-middleware.ts` exports `validateSession` and `withAuth`, returning `{ userId, session }` when the Better Auth session is present.
+- **2025-11-19** — **Admin RBAC + in-app verification dashboard**
+  - Rationale: Unverified discovery imports need human review before surfacing on `/map`. Building `/admin` with the same Next.js stack keeps auth/streaming consistent and lets us reuse shared context.
+  - Implementation: `src/lib/auth/admin.ts` adds `validateAdminSession`, `withAdminAuth`, and `/api/admin/resources` powers the queue with missing-field filters (hours/phone/website/description/address/duplicates).
 
 ## Community Features Architecture
 
@@ -39,6 +42,10 @@ Last updated: 2025-11-07
 - **2025-11-07** — **Schema-ready for photos, implement later**
   - Rationale: Not critical for MVP; adds complexity (uploads, storage, moderation); can add via Supabase Storage when needed.
   - Prepared: `photoUrl` column exists but unused initially.
+
+- **2025-11-16** — **Expose posts to map via `onlyWithCoords` filter**
+  - Rationale: Map pins should only represent posts that opted-in with approximate coordinates; reduces payload size and prevents private posts without location from leaking into discovery.
+  - Implementation: `src/app/api/posts/route.ts` and `src/lib/post-queries.ts` accept `onlyWithCoords`, filtering via `isNotNull(posts.locationCoords)`.
 
 ## UI/UX Strategy
 
@@ -72,6 +79,14 @@ Last updated: 2025-11-07
 - **2025-11-15** — **Calendar view for community events**
   - Rationale: Events are the hero of the Community experience; a `/community/events/calendar` view lets people see potlucks + volunteer shifts at a glance with filters.
   - Implementation: Server component fetches via `getEventsWithinRange`, enforces auth, and provides month/type query params while reusing existing Event detail routes.
+
+- **2025-11-16** — **Quick RSVP directly from map popups**
+  - Rationale: Reduce friction by letting users commit to events without leaving the map; keeps discovery momentum high, especially on mobile.
+  - Implementation: `MapPageClient` event popups now expose guest count selector (1-5) and call `/api/events/[id]/rsvp`. Success/error states render inline while preserving "Full details" link.
+
+- **2025-11-16** — **URL-driven cross-area navigation**
+  - Rationale: Community posts/events should deep-link into the same context on the map (pins selected + filters applied) to unify discovery surfaces.
+  - Implementation: Community cards link to `/map?eventId=...` or `/map?postId=...`; MapPage reads `foodBankId`, `eventId`, `postId`, `eventType`, `postKind` search params and seeds local filter state.
 
 ## Product Strategy
 
@@ -117,6 +132,20 @@ Last updated: 2025-11-07
 - **2025-11-07** — **Start with polling, migrate to Supabase Realtime in Phase 6**
   - Rationale: Polling simpler to implement; validates UX first; Supabase Realtime adds complexity (WebSocket management); can add when proven valuable.
   - Polling: Every 30 seconds for new posts.
+
+## AI & Automation
+
+- **2025-11-19** — **LLM response schema flattened under `updates`**
+  - Rationale: OpenRouter (Azure) enforces JSON schema where every property must appear in `required`. Nesting optional fields (phone/website/hours) under an `updates` object avoids constant 400s while still letting us parse structured responses.
+  - Implementation: `admin-enhancer.ts` now expects `{ summary, confidence, updates: { … } }` and converts `updates.hours` strings into `HoursType`. See current warning in logs when provider rejects invalid schema.
+
+- **2025-11-23** — **Relaxed State Validation for Discovery**
+  - Rationale: Geocoding/Autocomplete often returns full state names ("California") instead of codes ("CA"). Enforcing strict 2-letter validation caused UX errors.
+  - Implementation: `triggerSchema` now uses `min(2)` for state.
+
+- **2025-11-23** — **Insert "Soft Duplicates" instead of blocking**
+  - Rationale: Duplicate detection isn't perfect. Admins need to see potential duplicates to manually verify or merge them, rather than them being silently discarded.
+  - Implementation: `duplicate-guard.ts` distinguishes "hard" (exact address) vs "soft" (fuzzy) duplicates. `trigger` route inserts soft matches with `potentialDuplicate` flag.
 
 ## Deferred Decisions
 

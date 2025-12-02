@@ -106,6 +106,14 @@ export function PostCard({ post }: PostCardProps) {
           <MessageCircle className="mr-1.5 h-4 w-4" />
           Add a comment
         </Button>
+        {post.locationCoords && (
+          <Button asChild variant="ghost" size="sm" className="rounded-full">
+            <Link href={`/map?postId=${post.id}`}>
+              <MapPin className="mr-1.5 h-4 w-4" />
+              View on map
+            </Link>
+          </Button>
+        )}
         <Button asChild variant="ghost" size="sm" className="rounded-full">
           <Link href={askSousChefHref}>Ask sous-chef</Link>
         </Button>

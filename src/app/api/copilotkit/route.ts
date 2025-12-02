@@ -4,8 +4,6 @@ import {
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
-import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import {
   searchFoodBanks,
   getFoodBankById,
@@ -35,27 +33,8 @@ const serviceAdapter = new OpenAIAdapter({
 });
 
 export async function POST(req: NextRequest) {
-  // Extract context from headers for use in tool handlers
-  const userIdHeader = req.headers.get("x-user-id");
-  const locationHeader = req.headers.get("x-user-location");
-  const radiusHeader = req.headers.get("x-radius-miles");
-
-  // Parse location if provided
-  let location: { lat: number; lng: number; label?: string } | null = null;
-  if (locationHeader) {
-    try {
-      location = JSON.parse(locationHeader);
-    } catch {
-      location = null;
-    }
-  }
-
   // Get session user if no explicit userId header
-  const session = await auth.api.getSession({ headers: req.headers });
-  const effectiveUserId = userIdHeader ?? session?.user?.id ?? null;
-  const effectiveRadius = radiusHeader
-    ? parseFloat(radiusHeader)
-    : DEFAULT_RADIUS_MILES;
+
 
   // Note: System instructions are handled in the frontend via CopilotChat instructions prop
 
@@ -178,7 +157,7 @@ export async function POST(req: NextRequest) {
         handler: async ({
           lat,
           lng,
-          radiusMiles = 10,
+          radiusMiles = DEFAULT_RADIUS_MILES,
           openNow,
           services,
           limit,
@@ -569,7 +548,6 @@ export async function POST(req: NextRequest) {
           summary: string;
           usedTools: string[];
         }) => {
-          // eslint-disable-next-line no-console
           console.log("[AI LOG]", {
             userId: userId ?? null,
             summary,

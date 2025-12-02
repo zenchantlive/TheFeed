@@ -1,0 +1,5 @@
+# FoodShare overview
+- Purpose: Mobile-first Next.js app to help people discover nearby food assistance, chat with an AI guide, and connect to community programs. Extends Agentic Coding Starter Kit with map discovery, FoodShare branding, and Supabase-backed data layer.
+- Stack: Next.js 15 (App Router), React 19, TypeScript, TailwindCSS, Drizzle ORM + Postgres/Supabase, Vercel AI SDK/ai + CopilotKit, Mapbox GL for maps, Better Auth for auth.
+- Key areas: app routes under `src/app` (chat, map, community, admin, api routes); data/db utilities under `src/lib` and `drizzle`; UI components in `src/components` and `src/app/**/components`; scripts in `scripts/`; configuration in root (`eslint.config.mjs`, `tsconfig.json`, `drizzle.config.ts`).
+- Notable features: Map discovery with Mapbox, AI chat intents, community stories/programs, saved locations via auth/session, data normalization utilities (`src/lib/resource-normalizer.ts`, `resource-feed.ts`).
