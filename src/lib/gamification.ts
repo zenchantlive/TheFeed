@@ -54,38 +54,38 @@ export async function awardPoints(
 ) {
     const points = POINTS[action];
 
-    await db
-        .update(userProfiles)
-        .set({
-            points: sql`${userProfiles.points} + ${points}`,
-        })
-        .where(eq(userProfiles.userId, userId));
-
-    // Check for level up
-    const [profile] = await db
-        .select()
-        .from(userProfiles)
-        .where(eq(userProfiles.userId, userId));
-
-    if (!profile) return;
-
-    const newLevel = calculateLevel(profile.points);
-    if (newLevel > profile.level) {
-        await db
-            .update(userProfiles)
-            .set({ level: newLevel })
+    await db.transaction(async (tx) => {
+        // We select the current points and level first to determine the new level.
+        const [currentProfile] = await tx
+            .select({ points: userProfiles.points, level: userProfiles.level })
+            .from(userProfiles)
             .where(eq(userProfiles.userId, userId));
 
-        // Award level-up badge (optional, can implement specific level badges)
-        // await awardBadge(userId, `level_${newLevel}`);
-    }
+        if (!currentProfile) {
+            // Optionally, handle case where user profile doesn't exist, maybe create it.
+            // For now, we'll exit if no profile is found.
+            console.warn(`User profile not found for userId: ${userId}. Skipping point award.`);
+            return;
+        }
 
-    // Log points transaction
-    await db.insert(pointsHistory).values({
-        userId,
-        action,
-        points,
-        metadata,
+        const newPoints = currentProfile.points + points;
+        const newLevel = calculateLevel(newPoints);
+
+        await tx
+            .update(userProfiles)
+            .set({
+                points: newPoints,
+                level: newLevel > currentProfile.level ? newLevel : currentProfile.level,
+            })
+            .where(eq(userProfiles.userId, userId));
+
+        // Log points transaction
+        await tx.insert(pointsHistory).values({
+            userId,
+            action,
+            points,
+            metadata,
+        });
     });
 }
 
