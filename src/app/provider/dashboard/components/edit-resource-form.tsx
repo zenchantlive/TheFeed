@@ -13,9 +13,10 @@ import type { FoodBank } from "@/lib/schema";
 
 interface EditResourceFormProps {
     resource: FoodBank;
+    onSuccess?: () => void;
 }
 
-export function EditResourceForm({ resource }: EditResourceFormProps) {
+export function EditResourceForm({ resource, onSuccess }: EditResourceFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -60,17 +61,19 @@ export function EditResourceForm({ resource }: EditResourceFormProps) {
         setLoading(true);
         setError("");
 
-        try {
-            // Parse hours JSON
-            let parsedHours = null;
-            if (hours.trim()) {
-                try {
-                    parsedHours = JSON.parse(hours);
-                } catch (e) {
-                    throw new Error("Invalid hours JSON format");
-                }
+        // Parse hours JSON
+        let parsedHours = null;
+        if (hours.trim()) {
+            try {
+                parsedHours = JSON.parse(hours);
+            } catch (e) {
+                setError("Invalid hours JSON format. Please check your syntax.");
+                setLoading(false);
+                return;
             }
+        }
 
+        try {
             const response = await fetch(`/api/provider/resources/${resource.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -95,9 +98,12 @@ export function EditResourceForm({ resource }: EditResourceFormProps) {
             }
 
             router.refresh();
-            alert("Resource updated successfully!");
-            // Close dialog by triggering parent state change
-            window.location.reload(); // Simple way to refresh the page
+
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                alert("Resource updated successfully!");
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Something went wrong");
         } finally {

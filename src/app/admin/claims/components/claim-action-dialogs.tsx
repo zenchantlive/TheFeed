@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, User, Building2, Calendar, FileText, ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { verificationInfoSchema } from "@/lib/schema";
 import type { Claim } from "../page-client";
 
 interface ApproveClaimDialogProps {
@@ -213,13 +214,16 @@ export function ViewClaimDetailsDialog({
 }: ViewClaimDetailsDialogProps) {
     if (!claim) return null;
 
-    // Parse verification info from JSON
-    const verificationInfo = claim.verificationInfo as {
-        jobTitle?: string;
-        workEmail?: string;
-        workPhone?: string;
-        verificationMethod?: string;
-    } | null;
+    // Parse verification info from JSON safely
+    let verificationInfo = null;
+    if (claim.verificationInfo) {
+        const result = verificationInfoSchema.safeParse(claim.verificationInfo);
+        if (result.success) {
+            verificationInfo = result.data;
+        } else {
+            console.error("Invalid verification info:", result.error);
+        }
+    }
 
     const isPending = claim.status === "pending";
 
@@ -397,11 +401,9 @@ function StatusBadge({ status }: { status: string }) {
             return <Badge className="bg-green-500 hover:bg-green-600">Approved</Badge>;
         case "rejected":
             return <Badge variant="destructive">Rejected</Badge>;
-        case "pending":
-            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
         case "withdrawn":
             return <Badge variant="outline">Withdrawn</Badge>;
         default:
-            return <Badge variant="outline">{status}</Badge>;
+            return <Badge variant="secondary">Pending</Badge>;
     }
 }
