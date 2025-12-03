@@ -8,7 +8,14 @@ export const POST = withAdminAuth(async (req: NextRequest, context: AdminSession
     try {
         const claimId = context.params.id;
         const adminUser = context;
-        const { reason } = await req.json();
+
+        let payload: { reason?: string };
+        try {
+            payload = await req.json();
+        } catch (e) {
+            return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+        }
+        const { reason } = payload;
 
         if (!reason) {
             return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });

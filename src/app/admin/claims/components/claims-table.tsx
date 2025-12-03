@@ -102,7 +102,7 @@ export function ClaimsTable({
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={claim.claimer.image || undefined} />
-                      <AvatarFallback>{claim.claimer.name[0]}</AvatarFallback>
+                      <AvatarFallback>{claim.claimer.name.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{claim.claimer.name}</span>
@@ -169,7 +169,7 @@ export function ClaimsTable({
             onConfirm={() => onApprove(selectedClaim.id)}
             resourceName={selectedClaim.resource.name}
             userName={selectedClaim.claimer.name}
-            verificationInfo={selectedClaim.verificationInfo}
+            verificationInfo={selectedClaim.verificationInfo || undefined}
           />
           <RejectClaimDialog
             open={showRejectDialog}

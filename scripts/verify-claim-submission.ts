@@ -77,7 +77,7 @@ async function main() {
     if (
         claim?.status === "pending" &&
         claim?.claimReason === claimReason &&
-        (claim?.verificationInfo as any).jobTitle === "Program Director"
+        claim?.verificationInfo?.jobTitle === "Program Director"
     ) {
         console.log("\n✅ SUCCESS: Enhanced claim submission logic verified correctly.");
     } else {

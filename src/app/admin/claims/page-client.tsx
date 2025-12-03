@@ -10,6 +10,7 @@ import { ClaimsTable } from "./components/claims-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 
 type ClaimStatus = "pending" | "approved" | "rejected" | "withdrawn" | "all";
 
@@ -19,7 +20,12 @@ export interface Claim {
   userId: string;
   status: string;
   claimReason: string | null;
-  verificationInfo: string | null;
+  verificationInfo: {
+    jobTitle: string;
+    workEmail?: string;
+    workPhone: string;
+    verificationMethod: string;
+  } | null;
   reviewedBy: string | null;
   reviewedAt: Date | null;
   reviewNotes: string | null;
@@ -113,11 +119,11 @@ export function ClaimsPageClient() {
 
       if (!response.ok) throw new Error("Failed to approve claim");
 
-      alert("Claim approved successfully");
+      toast.success("Claim approved successfully");
       fetchClaims();
     } catch (error) {
       console.error("Error approving claim:", error);
-      alert("Failed to approve claim");
+      toast.error("Failed to approve claim");
     }
   };
 
@@ -131,11 +137,11 @@ export function ClaimsPageClient() {
 
       if (!response.ok) throw new Error("Failed to reject claim");
 
-      alert("Claim rejected successfully");
+      toast.success("Claim rejected successfully");
       fetchClaims();
     } catch (error) {
       console.error("Error rejecting claim:", error);
-      alert("Failed to reject claim");
+      toast.error("Failed to reject claim");
     }
   };
 

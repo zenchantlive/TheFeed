@@ -9,13 +9,21 @@ export const POST = withAdminAuth(async (req: NextRequest, context: AdminSession
         const claimId = context.params.id;
         const adminUser = context; // context is the AdminSession
 
-        // 1. Get the claim
+        // 1. Get the claim and its associated resource
         const claim = await db.query.providerClaims.findFirst({
             where: eq(providerClaims.id, claimId),
+            with: {
+                resource: true,
+            },
         });
 
         if (!claim) {
             return NextResponse.json({ error: "Claim not found" }, { status: 404 });
+        }
+
+        // Check if the resource is already claimed
+        if (claim.resource.claimedBy) {
+            return NextResponse.json({ error: "Resource is already claimed by another user" }, { status: 409 });
         }
 
         if (claim.status !== "pending") {

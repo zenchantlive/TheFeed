@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import type { FoodBank } from "@/lib/schema";
+
 interface EditResourceFormProps {
-    resource: any; // We'll type this properly with the schema type
+    resource: FoodBank;
 }
 
 export function EditResourceForm({ resource }: EditResourceFormProps) {
