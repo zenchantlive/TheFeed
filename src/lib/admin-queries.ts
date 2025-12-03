@@ -78,6 +78,7 @@ const resourceSelection = {
   phone: foodBanks.phone,
   website: foodBanks.website,
   description: foodBanks.description,
+  bannerImage: foodBanks.bannerImage,
   services: foodBanks.services,
   hours: foodBanks.hours,
   verificationStatus: foodBanks.verificationStatus,

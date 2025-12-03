@@ -78,6 +78,13 @@
       "when": 1764655879886,
       "tag": "0010_black_sunspot",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1764730379817,
+      "tag": "0011_burly_living_tribunal",
+      "breakpoints": true
     }
   ]
 }

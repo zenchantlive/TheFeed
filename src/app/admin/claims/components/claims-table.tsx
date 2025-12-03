@@ -15,7 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2, Check, X, ExternalLink } from "lucide-react";
 import { Claim } from "../page-client";
 import { useState } from "react";
-import { ApproveClaimDialog, RejectClaimDialog } from "./claim-action-dialogs";
+import { ApproveClaimDialog, RejectClaimDialog, ViewClaimDetailsDialog } from "./claim-action-dialogs";
 import Link from "next/link";
 
 interface ClaimsTableProps {
@@ -43,8 +43,14 @@ export function ClaimsTable({
   onReject,
 }: ClaimsTableProps) {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+
+  const handleRowClick = (claim: Claim) => {
+    setSelectedClaim(claim);
+    setShowDetailsDialog(true);
+  };
 
   const handleApproveClick = (claim: Claim) => {
     setSelectedClaim(claim);
@@ -83,7 +89,11 @@ export function ClaimsTable({
             </TableRow>
           ) : (
             claims.map((claim) => (
-              <TableRow key={claim.id}>
+              <TableRow
+                key={claim.id}
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleRowClick(claim)}
+              >
                 <TableCell>
                   <div className="flex flex-col">
                     <Link
@@ -117,7 +127,7 @@ export function ClaimsTable({
                   {formatDistanceToNow(new Date(claim.createdAt), { addSuffix: true })}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                     {claim.status === "pending" && (
                       <>
                         <Button
@@ -163,13 +173,26 @@ export function ClaimsTable({
 
       {selectedClaim && (
         <>
+          <ViewClaimDetailsDialog
+            claim={selectedClaim}
+            open={showDetailsDialog}
+            onOpenChange={setShowDetailsDialog}
+            onApprove={() => {
+              setShowDetailsDialog(false);
+              setShowApproveDialog(true);
+            }}
+            onReject={() => {
+              setShowDetailsDialog(false);
+              setShowRejectDialog(true);
+            }}
+          />
           <ApproveClaimDialog
             open={showApproveDialog}
             onOpenChange={setShowApproveDialog}
             onConfirm={() => onApprove(selectedClaim.id)}
             resourceName={selectedClaim.resource.name}
             userName={selectedClaim.claimer.name}
-            verificationInfo={selectedClaim.verificationInfo}
+            verificationInfo={selectedClaim.verificationInfo as any}
           />
           <RejectClaimDialog
             open={showRejectDialog}
