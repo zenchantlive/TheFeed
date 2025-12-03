@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { parsePhoneNumber } from "libphonenumber-js";
 
 interface ClaimResourceDialogProps {
     resourceId: string;
@@ -53,8 +54,23 @@ export function ClaimResourceDialog({
             setError("Job Title is required.");
             return;
         }
-        if (!workPhone.trim() || workPhone.length < 10) {
-            setError("Please provide a valid work phone number.");
+
+
+        // ... inside component
+        // Basic Validation
+        if (!jobTitle.trim()) {
+            setError("Job Title is required.");
+            return;
+        }
+
+        try {
+            const phoneNumber = parsePhoneNumber(workPhone, "US");
+            if (!phoneNumber || !phoneNumber.isValid()) {
+                setError("Please provide a valid US phone number.");
+                return;
+            }
+        } catch (e) {
+            setError("Please provide a valid phone number.");
             return;
         }
         if (reason.length < 10) {

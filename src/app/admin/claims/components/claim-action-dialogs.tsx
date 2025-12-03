@@ -41,14 +41,17 @@ export function ApproveClaimDialog({
     verificationInfo,
 }: ApproveClaimDialogProps) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleConfirm = async () => {
         setLoading(true);
+        setError(null);
         try {
             await onConfirm();
             onOpenChange(false);
         } catch (error) {
             console.error("Failed to approve claim:", error);
+            setError("Failed to approve claim. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -97,6 +100,11 @@ export function ApproveClaimDialog({
                     <div className="text-xs text-muted-foreground">
                         <p><strong>Warning:</strong> Approving this claim will grant full edit access to the user.</p>
                     </div>
+                    {error && (
+                        <div className="text-sm text-red-500 font-medium">
+                            {error}
+                        </div>
+                    )}
                 </div>
 
                 <DialogFooter>
@@ -128,17 +136,20 @@ export function RejectClaimDialog({
 }: RejectClaimDialogProps) {
     const [reason, setReason] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleConfirm = async () => {
         if (!reason.trim()) return;
 
         setLoading(true);
+        setError(null);
         try {
             await onConfirm(reason);
             onOpenChange(false);
             setReason("");
         } catch (error) {
             console.error("Failed to reject claim:", error);
+            setError("Failed to reject claim. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -161,6 +172,11 @@ export function RejectClaimDialog({
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                     />
+                    {error && (
+                        <div className="text-sm text-red-500 font-medium mt-2">
+                            {error}
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>

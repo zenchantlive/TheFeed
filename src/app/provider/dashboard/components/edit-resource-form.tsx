@@ -9,8 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import type { FoodBank } from "@/lib/schema";
+
 interface EditResourceFormProps {
-    resource: any; // Will be typed with schema type
+    resource: FoodBank;
 }
 
 export function EditResourceForm({ resource }: EditResourceFormProps) {

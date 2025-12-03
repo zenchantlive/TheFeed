@@ -476,6 +476,15 @@ export const eventAttendance = pgTable("event_attendance", {
  * Provider Claims (Phase 5.2) - Resource ownership claims for admin approval
  * Allows food bank staff/volunteers to claim ownership of their organization's listing
  */
+import { z } from "zod";
+
+export const verificationInfoSchema = z.object({
+    jobTitle: z.string(),
+    workEmail: z.string().optional(),
+    workPhone: z.string(),
+    verificationMethod: z.string(),
+});
+
 export const providerClaims = pgTable("provider_claims", {
     id: text("id")
         .primaryKey()
@@ -491,7 +500,7 @@ export const providerClaims = pgTable("provider_claims", {
     // User-provided claim justification
     claimReason: text("claim_reason"),
     // Optional verification details (email, phone, etc.)
-    verificationInfo: jsonb("verification_info"),
+    verificationInfo: jsonb("verification_info").$type<z.infer<typeof verificationInfoSchema>>(),
     // Admin review metadata
     reviewedBy: text("reviewed_by").references(() => user.id),
     reviewedAt: timestamp("reviewed_at"),
