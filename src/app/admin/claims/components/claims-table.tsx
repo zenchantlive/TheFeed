@@ -1,14 +1,5 @@
 "use client";
 
-/**
- * Claims Table Component
- * Displays provider claims with sorting, pagination, and actions
- */
-
-import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,39 +8,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { Loader2, Check, X, ExternalLink } from "lucide-react";
+import { Claim } from "../page-client";
+import { useState } from "react";
+import { ApproveClaimDialog, RejectClaimDialog } from "./claim-action-dialogs";
 import Link from "next/link";
-
-interface Claim {
-  id: string;
-  resourceId: string;
-  userId: string;
-  status: string;
-  claimReason: string | null;
-  verificationInfo: string | null;
-  reviewedBy: string | null;
-  reviewedAt: Date | null;
-  reviewNotes: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  resource: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    state: string;
-  };
-  claimer: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-  };
-  reviewer: {
-    id: string;
-    name: string;
-  } | null;
-}
 
 interface ClaimsTableProps {
   claims: Claim[];
@@ -62,21 +29,8 @@ interface ClaimsTableProps {
   };
   onPageChange: (page: number) => void;
   onRefresh: () => void;
-}
-
-function getStatusBadgeVariant(status: string) {
-  switch (status) {
-    case "pending":
-      return "secondary";
-    case "approved":
-      return "default";
-    case "rejected":
-      return "destructive";
-    case "withdrawn":
-      return "outline";
-    default:
-      return "secondary";
-  }
+  onApprove: (claimId: string) => Promise<void>;
+  onReject: (claimId: string, reason: string) => Promise<void>;
 }
 
 export function ClaimsTable({
@@ -85,153 +39,161 @@ export function ClaimsTable({
   pagination,
   onPageChange,
   onRefresh,
+  onApprove,
+  onReject,
 }: ClaimsTableProps) {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-muted-foreground">Loading claims...</div>
-      </div>
-    );
-  }
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
 
-  if (claims.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 text-center">
-        <p className="text-lg font-medium text-muted-foreground">
-          No claims found
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Claims will appear here when providers submit them
-        </p>
-      </div>
-    );
-  }
+  const handleApproveClick = (claim: Claim) => {
+    setSelectedClaim(claim);
+    setShowApproveDialog(true);
+  };
+
+  const handleRejectClick = (claim: Claim) => {
+    setSelectedClaim(claim);
+    setShowRejectDialog(true);
+  };
 
   return (
-    <div className="space-y-4">
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Resource</TableHead>
+            <TableHead>Claimant</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Submitted</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
             <TableRow>
-              <TableHead>Resource</TableHead>
-              <TableHead>Claimed By</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Submitted</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={5} className="h-24 text-center">
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {claims.map((claim) => (
+          ) : claims.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                No claims found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            claims.map((claim) => (
               <TableRow key={claim.id}>
-                {/* Resource */}
                 <TableCell>
                   <div className="flex flex-col">
                     <Link
-                      href={`/resources/${claim.resource.id}`}
+                      href={`/map?resource=${claim.resourceId}`}
                       className="font-medium hover:underline"
+                      target="_blank"
                     >
                       {claim.resource.name}
                     </Link>
-                    <div className="text-xs text-muted-foreground">
-                      {claim.resource.city}, {claim.resource.state}
-                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {claim.resource.address}, {claim.resource.city}
+                    </span>
                   </div>
                 </TableCell>
-
-                {/* Claimed By */}
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={claim.claimer.image || undefined} />
-                      <AvatarFallback>
-                        {claim.claimer.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarFallback>{claim.claimer.name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <div className="text-sm font-medium">
-                        {claim.claimer.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {claim.claimer.email}
-                      </div>
+                      <span className="text-sm font-medium">{claim.claimer.name}</span>
+                      <span className="text-xs text-muted-foreground">{claim.claimer.email}</span>
                     </div>
                   </div>
                 </TableCell>
-
-                {/* Claim Reason */}
-                <TableCell className="max-w-xs">
-                  <div className="truncate text-sm text-muted-foreground">
-                    {claim.claimReason || "No reason provided"}
+                <TableCell>
+                  <StatusBadge status={claim.status} />
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {formatDistanceToNow(new Date(claim.createdAt), { addSuffix: true })}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    {claim.status === "pending" && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={() => handleApproveClick(claim)}
+                          title="Approve Claim"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleRejectClick(claim)}
+                          title="Reject Claim"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      asChild
+                      title="View Resource"
+                    >
+                      <Link href={`/map?resource=${claim.resourceId}`} target="_blank">
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
                   </div>
                 </TableCell>
-
-                {/* Status */}
-                <TableCell>
-                  <Badge variant={getStatusBadgeVariant(claim.status)}>
-                    {claim.status}
-                  </Badge>
-                </TableCell>
-
-                {/* Submitted Date */}
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(claim.createdAt), {
-                    addSuffix: true,
-                  })}
-                </TableCell>
-
-                {/* Actions */}
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/admin/claims/${claim.id}`}>
-                      Review
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-            {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-            {pagination.total} claims
-          </div>
+      {/* Pagination controls could go here */}
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-
-            <div className="text-sm text-muted-foreground">
-              Page {pagination.page} of {pagination.totalPages}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {selectedClaim && (
+        <>
+          <ApproveClaimDialog
+            open={showApproveDialog}
+            onOpenChange={setShowApproveDialog}
+            onConfirm={() => onApprove(selectedClaim.id)}
+            resourceName={selectedClaim.resource.name}
+            userName={selectedClaim.claimer.name}
+            verificationInfo={selectedClaim.verificationInfo}
+          />
+          <RejectClaimDialog
+            open={showRejectDialog}
+            onOpenChange={setShowRejectDialog}
+            onConfirm={(reason) => onReject(selectedClaim.id, reason)}
+            resourceName={selectedClaim.resource.name}
+          />
+        </>
       )}
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "approved":
+      return <Badge className="bg-green-500 hover:bg-green-600">Approved</Badge>;
+    case "rejected":
+      return <Badge variant="destructive">Rejected</Badge>;
+    case "pending":
+      return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
+    case "withdrawn":
+      return <Badge variant="outline">Withdrawn</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
 }

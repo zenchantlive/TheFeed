@@ -690,7 +690,9 @@ When working in this repo:
   - ✅ 5.2a: Provider claims schema + admin UI
   - ✅ 5.2b: Provider query layer
   - ✅ 5.2c: Claim submission API
-  - 🔄 5.2d: Admin review UI (approve/reject) - NEXT
+  - ✅ 5.2d: Admin review UI (approve/reject)
+  - ✅ 5.2e: Enhanced Verification (Job Title, Phone)
+  - ⚠️ 5.2f: Provider dashboard (Infinite Loading Bug) - NEXT
   - See `context/state.md` for full breakdown
 - **Phase 4.2 (Redis):** Caching layer (paused)
 - **Phase 4.3 (Pagination):** Enforce limits (paused)
@@ -698,7 +700,7 @@ When working in this repo:
 **📋 Pending / Future:**
 - **Phase 3 Wrap-up:** User contribution flows (suggestions), Mobile card optimization
 - **Phase 5 remaining:**
-  - 5.2d-f: Admin review UI, claim button, provider dashboard
+  - 5.2f: Provider dashboard
   - 5.1b-f: Points integration, badges, leaderboards
 - Deeper discovery (map overlays, calendar entry points everywhere)
 - Enhanced signup sheet UI (Phase 3C)

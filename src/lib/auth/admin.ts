@@ -45,19 +45,24 @@ export async function validateAdminSession(
 
 /**
  * Middleware wrapper for API routes that require admin privileges.
+ * Returns a new handler that validates admin access before calling the original handler.
  */
-export async function withAdminAuth<T extends NextRequest | Request>(
-  req: T,
-  handler: (req: T, context: AdminSession) => Promise<Response>
-): Promise<Response> {
-  const adminSession = await validateAdminSession(req);
+export function withAdminAuth<T extends NextRequest | Request, C = any>(
+  handler: (req: T, context: AdminSession & C) => Promise<Response>
+) {
+  return async (req: T, context: C): Promise<Response> => {
+    const adminSession = await validateAdminSession(req);
 
-  if (!adminSession) {
-    return NextResponse.json(
-      { error: "Admin access required" },
-      { status: 403 }
-    );
-  }
+    if (!adminSession) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
 
-  return handler(req, adminSession);
+    // Merge the route context (params) with the admin session
+    const mergedContext = { ...context, ...adminSession };
+
+    return handler(req, mergedContext);
+  };
 }

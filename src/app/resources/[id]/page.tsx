@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import { getNormalizedResources } from "@/lib/resource-feed";
 import { LocationCard } from "@/components/foodshare/location-card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Share2, Flag, Edit, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, Share2, Flag, Edit, CheckCircle2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { isCurrentlyOpen } from "@/lib/geolocation";
 import { Badge } from "@/components/ui/badge";
+import { ClaimResourceDialog } from "@/components/foodshare/claim-resource-dialog";
+import { auth } from "@/lib/auth";
 
 interface PageProps {
     params: { id: string };
@@ -15,12 +17,14 @@ export default async function ResourcePage({ params }: PageProps) {
     const { id } = params;
     const resources = await getNormalizedResources({ id });
     const resource = resources[0];
+    const session = await auth.api.getSession({ headers: await import("next/headers").then(h => h.headers()) });
 
     if (!resource) {
         notFound();
     }
 
     const isOpen = resource.hours ? isCurrentlyOpen(resource.hours) : false;
+    const isClaimed = !!resource.claimedBy;
 
     return (
         <div className="min-h-screen bg-background pb-20">
@@ -57,6 +61,11 @@ export default async function ResourcePage({ params }: PageProps) {
                                     {resource.verificationStatus === "official" && (
                                         <Badge variant="default" className="bg-green-600 hover:bg-green-700">
                                             <CheckCircle2 className="mr-1 h-3 w-3" /> Verified
+                                        </Badge>
+                                    )}
+                                    {isClaimed && (
+                                        <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
+                                            <ShieldCheck className="mr-1 h-3 w-3" /> Managed
                                         </Badge>
                                     )}
                                     <Button asChild variant="outline" size="sm" className="gap-2">
@@ -109,9 +118,29 @@ export default async function ResourcePage({ params }: PageProps) {
                                 <Button variant="outline" className="w-full justify-start" size="sm">
                                     <Flag className="mr-2 h-4 w-4" /> Report Issue
                                 </Button>
-                                <Button variant="outline" className="w-full justify-start" size="sm">
-                                    Claim this Listing
-                                </Button>
+
+                                {!isClaimed && (
+                                    session?.user ? (
+                                        <ClaimResourceDialog
+                                            resourceId={resource.id}
+                                            resourceName={resource.name}
+                                        />
+                                    ) : (
+                                        <Button variant="outline" className="w-full justify-start" size="sm" asChild>
+                                            <Link href={`/login?callbackUrl=/resources/${resource.id}`}>
+                                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                                Claim this Listing
+                                            </Link>
+                                        </Button>
+                                    )
+                                )}
+
+                                {isClaimed && (
+                                    <div className="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-700 flex items-start gap-2">
+                                        <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
+                                        <span>This listing is managed by a verified provider.</span>
+                                    </div>
+                                )}
                             </div>
                             <p className="mt-4 text-xs text-muted-foreground text-center">
                                 Help us keep this information accurate for everyone.
@@ -134,3 +163,4 @@ export default async function ResourcePage({ params }: PageProps) {
         </div>
     );
 }
+

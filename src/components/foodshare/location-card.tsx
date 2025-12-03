@@ -1,12 +1,13 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Globe, Navigation2 } from "lucide-react";
+import { MapPin, Phone, Globe, Navigation2, ShieldCheck } from "lucide-react";
 import { StatusBadge } from "./status-badge";
 import { VerificationBadge } from "./verification-badge";
 import { SourcesSection, type Source } from "./sources-section";
 import { DataCompleteness } from "./data-completeness";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 type LocationCardProps = {
   location: {
@@ -24,6 +25,7 @@ type LocationCardProps = {
     verificationStatus?: string | null;
     lastVerified?: Date | string | null;
     sources?: Source[];
+    claimedBy?: string | null;
   };
   distanceMiles?: number;
   isOpen?: boolean;
@@ -42,6 +44,8 @@ export function LocationCard({
   actionSlot,
   className,
 }: LocationCardProps) {
+  const isClaimed = !!location.claimedBy;
+
   return (
     <Card className={cn("rounded-2xl border border-border/80 shadow-md", className)}>
       <CardHeader className="space-y-3 pb-0">
@@ -49,6 +53,12 @@ export function LocationCard({
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <CardTitle className="text-xl font-semibold">{location.name}</CardTitle>
+              {isClaimed && (
+                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-blue-200 bg-blue-50 text-blue-700">
+                  <ShieldCheck className="mr-1 h-3 w-3" />
+                  Claimed
+                </Badge>
+              )}
               {location.verificationStatus && (
                 <VerificationBadge
                   status={location.verificationStatus}
