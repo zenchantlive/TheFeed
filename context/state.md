@@ -32,7 +32,7 @@ Last updated: 2025-12-02
   - POST /api/resources/[id]/claim - Submit claim with validation
   - GET /api/resources/[id]/claim - Check claim status
   - DELETE /api/resources/[id]/claim - Withdraw pending claim
-- **Branch**: `feat/phase-5.2-provider-claims`
+- **Branch**: `feat/phase-5.2g-provider-dashboard`
 - **Commits**: fa09fb3, c50a67e, 43f0524, (pending)
 
 ### Phase 5.1a: Gamification Indices ✅
