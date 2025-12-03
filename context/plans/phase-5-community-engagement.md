@@ -243,223 +243,30 @@ CREATE INDEX idx_provider_claims_resource ON provider_claims(resource_id);
 CREATE INDEX idx_provider_claims_email ON provider_claims(email);
 ```
 
-**Claim flow:**
-```tsx
-// File: /src/components/foodshare/claim-resource-button.tsx
-"use client";
+**Claim flow (Implemented - Admin Approval):**
+1. User clicks "Claim this Listing" on resource page.
+2. Fills out `ClaimResourceDialog` with Job Title, Work Phone, Verification Method.
+3. `POST /api/claims` creates a `pending` claim in `provider_claims`.
+4. Admin reviews claim in `/admin/claims`.
+5. Admin approves -> User becomes `owner` of the resource.
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-export function ClaimResourceButton({ resourceId }: { resourceId: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch(`/api/resources/${resourceId}/claim`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("Failed to submit claim");
-
-      setIsOpen(false);
-      alert("Verification email sent! Check your inbox.");
-    } catch (error) {
-      alert("Failed to submit claim. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          Is this your organization?
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Claim this listing</DialogTitle>
-          <DialogDescription>
-            Verify ownership by entering your organization's email address.
-            We'll send a verification link to confirm.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Organization Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="contact@yourorg.org"
-            />
-            <p className="text-xs text-muted-foreground">
-              Must be an official email from your organization's domain
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!email || isSubmitting}
-            >
-              {isSubmitting ? "Sending..." : "Send Verification"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-```
-
-**API endpoint:**
-```typescript
-// File: /src/app/api/resources/[id]/claim/route.ts
-import { sendEmail } from "@/lib/email";
-import crypto from "crypto";
-
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { email } = await req.json();
-  const resourceId = params.id;
-
-  // Get resource
-  const [resource] = await db
-    .select()
-    .from(foodBanks)
-    .where(eq(foodBanks.id, resourceId));
-
-  if (!resource) {
-    return NextResponse.json({ error: "Resource not found" }, { status: 404 });
-  }
-
-  // Validate email domain matches resource (optional)
-  const emailDomain = email.split("@")[1];
-  const resourceDomain = resource.website
-    ? new URL(resource.website).hostname.replace("www.", "")
-    : null;
-
-  if (resourceDomain && emailDomain !== resourceDomain) {
-    return NextResponse.json(
-      { error: "Email domain must match organization website" },
-      { status: 400 }
-    );
-  }
-
-  // Generate verification code
-  const verificationCode = crypto.randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-  // Store claim
-  await db.insert(providerClaims).values({
-    resourceId,
-    email,
-    verificationCode,
-    expiresAt,
-  });
-
-  // Send verification email
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-claim?code=${verificationCode}`;
-
-  await sendEmail({
-    to: email,
-    subject: "Verify your TheFeed listing claim",
-    html: `
-      <h1>Claim your listing</h1>
-      <p>Click the link below to verify ownership of <strong>${resource.name}</strong>:</p>
-      <a href="${verifyUrl}">${verifyUrl}</a>
-      <p>This link expires in 24 hours.</p>
-    `,
-  });
-
-  return NextResponse.json({ success: true });
-}
-```
-
-**Verification page:**
-```tsx
-// File: /src/app/verify-claim/page.tsx
-export default async function VerifyClaimPage({
-  searchParams,
-}: {
-  searchParams: { code: string };
-}) {
-  const code = searchParams.code;
-
-  const [claim] = await db
-    .select()
-    .from(providerClaims)
-    .where(eq(providerClaims.verificationCode, code));
-
-  if (!claim || claim.expiresAt < new Date()) {
-    return (
-      <div className="container mx-auto py-12">
-        <h1 className="text-2xl font-bold">Invalid or expired claim link</h1>
-      </div>
-    );
-  }
-
-  // Mark as verified
-  await db
-    .update(providerClaims)
-    .set({
-      status: "verified",
-      verifiedAt: new Date(),
-    })
-    .where(eq(providerClaims.id, claim.id));
-
-  // Update resource
-  await db
-    .update(foodBanks)
-    .set({
-      verificationStatus: "provider_claimed",
-    })
-    .where(eq(foodBanks.id, claim.resourceId));
-
-  return (
-    <div className="container mx-auto py-12">
-      <h1 className="text-2xl font-bold">Claim verified!</h1>
-      <p>You can now manage this listing from your provider dashboard.</p>
-      <Button asChild className="mt-4">
-        <a href="/provider/dashboard">Go to Dashboard</a>
-      </Button>
-    </div>
-  );
-}
-```
+**Provider Dashboard (Next Step):**
+- Route: `/provider/dashboard`
+- Features:
+  - List of managed resources.
+  - "Edit Resource" form (update hours, services, description).
+  - View basic stats (optional).
 
 **Acceptance Criteria:**
-- [ ] "Claim this listing" button visible
-- [ ] Verification email sent to organization email
-- [ ] Email link claims listing
-- [ ] Resource marked as "provider_claimed"
-- [ ] Provider can edit their listing
+- [x] "Claim this listing" button visible
+- [x] Enhanced verification form (Job Title, Phone)
+- [x] Admin review workflow (Approve/Reject)
+- [x] Resource marked as "provider_claimed" upon approval
+- [ ] Provider can edit their listing (Implemented but page hangs/infinite loads)
+
+**Next Session Goal:**
+- Debug and fix the infinite loading issue on `/provider/dashboard`.
+- Verify the edit flow end-to-end manually.
 
 ---
 

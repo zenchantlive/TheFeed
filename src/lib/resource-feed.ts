@@ -16,6 +16,7 @@ export type NormalizedResourceWithMeta = NormalizedResource & {
   verificationStatus: string | null;
   lastVerified: Date | null;
   aiSummary: string | null;
+  claimedBy: string | null;
 };
 
 /**
@@ -82,6 +83,7 @@ export async function getNormalizedResources(
       verificationStatus: row.verificationStatus ?? null,
       lastVerified: row.adminVerifiedAt ?? row.communityVerifiedAt ?? row.updatedAt ?? null,
       aiSummary: row.aiSummary ?? null,
+      claimedBy: row.claimedBy ?? null,
     };
   });
 }

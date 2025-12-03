@@ -1,11 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, CheckCircle2, Map as MapIcon } from "lucide-react";
+import { MapPin, Clock, CheckCircle2, Map as MapIcon, ShieldCheck } from "lucide-react";
 import { VerificationBadge } from "./verification-badge";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 
 type CompactResourceCardProps = {
     resource: {
@@ -18,7 +19,8 @@ type CompactResourceCardProps = {
         hours?: Record<string, { open: string; close: string; closed?: boolean }> | null;
         verificationStatus?: string | null;
         lastVerified?: Date | string | null;
-        dataCompleteness?: number; // Assuming we calculate this or have it
+        dataCompleteness?: number;
+        claimedBy?: string | null;
     };
     distanceMiles?: number;
     className?: string;
@@ -29,9 +31,8 @@ export function CompactResourceCard({
     distanceMiles,
     className,
 }: CompactResourceCardProps) {
-    // Calculate completeness if not provided (simple heuristic or passed prop)
-    // For now, let's assume it's passed or we calculate a simple one
-    const completeness = resource.dataCompleteness || 0; // Default/Placeholder
+    const completeness = resource.dataCompleteness || 0;
+    const isClaimed = !!resource.claimedBy;
 
     return (
         <Card className={cn("group relative overflow-hidden rounded-xl border border-border/60 transition-all hover:border-primary/50 hover:shadow-md", className)}>
@@ -57,9 +58,17 @@ export function CompactResourceCard({
                 {/* Header: Name & Map Icon */}
                 <div className="mb-2 flex items-start justify-between gap-2">
                     <div className="flex flex-col">
-                        <h3 className="font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
-                            {resource.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold leading-tight text-foreground group-hover:text-primary transition-colors">
+                                {resource.name}
+                            </h3>
+                            {isClaimed && (
+                                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-blue-200 bg-blue-50 text-blue-700">
+                                    <ShieldCheck className="mr-1 h-3 w-3" />
+                                    Claimed
+                                </Badge>
+                            )}
+                        </div>
                         {resource.verificationStatus && (
                             <div className="mt-1">
                                 <VerificationBadge

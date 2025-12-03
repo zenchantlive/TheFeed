@@ -32,7 +32,7 @@ Last updated: 2025-12-02
   - POST /api/resources/[id]/claim - Submit claim with validation
   - GET /api/resources/[id]/claim - Check claim status
   - DELETE /api/resources/[id]/claim - Withdraw pending claim
-- **Branch**: `feat/phase-5.2-provider-claims`
+- **Branch**: `feat/phase-5.2g-provider-dashboard`
 - **Commits**: fa09fb3, c50a67e, 43f0524, (pending)
 
 ### Phase 5.1a: Gamification Indices ✅
@@ -108,15 +108,17 @@ Last updated: 2025-12-02
 - ✅ 5.2a: Admin approval workflow setup (schema + admin UI)
 - ✅ 5.2b: Provider claims database schema & query layer
 - ✅ 5.2c: Claim submission API (POST/GET/DELETE)
-- 🔄 5.2d: Admin review UI (approve/reject endpoints + dialog) - IN PROGRESS
-- ⏳ 5.2e: Claim button UI component
-- ⏳ 5.2f: Provider dashboard (full implementation)
+- ✅ 5.2d: Admin review UI (approve/reject endpoints + dialog)
+- ✅ 5.2e: Claim button UI component (Enhanced Dialog)
+- ✅ 5.2f: Enhanced Verification System (Job Title, Phone, etc.)
+- ⚠️ 5.2g: Provider dashboard (implemented but has infinite loading bug) - DEBUGGING NEXT
 
 **Plan**: `/home/zenchant/.claude/plans/purrfect-forging-avalanche.md`
 
 ---
 
 ## Known Issues / Alerts
+- **CRITICAL**: `/provider/dashboard` is experiencing an infinite loading loop. Needs immediate investigation.
 - **TypeScript Errors**: Pre-existing typecheck errors (7 errors) - not blocking Phase 5 work:
   - admin/layout.tsx headers issue
   - Missing select component import

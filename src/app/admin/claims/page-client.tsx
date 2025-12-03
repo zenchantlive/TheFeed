@@ -10,16 +10,22 @@ import { ClaimsTable } from "./components/claims-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 
 type ClaimStatus = "pending" | "approved" | "rejected" | "withdrawn" | "all";
 
-interface Claim {
+export interface Claim {
   id: string;
   resourceId: string;
   userId: string;
   status: string;
   claimReason: string | null;
-  verificationInfo: string | null;
+  verificationInfo: {
+    jobTitle: string;
+    workEmail?: string;
+    workPhone: string;
+    verificationMethod: string;
+  } | null;
   reviewedBy: string | null;
   reviewedAt: Date | null;
   reviewNotes: string | null;
@@ -87,14 +93,57 @@ export function ClaimsPageClient() {
       }
 
       const data: ClaimsResponse = await response.json();
-      setClaims(data.claims);
+      // Ensure dates are parsed correctly
+      const parsedClaims = data.claims.map(claim => ({
+        ...claim,
+        createdAt: new Date(claim.createdAt),
+        updatedAt: new Date(claim.updatedAt),
+        reviewedAt: claim.reviewedAt ? new Date(claim.reviewedAt) : null
+      }));
+
+      setClaims(parsedClaims);
       setPagination(data.pagination);
     } catch (error) {
       console.error("Error fetching claims:", error);
+      // Silently fail or show error in UI state if needed
     } finally {
       setLoading(false);
     }
   }
+
+  const handleApprove = async (claimId: string) => {
+    try {
+      const response = await fetch(`/api/admin/claims/${claimId}/approve`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to approve claim");
+
+      toast.success("Claim approved successfully");
+      fetchClaims();
+    } catch (error) {
+      console.error("Error approving claim:", error);
+      toast.error("Failed to approve claim");
+    }
+  };
+
+  const handleReject = async (claimId: string, reason: string) => {
+    try {
+      const response = await fetch(`/api/admin/claims/${claimId}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+
+      if (!response.ok) throw new Error("Failed to reject claim");
+
+      toast.success("Claim rejected successfully");
+      fetchClaims();
+    } catch (error) {
+      console.error("Error rejecting claim:", error);
+      toast.error("Failed to reject claim");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -128,6 +177,8 @@ export function ClaimsPageClient() {
             pagination={pagination}
             onPageChange={(page) => setPagination({ ...pagination, page })}
             onRefresh={fetchClaims}
+            onApprove={handleApprove}
+            onReject={handleReject}
           />
         </TabsContent>
       </Tabs>
