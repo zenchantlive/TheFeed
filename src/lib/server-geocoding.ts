@@ -5,7 +5,8 @@
 export async function geocodeAddress(
   address: string,
   city: string,
-  state: string
+  state: string,
+  zipCode?: string
 ): Promise<{ latitude: number; longitude: number } | null> {
   const mapboxToken =
     process.env.MAPBOX_SERVER_TOKEN || process.env.MAPBOX_TOKEN;
@@ -14,7 +15,7 @@ export async function geocodeAddress(
     return null;
   }
 
-  const query = `${address}, ${city}, ${state}`;
+  const query = [address, city, state, zipCode].filter(Boolean).join(", ");
   const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
     query
   )}.json?access_token=${mapboxToken}&limit=1`;

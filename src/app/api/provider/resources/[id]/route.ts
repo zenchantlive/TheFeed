@@ -5,6 +5,8 @@ import { foodBanks } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { geocodeAddress } from "@/lib/server-geocoding";
+
 const updateSchema = z.object({
     name: z.string().min(1).optional(),
     description: z.string().optional().nullable(),
@@ -12,48 +14,14 @@ const updateSchema = z.object({
     address: z.string().min(1).optional(),
     city: z.string().min(1).optional(),
     state: z.string().length(2).optional(),
-    zipCode: z.string().min(5).optional(),
+    zipCode: z.string().regex(/^\d{5}(-\d{4})?$/).optional(),
     phone: z.string().optional().nullable().or(z.literal("")),
     website: z.string().url().optional().nullable().or(z.literal("")),
     services: z.array(z.string()).optional(),
     hours: z.record(z.string(), z.string()).optional().nullable(),
 });
 
-/**
- * Geocode an address using Mapbox Geocoding API
- */
-async function geocodeAddress(address: string, city: string, state: string, zipCode: string): Promise<{ lat: number; lng: number } | null> {
-    const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
-    const encodedAddress = encodeURIComponent(fullAddress);
-    const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-    if (!mapboxToken) {
-        console.error("Mapbox token not configured");
-        return null;
-    }
-
-    try {
-        const response = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${mapboxToken}&limit=1`
-        );
-
-        if (!response.ok) {
-            console.error("Mapbox geocoding failed:", response.statusText);
-            return null;
-        }
-
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-            const [lng, lat] = data.features[0].center;
-            return { lat, lng };
-        }
-
-        return null;
-    } catch (error) {
-        console.error("Error geocoding address:", error);
-        return null;
-    }
-}
 
 export async function PATCH(
     req: NextRequest,
@@ -67,7 +35,7 @@ export async function PATCH(
 
         const { id } = params;
         const body = await req.json();
-        const body = await req.json();
+
         const validation = updateSchema.safeParse(body);
 
         if (!validation.success) {
@@ -121,10 +89,10 @@ export async function PATCH(
             const coords = await geocodeAddress(address, city, state, zipCode);
 
             if (coords) {
-                updateData.latitude = coords.lat;
-                updateData.longitude = coords.lng;
+                updateData.latitude = coords.latitude;
+                updateData.longitude = coords.longitude;
                 // Update PostGIS geometry column
-                updateData.geom = sql`ST_SetSRID(ST_MakePoint(${coords.lng}, ${coords.lat}), 4326)`;
+                updateData.geom = sql`ST_SetSRID(ST_MakePoint(${coords.longitude}, ${coords.latitude}), 4326)`;
             } else {
                 return NextResponse.json(
                     { error: "Failed to geocode the new address. Please check the address and try again." },

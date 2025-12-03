@@ -78,11 +78,19 @@ async function runMigration() {
             { table: "provider_claims", name: "Users can read own claims", cmd: `CREATE POLICY "Users can read own claims" ON "provider_claims" AS PERMISSIVE FOR SELECT TO authenticated USING (user_id = auth.uid()::text);` }
         ];
 
-        for (const p of policies) {
-            await db.execute(sql.raw(`DROP POLICY IF EXISTS "${p.name}" ON "${p.table}";`));
-            await db.execute(sql.raw(p.cmd));
-        }
-        console.log("✓ Policies applied.");
+        await db.transaction(async (tx) => {
+            for (const p of policies) {
+                try {
+                    await tx.execute(sql.raw(`DROP POLICY IF EXISTS "${p.name}" ON "${p.table}";`));
+                    await tx.execute(sql.raw(p.cmd));
+                    console.log(`✓ Policy applied: ${p.name} on ${p.table}`);
+                } catch (err: any) {
+                    console.error(`✗ Failed to apply policy ${p.name} on ${p.table}: ${err.message}`);
+                    throw err; // Re-throw to trigger rollback
+                }
+            }
+        });
+        console.log("✓ All policies applied successfully.");
 
     } catch (error) {
         console.error("Migration failed:", error);
