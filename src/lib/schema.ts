@@ -39,6 +39,7 @@ export const user = pgTable("user", {
     image: text("image"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    role: text("role").default("user"),
 });
 
 export const session = pgTable("session", {
@@ -96,6 +97,7 @@ export const foodBanks = pgTable("food_banks", {
     phone: text("phone"),
     website: text("website"),
     description: text("description"),
+    bannerImage: text("banner_image"), // URL to banner image for resource detail page
     services: text("services").array(),
     hours: json("hours").$type<HoursType>(),
     // Verification & Discovery Fields

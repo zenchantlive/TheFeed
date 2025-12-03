@@ -358,7 +358,7 @@ const handleBatchEnhance = async () => {
 ### Phase 4 Deliverables Checklist
 
 - [x] **4.1** PostGIS queries implemented
-- [ ] **4.2** Redis caching active
+- [ ] **4.2** Redis caching active - IMPORTANT user decided against this
 - [ ] **4.3** Pagination enforced everywhere
 - [ ] **4.4** Batch operations optimized
 - [ ] Load testing with 50K resources completed

@@ -1,0 +1,1 @@
+ALTER TABLE "food_banks" ADD COLUMN "banner_image" text;
