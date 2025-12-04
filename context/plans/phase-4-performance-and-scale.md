@@ -98,7 +98,7 @@ export async function detectDuplicatesPostGIS(
 
 **Install:**
 ```bash
-pnpm add @upstash/redis
+bun add @upstash/redis
 ```
 
 **Setup Upstash Redis:**

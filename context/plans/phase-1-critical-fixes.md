@@ -190,7 +190,7 @@ export async function getNormalizedResources(
 
 **Add caching layer:**
 ```typescript
-// Install: pnpm add @upstash/redis
+// Install: bun add @upstash/redis
 import { Redis } from "@upstash/redis";
 
 const redis = Redis.fromEnv();

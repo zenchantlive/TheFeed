@@ -165,21 +165,21 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 
 ### Development
 ```bash
-pnpm dev                              # Start dev server (don't run manually)
-pnpm lint && pnpm typecheck           # Quality checks (run after changes)
+bun dev                              # Start dev server (don't run manually)
+bun lint && bun typecheck           # Quality checks (run after changes)
 ```
 
 ### Database Operations
 ```bash
-pnpm run db:generate                  # Generate migrations from schema
-pnpm run db:migrate                   # Apply migrations
-pnpm run db:push                      # Push schema directly (dev only)
-pnpm run db:studio                    # Open Drizzle Studio GUI
+bun run db:generate                  # Generate migrations from schema
+bun run db:migrate                   # Apply migrations
+bun run db:push                      # Push schema directly (dev only)
+bun run db:studio                    # Open Drizzle Studio GUI
 ```
 
 ### Seeding
 ```bash
-pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts   # Seed food banks
+bun scripts/seed-food-banks.ts   # Seed food banks
 ```
 
 ## Architecture Highlights

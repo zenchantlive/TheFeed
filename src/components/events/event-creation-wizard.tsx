@@ -10,8 +10,15 @@ import { EventDateTimeStep, type DateTimeData } from "./event-datetime-step";
 import { EventLocationStep, type LocationData } from "./event-location-step";
 import { EventCapacityStep, type CapacityData } from "./event-capacity-step";
 import { EventSignUpSheetStep, type SignUpSheetData } from "./event-signup-sheet-step";
+import { generateEventDetails } from "@/app/actions/generate-event";
+import { Textarea } from "@/components/ui/textarea";
+import { Sparkles } from "lucide-react";
 
-interface WizardData extends BasicInfoData, DateTimeData, LocationData, CapacityData, SignUpSheetData {}
+interface WizardData extends BasicInfoData, DateTimeData, LocationData, CapacityData, SignUpSheetData { }
+
+interface EventCreationWizardProps {
+  onClose?: () => void;
+}
 
 const INITIAL_DATA: WizardData = {
   // Step 1
@@ -34,15 +41,18 @@ const INITIAL_DATA: WizardData = {
   slots: [],
 };
 
-export function EventCreationWizard() {
+export function EventCreationWizard({ onClose }: EventCreationWizardProps) {
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0 = Start Choice, 1 = Basic Info, etc.
   const [data, setData] = useState<WizardData>(INITIAL_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const totalSteps = 5;
-  const progress = (step / totalSteps) * 100;
+  // Progress bar calculation (step 0 doesn't count towards progress)
+  const progress = step === 0 ? 0 : (step / totalSteps) * 100;
 
   // Update data from step components
   const updateData = (updates: Partial<WizardData>) => {
@@ -52,6 +62,8 @@ export function EventCreationWizard() {
   // Validation for each step
   const canProceed = (): boolean => {
     switch (step) {
+      case 0: // Start Choice
+        return true;
       case 1: // Basic info
         return Boolean(data.title.trim() && data.description.trim());
       case 2: // Date/time
@@ -79,6 +91,38 @@ export function EventCreationWizard() {
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+
+    setIsGenerating(true);
+    setError(null);
+
+    try {
+      const result = await generateEventDetails(aiPrompt);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to generate details");
+      }
+
+      const generated = result.data;
+
+      setData(prev => ({
+        ...prev,
+        title: generated.title,
+        description: generated.description,
+        eventType: generated.eventType as any, // Cast to match our type
+      }));
+
+      // Move to step 1 (Basic Info) to review
+      setStep(1);
+    } catch (err) {
+      console.error("AI Generation error:", err);
+      setError("Couldn't generate event details. Please try again or start manually.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -165,6 +209,9 @@ export function EventCreationWizard() {
       }
 
       // Redirect to event detail page
+      if (onClose) {
+        onClose();
+      }
       router.push(`/community/events/${event.id}`);
     } catch (err) {
       console.error("Event creation error:", err);
@@ -174,31 +221,99 @@ export function EventCreationWizard() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm font-medium">
-            Step {step} of {totalSteps}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {step === 1 && "Basic info"}
-            {step === 2 && "Date & time"}
-            {step === 3 && "Location"}
-            {step === 4 && "Capacity"}
-            {step === 5 && "Sign-up sheet"}
-          </span>
+    <div className="max-w-2xl mx-auto py-4 px-1">
+      {/* Progress Bar - Only show after step 0 */}
+      {step > 0 && (
+        <div className="mb-8">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">
+              Step {step} of {totalSteps}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {step === 1 && "Basic info"}
+              {step === 2 && "Date & time"}
+              {step === 3 && "Location"}
+              {step === 4 && "Capacity"}
+              {step === 5 && "Sign-up sheet"}
+            </span>
+          </div>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
-        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      )}
 
       {/* Step Content */}
-      <Card className="p-6 mb-6">
+      <Card className="p-6 mb-6 border-none shadow-none sm:border sm:shadow-sm">
+        {step === 0 && (
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-bold">Let's get this party started! 🎉</h2>
+              <p className="text-muted-foreground">How would you like to create your event?</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* AI Option */}
+              <button
+                onClick={() => { }} // No-op, we use the input below
+                className="group relative flex flex-col items-start p-6 rounded-xl border-2 border-primary/20 hover:border-primary/50 bg-primary/5 hover:bg-primary/10 transition-all text-left"
+              >
+                <div className="mb-4 p-3 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-lg mb-1">Quick Start with AI</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Describe your event and we'll fill in the details for you.
+                </p>
+
+                <div className="w-full space-y-2" onClick={(e) => e.stopPropagation()}>
+                  <Textarea
+                    placeholder="e.g., A potluck at Fremont Park next Saturday at 2pm for the neighborhood..."
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    className="bg-background/50 resize-none"
+                    rows={3}
+                  />
+                  <Button
+                    onClick={handleGenerate}
+                    disabled={!aiPrompt.trim() || isGenerating}
+                    className="w-full"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generate Draft
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </button>
+
+              {/* Manual Option */}
+              <button
+                onClick={() => setStep(1)}
+                className="group flex flex-col items-start p-6 rounded-xl border-2 border-muted hover:border-foreground/20 hover:bg-muted/50 transition-all text-left"
+              >
+                <div className="mb-4 p-3 rounded-full bg-muted text-foreground group-hover:scale-110 transition-transform">
+                  <ArrowRight className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-lg mb-1">Start from Scratch</h3>
+                <p className="text-sm text-muted-foreground">
+                  Fill out the form manually step-by-step. Best for specific details.
+                </p>
+              </button>
+            </div>
+          </div>
+        )}
+
         {step === 1 && <EventBasicInfoStep data={data} onChange={updateData} />}
         {step === 2 && <EventDateTimeStep data={data} onChange={updateData} />}
         {step === 3 && <EventLocationStep data={data} onChange={updateData} />}
@@ -215,38 +330,40 @@ export function EventCreationWizard() {
         </div>
       )}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={step === 1 || isSubmitting}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+      {/* Navigation Buttons - Hide on Step 0 */}
+      {step > 0 && (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={isSubmitting}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
 
-        {step < totalSteps ? (
-          <Button onClick={handleNext} disabled={!canProceed() || isSubmitting}>
-            Next
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        ) : (
-          <Button onClick={handleSubmit} disabled={!canProceed() || isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating event...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Create Event
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+          {step < totalSteps ? (
+            <Button onClick={handleNext} disabled={!canProceed() || isSubmitting}>
+              Next
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={!canProceed() || isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating event...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Create Event
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

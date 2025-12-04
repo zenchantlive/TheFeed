@@ -80,7 +80,7 @@ If MCP search doesn't yield clear results, fallback to WebFetch on the documenta
 ```bash
 # From Windows PowerShell (per user rules)
 cd C:\Users\Zenchant\thefeed\foodshare
-pnpm add @copilotkit/react-core @copilotkit/react-ui @copilotkit/runtime
+bun add @copilotkit/react-core @copilotkit/react-ui @copilotkit/runtime
 ```
 
 **Expected Dependencies:**
@@ -573,7 +573,7 @@ mv src/app/chat-v2 src/app/chat
 **After Migration Complete:**
 ```bash
 # Remove old dependencies (if no longer needed)
-pnpm remove @ai-sdk/react   # Check if used elsewhere first
+bun remove @ai-sdk/react   # Check if used elsewhere first
 # Keep `ai` package - might be used by CopilotKit
 ```
 

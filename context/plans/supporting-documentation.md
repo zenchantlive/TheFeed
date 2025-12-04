@@ -126,7 +126,7 @@ If any phase fails:
 
 1. **Revert database migrations:**
    ```bash
-   pnpm drizzle-kit drop --config drizzle.config.ts
+   bun run drizzle-kit drop --config drizzle.config.ts
    # Restore from backup
    ```
 
