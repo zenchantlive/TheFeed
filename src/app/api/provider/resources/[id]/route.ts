@@ -18,14 +18,18 @@ const updateSchema = z.object({
     phone: z.string().optional().nullable().or(z.literal("")),
     website: z.string().url().optional().nullable().or(z.literal("")),
     services: z.array(z.string()).optional(),
-    hours: z.record(z.string(), z.string()).optional().nullable(),
+    hours: z.record(z.string(), z.object({
+        open: z.string(),
+        close: z.string(),
+        closed: z.boolean().optional(),
+    })).optional().nullable(),
 });
 
 
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth.api.getSession({ headers: req.headers });
@@ -33,7 +37,7 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { id } = params;
+        const { id } = await params;
         const body = await req.json();
 
         const validation = updateSchema.safeParse(body);
@@ -62,7 +66,7 @@ export async function PATCH(
         }
 
         // Prepare update data
-        const updateData: any = {
+        const updateData: Partial<typeof foodBanks.$inferSelect> = {
             ...validation.data,
             updatedAt: new Date(),
         };
@@ -92,7 +96,7 @@ export async function PATCH(
                 updateData.latitude = coords.latitude;
                 updateData.longitude = coords.longitude;
                 // Update PostGIS geometry column
-                updateData.geom = sql`ST_SetSRID(ST_MakePoint(${coords.longitude}, ${coords.latitude}), 4326)`;
+                (updateData as Record<string, unknown>).geom = sql`ST_SetSRID(ST_MakePoint(${coords.longitude}, ${coords.latitude}), 4326)`;
             } else {
                 return NextResponse.json(
                     { error: "Failed to geocode the new address. Please check the address and try again." },

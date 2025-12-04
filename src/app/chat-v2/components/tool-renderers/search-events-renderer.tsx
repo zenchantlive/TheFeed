@@ -5,13 +5,7 @@ import { EventCard } from "../event-card";
 import { ChevronDown } from "lucide-react";
 import type { CopilotRenderProps, SearchEventResult } from "./types";
 
-type SearchEventsRendererProps = {
-  userLocation: { lat: number; lng: number } | null;
-};
-
-export function SearchEventsRenderer({
-  userLocation,
-}: SearchEventsRendererProps) {
+export function SearchEventsRenderer() {
   useCopilotAction({
     name: "search_events",
     available: "disabled",
@@ -33,7 +27,7 @@ export function SearchEventsRenderer({
       }
 
       if (status === "complete" && result && Array.isArray(result)) {
-        return <EventGrid events={result} userLocation={userLocation} />;
+        return <EventGrid events={result} />;
       }
 
       return <></>;
@@ -45,10 +39,8 @@ export function SearchEventsRenderer({
 
 function EventGrid({
   events,
-  userLocation,
 }: {
   events: SearchEventResult[];
-  userLocation: { lat: number; lng: number } | null;
 }) {
   const now = new Date();
   const upcomingEvents = events
@@ -80,7 +72,6 @@ function EventGrid({
           <EventCard
             key={event.id}
             event={event}
-            userLocation={userLocation}
           />
         ))}
       </div>
@@ -98,7 +89,6 @@ function EventGrid({
               <EventCard
                 key={event.id}
                 event={event}
-                userLocation={userLocation}
               />
             ))}
           </div>

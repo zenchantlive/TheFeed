@@ -49,6 +49,14 @@ export type VibeStat = {
   description?: string;
 };
 
+export type HotItem = {
+  id: string;
+  title: string;
+  host: string;
+  until: string;
+  distance: string;
+};
+
 export type EventCardData = {
   id: string;
   title: string;

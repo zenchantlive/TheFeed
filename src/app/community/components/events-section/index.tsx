@@ -57,7 +57,7 @@ export function EventsSection({ initialEvents, mode }: EventsSectionProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredEvents.map((event) => (
-            <EventCardWithActions key={event.id} event={event} mode={mode} />
+            <EventCardWithActions key={event.id} event={event} />
           ))}
         </div>
       )}

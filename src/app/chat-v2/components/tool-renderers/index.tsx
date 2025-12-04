@@ -32,7 +32,7 @@ export function ToolRenderers({ userLocation }: ToolRenderersProps) {
   return (
     <>
       <SearchResourcesRenderer userLocation={userLocation} />
-      <SearchEventsRenderer userLocation={userLocation} />
+      <SearchEventsRenderer />
       <SearchPostsRenderer />
       <DirectionsRenderer />
       <ResourceDetailsRenderer userLocation={userLocation} />
