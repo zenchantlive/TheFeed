@@ -85,7 +85,10 @@ export const PUT = withAdminAuth(async (
         // A proper deep-equal function would be the best solution.
         // As a pragmatic improvement, we can at least sort object keys before stringifying for simple objects.
         const sortObjectKeys = (obj: unknown): unknown => {
-          if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+          if (Array.isArray(obj)) {
+            return obj.map(sortObjectKeys);
+          }
+          if (typeof obj !== 'object' || obj === null) {
             return obj;
           }
           return Object.keys(obj as Record<string, unknown>).sort().reduce((acc, key) => {

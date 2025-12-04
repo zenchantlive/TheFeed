@@ -66,8 +66,9 @@ export async function PATCH(
         }
 
         // Prepare update data
+        const { name, description, bannerImage, address, city, state, zipCode, phone, website, services, hours } = validation.data;
         const updateData: Partial<typeof foodBanks.$inferSelect> = {
-            ...validation.data,
+            name, description, bannerImage, address, city, state, zipCode, phone, website, services, hours,
             updatedAt: new Date(),
         };
 
@@ -85,12 +86,22 @@ export async function PATCH(
             (validation.data.zipCode && validation.data.zipCode !== resource.zipCode);
 
         if (addressChanged) {
-            const address = validation.data.address || resource.address;
-            const city = validation.data.city || resource.city;
-            const state = validation.data.state || resource.state;
-            const zipCode = validation.data.zipCode || resource.zipCode;
+            const newAddress = {
+                address: validation.data.address,
+                city: validation.data.city,
+                state: validation.data.state,
+                zipCode: validation.data.zipCode,
+            };
+            const currentAddress = {
+                address: resource.address,
+                city: resource.city,
+                state: resource.state,
+                zipCode: resource.zipCode,
+            };
 
-            const coords = await geocodeAddress(address, city, state, zipCode);
+            const addressToGeocode = { ...currentAddress, ...newAddress };
+
+            const coords = await geocodeAddress(addressToGeocode.address, addressToGeocode.city, addressToGeocode.state, addressToGeocode.zipCode);
 
             if (coords) {
                 updateData.latitude = coords.latitude;
