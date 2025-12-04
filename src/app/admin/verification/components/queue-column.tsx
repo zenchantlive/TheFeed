@@ -10,7 +10,6 @@
 
 "use client";
 
-import { useState } from "react";
 import { Info } from "lucide-react";
 import {
   Tooltip,

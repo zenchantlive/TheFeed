@@ -4,7 +4,7 @@
  */
 
 import { db } from "./db";
-import { providerClaims, foodBanks, user } from "./schema";
+import { providerClaims } from "./schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
 export type ClaimStatus = "pending" | "approved" | "rejected" | "withdrawn";

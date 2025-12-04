@@ -6,7 +6,7 @@
  * - Website: https://, no www
  */
 
-import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
+import { parsePhoneNumber } from "libphonenumber-js";
 
 export function validatePhone(phone: string | null | undefined): {
   isValid: boolean;
@@ -74,7 +74,7 @@ export function validateWebsite(website: string | null | undefined): {
       isValid: true,
       normalized
     };
-  } catch (error) {
+  } catch {
     return {
       isValid: false,
       normalized: null,

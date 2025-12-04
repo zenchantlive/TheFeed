@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { VerificationSearchBar } from "./components/verification-search-bar";
@@ -80,7 +80,7 @@ export function VerificationPageClient({
   }, [initialResources, filters, archiveMode]);
 
   // Reset page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setPage(1);
   }, [filters, archiveMode]);
 
@@ -102,8 +102,7 @@ export function VerificationPageClient({
 
       // Show success message
       alert(
-        `✅ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
+        `✅ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"
         } verified`
       );
 
@@ -143,8 +142,7 @@ export function VerificationPageClient({
 
       // Show success message
       alert(
-        `✨ ${data.enhanced} ${
-          data.enhanced === 1 ? "resource" : "resources"
+        `✨ ${data.enhanced} ${data.enhanced === 1 ? "resource" : "resources"
         } enhanced`
       );
 
@@ -167,8 +165,7 @@ export function VerificationPageClient({
   const handleReject = async (resourceIds: string[]) => {
     // Confirm rejection
     const confirmed = confirm(
-      `Are you sure you want to reject ${resourceIds.length} ${
-        resourceIds.length === 1 ? "resource" : "resources"
+      `Are you sure you want to reject ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"
       }?`
     );
 
@@ -186,8 +183,7 @@ export function VerificationPageClient({
 
       // Show success message
       alert(
-        `❌ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
+        `❌ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"
         } rejected`
       );
 
@@ -221,8 +217,7 @@ export function VerificationPageClient({
 
       // Show success message
       alert(
-        `⚠️ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
+        `⚠️ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"
         } flagged for review`
       );
 

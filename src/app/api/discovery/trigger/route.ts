@@ -17,7 +17,7 @@ import {
 } from "@/lib/discovery/circuit-breaker";
 import { isDuplicateOrBlocked } from "@/lib/discovery/duplicate-guard";
 import { detectDuplicates } from "@/lib/discovery/duplicate-detector";
-import { normalizeResource, isTrustedSource } from "@/lib/resource-normalizer";
+import { normalizeResource } from "@/lib/resource-normalizer";
 import { calculateConfidence, shouldAutoApprove } from "@/lib/discovery/confidence-scoring";
 import { withTimeout } from "@/lib/timeout";
 import { and, desc, eq } from "drizzle-orm";
@@ -38,7 +38,7 @@ async function geocodeAddress(address: string, city: string, state: string): Pro
     const res = await fetch(endpoint);
     if (!res.ok) return null;
     const data = await res.json();
-    
+
     if (data.features && data.features.length > 0) {
       const [lng, lat] = data.features[0].center;
       return { latitude: lat, longitude: lng };
@@ -103,7 +103,7 @@ export const POST = async (req: NextRequest) => {
 
   // 4. Create Stream
   const encoder = new TextEncoder();
-  
+
   const stream = new ReadableStream({
     async start(controller) {
       const sendUpdate = (
@@ -134,7 +134,7 @@ export const POST = async (req: NextRequest) => {
 
         // Processing
         sendUpdate({ type: "progress", stage: "saving", message: "Saving new resources..." });
-        
+
         for (const result of results) {
           const normalized = normalizeResource({
             ...result,

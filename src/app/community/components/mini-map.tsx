@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Map, { Marker, NavigationControl } from "react-map-gl";
+import Map, { Marker } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";

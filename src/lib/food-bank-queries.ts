@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { foodBanks, type HoursType } from "./schema";
 import { sql } from "drizzle-orm";
-import { calculateDistance, isCurrentlyOpen, type Coordinates } from "./geolocation";
+import { isCurrentlyOpen, type Coordinates } from "./geolocation";
 
 export type FoodBankRecord = typeof foodBanks.$inferSelect;
 

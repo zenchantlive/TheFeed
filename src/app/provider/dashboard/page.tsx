@@ -51,7 +51,7 @@ export default async function ProviderDashboardPage() {
                         </div>
                         <h3 className="text-lg font-semibold mb-2">No Managed Resources</h3>
                         <p className="text-muted-foreground max-w-md mb-6">
-                            You haven't claimed any resources yet. Find your organization on the map and click "Claim this Listing" to get started.
+                            You haven&apos;t claimed any resources yet. Find your organization on the map and click &quot;Claim this Listing&quot; to get started.
                         </p>
                         <Button asChild>
                             <Link href="/map">Find My Organization</Link>

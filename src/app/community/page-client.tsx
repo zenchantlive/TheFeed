@@ -11,7 +11,7 @@ import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
 import { ResourcesNearYou } from "./components/resources-near-you";
 import { ScannerNotification } from "@/components/discovery/scanner-notification";
-import { UtensilsCrossed, HandHeart, Plus, MapPin, X } from "lucide-react";
+import { UtensilsCrossed, HandHeart, MapPin } from "lucide-react";
 import { MiniMap } from "./components/mini-map";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

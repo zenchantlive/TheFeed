@@ -765,7 +765,7 @@ export const resourceVersions = pgTable("resource_versions", {
     version: integer("version").notNull(), // 1, 2, 3, etc.
 
     // Snapshot of full resource at this version
-    snapshot: json("snapshot").notNull().$type<Record<string, any>>(),
+    snapshot: json("snapshot").notNull().$type<Record<string, unknown>>(),
 
     // What changed
     changedFields: json("changed_fields").$type<string[]>(),
@@ -797,7 +797,7 @@ export const adminAuditLog = pgTable("admin_audit_log", {
     affectedIds: json("affected_ids").$type<string[]>(),
 
     // Change details
-    changes: json("changes").$type<Record<string, { old: any; new: any }>>(),
+    changes: json("changes").$type<Record<string, { old: unknown; new: unknown }>>(),
     reason: text("reason"),
 
     // IP for security audit

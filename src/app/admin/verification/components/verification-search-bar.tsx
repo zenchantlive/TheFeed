@@ -17,13 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -31,7 +24,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Search, Filter, X, MapPin, Sparkles } from "lucide-react";
+import { Search, Filter, X, MapPin } from "lucide-react";
 import type { VerificationFilters } from "../types";
 
 interface VerificationSearchBarProps {
@@ -210,10 +203,10 @@ export function VerificationSearchBar({
                         <Checkbox
                           id={`missing-${field}`}
                           checked={filters.missingFields.includes(
-                            field as any
+                            field as "phone" | "website" | "hours" | "description" | "services"
                           )}
                           onCheckedChange={() =>
-                            toggleMissingField(field as any)
+                            toggleMissingField(field as "phone" | "website" | "hours" | "description" | "services")
                           }
                         />
                         <label
@@ -245,7 +238,7 @@ export function VerificationSearchBar({
           {/* Search query badge */}
           {filters.searchQuery && (
             <Badge variant="secondary" className="gap-1">
-              Search: "{filters.searchQuery}"
+              Search: &quot;{filters.searchQuery}&quot;
               <button
                 onClick={() => handleSearchChange("")}
                 className="ml-1 hover:text-foreground"

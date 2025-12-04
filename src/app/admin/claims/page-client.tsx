@@ -5,7 +5,7 @@
  * Manages claims table state, filtering, and data fetching
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ClaimsTable } from "./components/claims-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -72,12 +72,7 @@ export function ClaimsPageClient() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch claims whenever tab or search changes
-  useEffect(() => {
-    fetchClaims();
-  }, [activeTab, searchTerm, pagination.page]);
-
-  async function fetchClaims() {
+  const fetchClaims = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -109,7 +104,12 @@ export function ClaimsPageClient() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [activeTab, pagination.page, pagination.limit, searchTerm]);
+
+  // Fetch claims whenever tab or search changes
+  useEffect(() => {
+    fetchClaims();
+  }, [fetchClaims]);
 
   const handleApprove = async (claimId: string) => {
     try {

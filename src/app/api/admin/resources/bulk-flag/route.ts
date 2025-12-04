@@ -18,7 +18,7 @@ interface BulkFlagRequest {
   note?: string;
 }
 
-export const POST = withAdminAuth<NextRequest>(async (req, { userId }) => {
+export const POST = withAdminAuth<NextRequest>(async (req) => {
   try {
     // Parse request body
     const body = (await req.json()) as BulkFlagRequest;

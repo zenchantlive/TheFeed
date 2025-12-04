@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { userProfiles, pointsHistory } from "@/lib/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export const POINTS = {
     SUBMIT_RESOURCE: 50,
@@ -50,7 +50,7 @@ export const BADGES = {
 export async function awardPoints(
     userId: string,
     action: PointAction,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
 ) {
     const points = POINTS[action];
 

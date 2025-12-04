@@ -10,11 +10,11 @@ import { ClaimResourceDialog } from "@/components/foodshare/claim-resource-dialo
 import { auth } from "@/lib/auth";
 
 interface PageProps {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }
 
 export default async function ResourcePage({ params }: PageProps) {
-    const { id } = params;
+    const { id } = await params;
     const resources = await getNormalizedResources({ id });
     const resource = resources[0];
     const session = await auth.api.getSession({ headers: await import("next/headers").then(h => h.headers()) });

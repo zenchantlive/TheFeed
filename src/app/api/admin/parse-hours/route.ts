@@ -9,28 +9,27 @@ const parseSchema = z.object({
   text: z.string().min(1),
 });
 
-export const POST = async (req: NextRequest) => {
-  return withAdminAuth(req, async () => {
-    try {
-      const body = await req.json();
-      const validation = parseSchema.safeParse(body);
+export const POST = withAdminAuth<NextRequest, unknown>(async (req: NextRequest) => {
+  try {
+    const body = await req.json();
+    const validation = parseSchema.safeParse(body);
 
-      if (!validation.success) {
-        return NextResponse.json({ error: "Invalid text" }, { status: 400 });
-      }
+    if (!validation.success) {
+      return NextResponse.json({ error: "Invalid text" }, { status: 400 });
+    }
 
-      const { text } = validation.data;
-      const apiKey = process.env.OPENROUTER_API_KEY;
-      
-      if (!apiKey) {
-        return NextResponse.json({ error: "AI configuration missing" }, { status: 500 });
-      }
+    const { text } = validation.data;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-      const modelName = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
-      
-      const { text: jsonString } = await generateText({
-        model: openrouter(modelName),
-        prompt: `
+    if (!apiKey) {
+      return NextResponse.json({ error: "AI configuration missing" }, { status: 500 });
+    }
+
+    const modelName = process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
+
+    const { text: jsonString } = await generateText({
+      model: openrouter(modelName),
+      prompt: `
           You are a helper that extracts opening hours from text into JSON.
           
           Output ONLY valid JSON. Do not include markdown formatting like \`\`\`json.
@@ -54,25 +53,24 @@ export const POST = async (req: NextRequest) => {
           
           Input text: "${text}"
         `,
-      });
+    });
 
-      // Clean up potential markdown code blocks
-      const cleanedJson = jsonString.replace(/```json\n?|\n?```/g, "").trim();
-      
-      try {
-        const data = JSON.parse(cleanedJson);
-        const normalized = normalizeHours(data.hours ?? null).hours;
-        return NextResponse.json({ hours: normalized });
-      } catch (e) {
-        console.error("JSON parse error", e, cleanedJson);
-        return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
-      }
-    } catch (error) {
-      console.error("Parse hours error:", error);
-      return NextResponse.json(
-        { error: "Failed to parse schedule" },
-        { status: 500 }
-      );
+    // Clean up potential markdown code blocks
+    const cleanedJson = jsonString.replace(/```json\n?|\n?```/g, "").trim();
+
+    try {
+      const data = JSON.parse(cleanedJson);
+      const normalized = normalizeHours(data.hours ?? null).hours;
+      return NextResponse.json({ hours: normalized });
+    } catch (e) {
+      console.error("JSON parse error", e, cleanedJson);
+      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
     }
-  });
-};
+  } catch (error) {
+    console.error("Parse hours error:", error);
+    return NextResponse.json(
+      { error: "Failed to parse schedule" },
+      { status: 500 }
+    );
+  }
+});

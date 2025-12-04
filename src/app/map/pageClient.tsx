@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { MapSearchBar } from "@/components/map/MapSearchBar";
 import { MapView } from "@/components/map/MapView";
-import { LocationPopup } from "@/components/map/LocationPopup";
+
 import { LocationCard } from "@/components/foodshare/location-card";
 import { SidebarResourceDetail } from "@/components/map/SidebarResourceDetail";
 import {

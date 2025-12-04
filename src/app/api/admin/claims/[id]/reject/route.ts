@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAdminAuth, AdminSession } from "@/lib/auth/admin";
+import { withAdminAuth } from "@/lib/auth/admin";
 import { db } from "@/lib/db";
 import { providerClaims, adminAuditLog } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
-export const POST = withAdminAuth(async (req: NextRequest, context: AdminSession & { params: { id: string } }) => {
+export const POST = withAdminAuth<NextRequest, { params: Promise<{ id: string }> }>(async (req, context) => {
     try {
-        const claimId = context.params.id;
+        const { id: claimId } = await context.params;
         const adminUser = context;
 
         let payload: { reason?: string };
         try {
             payload = await req.json();
-        } catch (e) {
+        } catch {
             return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
         }
         const { reason } = payload;

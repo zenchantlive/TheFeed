@@ -36,9 +36,6 @@ interface ClaimsTableProps {
 export function ClaimsTable({
   claims,
   loading,
-  pagination,
-  onPageChange,
-  onRefresh,
   onApprove,
   onReject,
 }: ClaimsTableProps) {

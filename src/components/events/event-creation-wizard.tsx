@@ -113,7 +113,7 @@ export function EventCreationWizard({ onClose }: EventCreationWizardProps) {
         ...prev,
         title: generated.title,
         description: generated.description,
-        eventType: generated.eventType as any, // Cast to match our type
+        eventType: (generated.eventType === "potluck" ? "potluck" : "volunteer"),
       }));
 
       // Move to step 1 (Basic Info) to review
@@ -251,7 +251,7 @@ export function EventCreationWizard({ onClose }: EventCreationWizardProps) {
         {step === 0 && (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">Let's get this party started! 🎉</h2>
+              <h2 className="text-2xl font-bold">Let&apos;s get this party started! 🎉</h2>
               <p className="text-muted-foreground">How would you like to create your event?</p>
             </div>
 
@@ -266,7 +266,7 @@ export function EventCreationWizard({ onClose }: EventCreationWizardProps) {
                 </div>
                 <h3 className="font-semibold text-lg mb-1">Quick Start with AI</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Describe your event and we'll fill in the details for you.
+                  Describe your event and we&apos;ll fill in the details for you.
                 </p>
 
                 <div className="w-full space-y-2" onClick={(e) => e.stopPropagation()}>

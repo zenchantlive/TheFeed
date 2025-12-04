@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BADGES } from "@/lib/gamification";
 
-export async function Leaderboard({ period }: { period: "week" | "month" | "alltime" }) {
+export async function Leaderboard({ }: { period: "week" | "month" | "alltime" }) {
     // TODO: Implement period filtering (requires pointsHistory aggregation)
     // For now, we'll just show all-time leaders based on total points
 
