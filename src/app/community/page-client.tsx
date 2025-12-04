@@ -11,7 +11,8 @@ import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
 import { ResourcesNearYou } from "./components/resources-near-you";
 import { ScannerNotification } from "@/components/discovery/scanner-notification";
-import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin, X } from "lucide-react";
+import { UtensilsCrossed, HandHeart, Plus, MapPin, X } from "lucide-react";
+import { MiniMap } from "./components/mini-map";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -36,7 +37,6 @@ export function CommunityPageClient(props: CommunityPageClientProps) {
 function CommunityPageView({
   posts,
   initialEvents,
-  hotItems,
   user,
 }: CommunityPageClientProps) {
   const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
@@ -87,24 +87,32 @@ function CommunityPageView({
         if (ipData.city) {
           setUserLocation(ipData.city);
 
-          // Try to get coordinates for this city so ResourcesNearYou works
-          try {
-            // Use Nominatim for consistency with the GPS fallback
-            const geoRes = await fetch(
-              `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ipData.city)}&limit=1`,
-              { headers: { "User-Agent": "TheFeed Community App" }, signal: controller.signal }
-            );
-            if (geoRes.ok) {
-              const geoData = await geoRes.json();
-              if (geoData && geoData.length > 0) {
-                setUserCoords({
-                  lat: parseFloat(geoData[0].lat),
-                  lng: parseFloat(geoData[0].lon)
-                });
+          // Use coordinates from IP API if available
+          if (ipData.latitude && ipData.longitude) {
+            setUserCoords({
+              lat: ipData.latitude,
+              lng: ipData.longitude
+            });
+          } else {
+            // Fallback: Try to get coordinates for this city
+            try {
+              // Use Nominatim for consistency with the GPS fallback
+              const geoRes = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ipData.city)}&limit=1`,
+                { headers: { "User-Agent": "TheFeed Community App" }, signal: controller.signal }
+              );
+              if (geoRes.ok) {
+                const geoData = await geoRes.json();
+                if (geoData && geoData.length > 0) {
+                  setUserCoords({
+                    lat: parseFloat(geoData[0].lat),
+                    lng: parseFloat(geoData[0].lon)
+                  });
+                }
               }
+            } catch (e) {
+              console.warn("Failed to geocode IP city", e);
             }
-          } catch (e) {
-            console.warn("Failed to geocode IP city", e);
           }
           return;
         }
@@ -389,12 +397,13 @@ function CommunityPageView({
 
           {/* RIGHT: Mini Map + Stats + Hot Items */}
           <div className="flex flex-col gap-4">
-            {/* Mini Map (TODO: implement) - Now at top */}
+            {/* Mini Map - Now at top */}
             <div className="rounded-xl border border-border/60 bg-card p-4">
               <h3 className="mb-3 text-sm font-semibold text-foreground">Nearby resources</h3>
-              <div className="flex aspect-video items-center justify-center rounded-lg bg-muted/30">
-                <p className="text-xs text-muted-foreground">Mini map loading...</p>
-              </div>
+              <MiniMap
+                userCoords={userCoords}
+                className="aspect-video w-full rounded-lg border border-border/40"
+              />
               <Button asChild size="sm" variant="outline" className="mt-3 w-full">
                 <Link href="/map">View full map</Link>
               </Button>
@@ -416,26 +425,6 @@ function CommunityPageView({
                     <div className="text-xl font-bold text-primary">{eventsCount}</div>
                     <div className="text-xs text-muted-foreground">Events</div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Hot items */}
-            {hotItems.length > 0 && (
-              <div className="rounded-xl border border-border/60 bg-card p-4">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  Tonight&apos;s hot dishes
-                </h3>
-                <div className="mt-3 space-y-2">
-                  {hotItems.slice(0, 3).map((item) => (
-                    <div key={item.id} className="text-sm">
-                      <p className="font-medium text-foreground">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.host} • {item.until}
-                      </p>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
