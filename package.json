@@ -14,7 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "db:dev": "drizzle-kit push",
     "db:reset": "drizzle-kit drop && drizzle-kit push",
-    "nuke:discovery": "tsx --env-file=.env scripts/nuke-test-data.ts",
+    "nuke:discovery": "bun scripts/nuke-test-data.ts",
     "sync-template": "node create-agentic-app/scripts/sync-templates.js"
   },
   "dependencies": {
@@ -57,6 +57,7 @@
     "react-markdown": "^10.1.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
+    "vaul": "^1.1.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -74,7 +75,6 @@
     "jest": "^29.7.0",
     "shadcn": "^3.5.0",
     "tailwindcss": "^4.1.16",
-    "tsx": "^4.20.6",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3"
   }

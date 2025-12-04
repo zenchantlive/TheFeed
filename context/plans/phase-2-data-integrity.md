@@ -417,7 +417,7 @@ function haversineDistance(
 
 **Install dependency:**
 ```bash
-pnpm add fastest-levenshtein
+bun add fastest-levenshtein
 ```
 
 **Update discovery pipeline:**
@@ -579,7 +579,7 @@ export async function validateWebsiteReachable(
 
 **Install dependency:**
 ```bash
-pnpm add libphonenumber-js
+bun add libphonenumber-js
 ```
 
 **Update normalization:**

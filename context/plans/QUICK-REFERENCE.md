@@ -109,17 +109,17 @@
 ### Development
 ```bash
 # Run dev server
-pnpm dev
+bun dev
 
 # Run database migrations
-pnpm run db:generate
-pnpm run db:migrate
+bun run db:generate
+bun run db:migrate
 
 # Run tests
-pnpm test
+bun test
 
 # Type check
-pnpm tsc --noEmit
+bun tsc --noEmit
 ```
 
 ### Testing Specific Fixes

@@ -11,8 +11,14 @@ import { PostFeed } from "./components/post-feed";
 import { LocationDialog } from "./components/location-dialog";
 import { ResourcesNearYou } from "./components/resources-near-you";
 import { ScannerNotification } from "@/components/discovery/scanner-notification";
-import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin } from "lucide-react";
+import { UtensilsCrossed, HandHeart, Plus, Sparkles, MapPin, X } from "lucide-react";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { EventCreationWizard } from "@/components/events/event-creation-wizard";
+import { HostEventButton } from "./components/host-event-button";
+import { useRouter } from "next/navigation";
 
 /**
  * Community Page Client Component
@@ -37,6 +43,22 @@ function CommunityPageView({
   const [userLocation, setUserLocation] = useState<string | null>(null);
   const [userState, setUserState] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const router = useRouter();
+
+  const handleHostEventClick = () => {
+    if (!user) {
+      // If not logged in, redirect to login (or show login modal if available)
+      // For now, we'll redirect to a login page or let the middleware handle it if we tried to visit a protected route.
+      // Since we are on a client page, let's just push to login with a return url.
+      router.push("/login?returnUrl=/community");
+      return;
+    }
+    setIsEventModalOpen(true);
+  };
+
+  const closeEventModal = () => setIsEventModalOpen(false);
 
   const handleModeToggle = (mode: "hungry" | "full") => {
     setActiveMode(activeMode === mode ? null : mode);
@@ -290,9 +312,9 @@ function CommunityPageView({
                 <p className="mt-2 text-sm text-muted-foreground">
                   RSVP to volunteer events or host your own potluck to share food.
                 </p>
-                <Button asChild size="sm" className="mt-3 w-full">
-                  <Link href="/community/events/new">Create an event</Link>
-                </Button>
+                <div className="mt-3">
+                  <HostEventButton onClick={handleHostEventClick} className="w-full" />
+                </div>
               </div>
             )}
 
@@ -322,8 +344,8 @@ function CommunityPageView({
         <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
           {/* LEFT: Events + Posts */}
           <div className="flex flex-col gap-4">
-            {/* Resources Near You */}
-            <ResourcesNearYou userCoords={userCoords} />
+            {/* Resources Near You - Hide when in "I'm Full" mode */}
+            {activeMode !== "full" && <ResourcesNearYou userCoords={userCoords} />}
 
             {/* Events Section */}
             <div className="space-y-2">
@@ -334,12 +356,7 @@ function CommunityPageView({
                   {!activeMode && "Upcoming events"}
                 </h2>
                 {activeMode === "full" && (
-                  <Button asChild size="sm" className="rounded-full">
-                    <Link href="/community/events/new">
-                      <Plus className="mr-1.5 h-4 w-4" />
-                      Host an event
-                    </Link>
-                  </Button>
+                  <HostEventButton onClick={handleHostEventClick} variant="minimal" />
                 )}
                 {!activeMode && (
                   <Button asChild variant="ghost" size="sm" className="rounded-full">
@@ -425,6 +442,29 @@ function CommunityPageView({
           </div>
         </div>
       </div>
+
+      {/* Event Creation Modal */}
+      {isDesktop ? (
+        <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Host an Event</DialogTitle>
+            </DialogHeader>
+            <EventCreationWizard onClose={closeEventModal} />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <Drawer open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
+          <DrawerContent className="max-h-[90vh]">
+            <DrawerHeader className="text-left">
+              <DrawerTitle>Host an Event</DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-8 overflow-y-auto">
+              <EventCreationWizard onClose={closeEventModal} />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }
