@@ -66,8 +66,9 @@ export async function PATCH(
         }
 
         // Prepare update data
+        const { name, description, bannerImage, address, city, state, zipCode, phone, website, services, hours } = validation.data;
         const updateData: Partial<typeof foodBanks.$inferSelect> = {
-            ...validation.data,
+            name, description, bannerImage, address, city, state, zipCode, phone, website, services, hours,
             updatedAt: new Date(),
         };
 
