@@ -109,9 +109,9 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
     eventTypeFilter,
     dateRangeFilter,
   });
-  const { posts: mapPosts } = useMapPosts({
-    postKindFilter,
-  });
+  // const { posts: mapPosts } = useMapPosts({
+  //   postKindFilter,
+  // });
 
   // Get User Location on Mount
   useEffect(() => {
