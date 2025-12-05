@@ -106,7 +106,7 @@ export function VerificationSearchBar({
   return (
     <div className="space-y-3">
       {/* Search bar and actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         {/* Search input */}
         <div className="relative flex-1">
           <Search

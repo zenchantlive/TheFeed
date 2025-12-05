@@ -20,7 +20,7 @@ interface SpeechRecognition extends EventTarget {
 }
 
 interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
+  new(): SpeechRecognition;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -168,8 +168,8 @@ export function InputField({
           className
         )}
         style={{
-          minHeight: appearance === "glass" ? "44px" : "48px",
-          maxHeight: "120px",
+          minHeight: appearance === "glass" ? "2.75rem" : "3rem",
+          maxHeight: "7.5rem",
           lineHeight: "1.5",
         }}
         aria-label="Message input"

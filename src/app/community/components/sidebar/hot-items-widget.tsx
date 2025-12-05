@@ -15,7 +15,7 @@ type HotItemsWidgetProps = {
  */
 export function HotItemsWidget({ items }: HotItemsWidgetProps) {
   return (
-    <div className="rounded-xl border-2 border-yellow-200/60 bg-gradient-to-br from-yellow-50/90 to-amber-50/80 p-4 shadow-[2px_3px_8px_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[2px_3px_12px_rgba(0,0,0,0.25)]">
+    <div className="rounded-xl border-2 border-yellow-200/60 bg-gradient-to-br from-yellow-50/90 to-amber-50/80 p-4 shadow-[0.125rem_0.1875rem_0.5rem_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[0.125rem_0.1875rem_0.75rem_rgba(0,0,0,0.25)]">
       {/* Header */}
       <div className="flex items-center gap-2 text-sm font-bold text-amber-900 dark:text-amber-100">
         <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" />

@@ -7,6 +7,8 @@ import { CheckCircle, Home, Settings, Users, UserCheck } from "lucide-react";
 
 type AdminSidebarProps = {
   userName: string;
+  className?: string;
+  onNavigate?: () => void;
 };
 
 const navItems = [
@@ -17,11 +19,11 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings, disabled: true },
 ];
 
-export function AdminSidebar({ userName }: AdminSidebarProps) {
+export function AdminSidebar({ userName, className, onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-card/80 backdrop-blur">
+    <aside className={cn("flex h-screen w-64 flex-col border-r bg-card/80 backdrop-blur", className)}>
       <div className="px-6 py-5">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">
           Admin
@@ -38,6 +40,7 @@ export function AdminSidebar({ userName }: AdminSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition",
                 item.disabled

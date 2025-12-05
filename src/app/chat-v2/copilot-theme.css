@@ -41,7 +41,7 @@ div[role="log"] {
 /* Center content like the community feed */
 [class*="copilotKitMessages"] > div,
 [class*="messagesContainer"] > div {
-  max-width: 680px !important;
+  max-width: 42.5rem !important;
   margin: 0 auto !important;
   width: 100% !important;
 }
@@ -181,7 +181,7 @@ form[class*="chat"] {
 [class*="inputWrapper"],
 [class*="copilotKitInput"] > div:first-child,
 [class*="inputContainer"] > div {
-  max-width: 680px !important;
+  max-width: 42.5rem !important;
   margin: 0 auto !important;
   display: flex !important;
   gap: 0.75rem !important;
@@ -205,8 +205,8 @@ input[type="text"] {
   font-size: 0.9375rem !important;
   color: hsl(var(--foreground)) !important;
   resize: none !important;
-  min-height: 48px !important;
-  max-height: 120px !important;
+  min-height: 3rem !important;
+  max-height: 7.5rem !important;
   transition: all 150ms ease !important;
   font-family: inherit !important;
   line-height: 1.5 !important;
@@ -280,10 +280,10 @@ button[class*="send"] {
 
   border: none !important;
   border-radius: 50% !important;
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px !important;
-  min-height: 48px !important;
+  width: 3rem !important;
+  height: 3rem !important;
+  min-width: 3rem !important;
+  min-height: 3rem !important;
 
   display: flex !important;
   align-items: center !important;
@@ -310,8 +310,8 @@ button[class*="send"] * {
 /* SVG sizing */
 [class*="copilotKitInput"] button svg,
 button[type="submit"] svg {
-  width: 20px !important;
-  height: 20px !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
 }
 
 /* Hover - subtle lift */
@@ -371,7 +371,7 @@ div[role="log"] {
 .scrollbar-thin::-webkit-scrollbar,
 [class*="copilotKitMessages"]::-webkit-scrollbar,
 div[role="log"]::-webkit-scrollbar {
-  width: 4px !important;
+  width: 0.25rem !important;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track,
@@ -417,7 +417,7 @@ div[role="log"]::-webkit-scrollbar-thumb:hover {
   .scrollbar-thin::-webkit-scrollbar,
   [class*="copilotKitMessages"]::-webkit-scrollbar,
   div[role="log"]::-webkit-scrollbar {
-    width: 8px !important;
+    width: 0.5rem !important;
   }
 
   .overflow-y-auto::-webkit-scrollbar-thumb,

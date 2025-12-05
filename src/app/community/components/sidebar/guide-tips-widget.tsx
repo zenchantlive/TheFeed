@@ -17,7 +17,7 @@ type GuideTipsWidgetProps = {
  */
 export function GuideTipsWidget({ tips }: GuideTipsWidgetProps) {
   return (
-    <div className="rounded-xl border-2 border-blue-200/60 bg-gradient-to-br from-blue-50/90 to-sky-50/80 p-4 shadow-[2px_3px_8px_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[2px_3px_12px_rgba(0,0,0,0.25)]">
+    <div className="rounded-xl border-2 border-blue-200/60 bg-gradient-to-br from-blue-50/90 to-sky-50/80 p-4 shadow-[0.125rem_0.1875rem_0.5rem_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[0.125rem_0.1875rem_0.75rem_rgba(0,0,0,0.25)]">
       {/* Header */}
       <div className="flex items-center gap-2 text-sm font-bold text-blue-900 dark:text-blue-100">
         <ChefHat className="h-5 w-5 text-blue-600 dark:text-blue-400" />
