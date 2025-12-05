@@ -429,16 +429,16 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                size="sm"
-                onClick={() => signIn.social({ provider: "google", callbackURL: "/chat" })}
-                className="text-white hover:text-white hover:bg-white/10"
+                  size="sm"
+                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
+                  className="text-white hover:text-white hover:bg-white/10"
               >
-                Sign in
+                  Sign in
               </Button>
               <Button
-                size="sm"
-                onClick={() => signIn.social({ provider: "google", callbackURL: "/chat" })}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  size="sm"
+                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Sign up
               </Button>
