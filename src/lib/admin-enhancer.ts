@@ -1,11 +1,7 @@
-import { openrouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
 import { z } from "zod";
 import { db } from "./db";
-import { foodBanks, type HoursType } from "./schema";
+import { type HoursType } from "./schema";
 import { normalizeHours, normalizePhone, normalizeServices, normalizeWebsite } from "./resource-normalizer";
-
-const TAVILY_API_URL = "https://api.tavily.com/search";
 
 export class EnhancementError extends Error {
   status: number;
@@ -17,16 +13,7 @@ export class EnhancementError extends Error {
   }
 }
 
-type TavilyResult = {
-  title: string;
-  url: string;
-  content: string;
-  raw_content?: string;
-};
 
-type TavilyResponse = {
-  results: TavilyResult[];
-};
 
 export type EnhancementProposal = {
   resourceId: string;
@@ -54,96 +41,6 @@ async function fetchResource(resourceId: string) {
   }
 
   return record;
-}
-
-async function searchResourceDocuments(resource: typeof foodBanks.$inferSelect) {
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) {
-    throw new EnhancementError("Tavily API key missing from configuration", 500);
-  }
-
-  const locationContext = [
-    resource.address,
-    resource.city,
-    resource.state,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  // Improved query: strictly look for food-related services to avoid church/childcare confusion
-  const query = `"${resource.name}" "food pantry" OR "food bank" OR "soup kitchen" OR "food distribution" hours services ${locationContext || "Sacramento, CA"}`;
-
-  console.log(`[Tavily] Searching for: ${resource.name}`);
-  console.log(`[Tavily] Query: ${query}`);
-
-  const fetchWithRetry = async (retries = 3, delay = 1000) => {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
-
-        const res = await fetch(TAVILY_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            api_key: apiKey,
-            query,
-            search_depth: "basic",
-            max_results: 5,
-            include_raw_content: true,
-          }),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (res.ok) return res;
-
-        // If 429 or 5xx, retry. If 400, fail.
-        if (res.status === 429 || res.status >= 500) {
-          console.warn(`Tavily fetch failed (attempt ${i + 1}/${retries}): ${res.status}`);
-          if (i === retries - 1) return res;
-        } else {
-          return res; // Fatal client error
-        }
-      } catch (err) {
-        console.warn(`Tavily fetch error (attempt ${i + 1}/${retries}):`, err);
-        if (i === retries - 1) throw err;
-      }
-      await new Promise((r) => setTimeout(r, delay * (i + 1))); // Exponential backoff
-    }
-    throw new Error("Max retries reached");
-  };
-
-  const response = await fetchWithRetry();
-
-  if (!response.ok) {
-    console.error("Tavily enhancement error", {
-      status: response.status,
-      statusText: response.statusText,
-    });
-    throw new EnhancementError("Failed to search for this resource", response.status);
-  }
-
-  const data = (await response.json()) as TavilyResponse;
-  console.log(`[Tavily] Found ${data.results?.length || 0} results`);
-  if (data.results?.length > 0) {
-    console.log(`[Tavily] First result: ${data.results[0].title} - ${data.results[0].url}`);
-  }
-  return data.results ?? [];
-}
-
-function truncateContent(results: TavilyResult[]): { content: string; sources: string[] } {
-  const top = results.slice(0, 3);
-  const content = top
-    .map((result) => {
-      const body = result.raw_content || result.content || "";
-      const truncated = body.slice(0, 4000);
-      return `Source: ${result.url}\nTitle: ${result.title}\n${truncated}`;
-    })
-    .join("\n\n---\n\n");
-
-  const sources = top.map((result) => result.url).filter(Boolean);
-  return { content, sources };
 }
 
 export async function enhanceResource(

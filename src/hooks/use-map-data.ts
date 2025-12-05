@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { addDays } from "date-fns";
 
 // Type definitions for Map Pins

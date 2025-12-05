@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, CheckCircle2, Map as MapIcon, ShieldCheck } from "lucide-react";
+import { MapPin, Clock, Map as MapIcon, ShieldCheck } from "lucide-react";
 import { VerificationBadge } from "./verification-badge";
 import { formatHoursForDisplay } from "@/lib/geolocation";
 import { cn } from "@/lib/utils";

@@ -166,8 +166,16 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 ### Development
 ```bash
 bun dev                              # Start dev server (don't run manually)
-bun lint && bun typecheck           # Quality checks (run after changes)
+
+# Quality checks (ALWAYS run before commits)
+bun run typecheck                    # Fast type checking (2-5s) - use this first!
+bun run lint                         # ESLint checks
+bun run typecheck && bun run lint   # Both together (recommended)
+bun run build                        # Full build (15-30s) - final verification
 ```
+
+**Best Practice**: Use `typecheck` frequently during development for fast feedback. Only run `build` before commits or deployment.
+**Reference**: See `context/rules/typescript-standards.md` for detailed coding standards.
 
 ### Database Operations
 ```bash

@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,7 +64,7 @@ export function ResourceEditor({
   /**
    * Handle field change
    */
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | string[] | Record<string, unknown>) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -389,7 +389,7 @@ export function ResourceEditor({
             </div>
           ) : (
             <div className="text-sm text-muted-foreground p-3 border rounded-lg border-dashed">
-              No hours available. Click "Find Hours" to search automatically.
+              No hours available. Click &quot;Find Hours&quot; to search automatically.
             </div>
           )}
         </div>

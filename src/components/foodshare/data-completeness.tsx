@@ -9,7 +9,7 @@
 
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, CheckCircle2, Pencil } from "lucide-react";
+import { AlertCircle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HoursType } from "@/lib/schema";
 

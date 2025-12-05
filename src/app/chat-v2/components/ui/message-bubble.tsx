@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getChatStyles } from "@/app/chat-v2/lib/theme-utils";
 
 interface MessageBubbleProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   role: "user" | "assistant";
@@ -137,32 +138,32 @@ export function MessageBubble({
           )}>
             {/* Streaming indicator */}
             {isStreaming && (
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex space-x-1">
-                <div className={cn(
-                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
-                  "animate-bounce"
-                )} style={{ animationDelay: "0ms" }} />
-                <div className={cn(
-                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
-                  "animate-bounce"
-                )} style={{ animationDelay: "150ms" }} />
-                <div className={cn(
-                  "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
-                  "animate-bounce"
-                )} style={{ animationDelay: "300ms" }} />
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex space-x-1">
+                  <div className={cn(
+                    "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
+                    "animate-bounce"
+                  )} style={{ animationDelay: "0ms" }} />
+                  <div className={cn(
+                    "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
+                    "animate-bounce"
+                  )} style={{ animationDelay: "150ms" }} />
+                  <div className={cn(
+                    "w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary-foreground/60 rounded-full",
+                    "animate-bounce"
+                  )} style={{ animationDelay: "300ms" }} />
+                </div>
+                <span className="text-[0.7rem] sm:text-xs opacity-75">Typing...</span>
               </div>
-              <span className="text-[0.7rem] sm:text-xs opacity-75">Typing...</span>
-            </div>
-          )}
+            )}
 
-          <div className={cn(
-            "text-sm leading-relaxed",
-            currentRole.content
-          )}>
-            {bubbleContent}
+            <div className={cn(
+              "text-sm leading-relaxed",
+              currentRole.content
+            )}>
+              {bubbleContent}
+            </div>
           </div>
-        </div>
 
           {/* Message Actions - only show for assistant messages */}
           {role === "assistant" && !isStreaming && (
@@ -232,7 +233,7 @@ export function MessageGroup({ children, className, ...props }: MessageGroupProp
   const styles = getChatStyles();
 
   return (
-    <div 
+    <div
       className={cn(
         "flex flex-col gap-4 p-4",
         styles.container,

@@ -9,7 +9,7 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  const headerList = headers();
+  const headerList = await headers();
   const request = new Request("http://localhost/admin", {
     headers: headerList,
   });

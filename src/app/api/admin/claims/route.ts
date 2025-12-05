@@ -11,12 +11,7 @@ import { eq, desc } from "drizzle-orm";
 
 type ClaimStatus = "pending" | "approved" | "rejected" | "withdrawn" | "all";
 
-interface ClaimsQueryParams {
-  status?: ClaimStatus;
-  page?: string;
-  limit?: string;
-  search?: string;
-}
+
 
 export const GET = withAdminAuth(async (req: NextRequest) => {
   try {

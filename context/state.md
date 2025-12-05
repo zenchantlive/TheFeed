@@ -1,9 +1,9 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-12-02
+Last updated: 2025-12-04
 
 ## Current Focus: Phase 5 - Community Engagement (ACTIVE)
 
-**Status**: Phase 5 Provider Claims implementation in progress.
+**Status**: Provider Claims implementation complete. Build issues resolved.
 
 ### Active Work:
 - **Phase 5.2a-c ✅ Complete**: Provider claims schema, admin UI, query layer, submission API
@@ -16,6 +16,22 @@ Last updated: 2025-12-02
 ---
 
 ## Recent Deliverables (December 2025)
+
+### Build System & Type Safety (December 4, 2025) ✅
+- **Comprehensive TypeScript Error Resolution**: Fixed 50+ build-blocking errors
+  - Eliminated all `@typescript-eslint/no-explicit-any` violations
+  - Removed all unused variables and imports (`@typescript-eslint/no-unused-vars`)
+  - Fixed component prop type mismatches
+  - Resolved Drizzle geometry type conflicts with PostGIS SQL operations
+  - Added missing type exports (e.g., `HotItem` in community types)
+- **Build Process Improvements**:
+  - Documented use of `bun run typecheck` for fast error detection (2-5s vs 15-30s builds)
+  - Established pre-commit workflow: `typecheck → lint → build`
+- **New Documentation**:
+  - Created `context/rules/typescript-standards.md` with comprehensive TypeScript coding standards
+  - Covers: type safety, prop management, Drizzle patterns, Next.js 15 route handlers
+- **Branch**: `fix/build-issues`
+- **Result**: Clean production build, deployed to Vercel successfully
 
 ### Phase 5.2: Provider Claims (Subphases 5.2a-c) ✅
 - **Database Schema**: Created `providerClaims` table with status tracking and review metadata
@@ -119,14 +135,14 @@ Last updated: 2025-12-02
 
 ## Known Issues / Alerts
 - **CRITICAL**: `/provider/dashboard` is experiencing an infinite loading loop. Needs immediate investigation.
-- **TypeScript Errors**: Pre-existing typecheck errors (7 errors) - not blocking Phase 5 work:
-  - admin/layout.tsx headers issue
-  - Missing select component import
-  - Event card prop mismatches
-  - Admin queries geom field
 - **Phase 3 Pending**: User suggestion flow (`suggest-update` API) and Mobile-first card optimization are pending.
 - **CopilotKit**: Blank assistant bubbles still appear occasionally.
 - **Supabase Warning**: `supautils.disable_program` warning is harmless.
+
+## TypeScript / Build Quality
+- ✅ **All TypeScript errors resolved** (December 4, 2025)
+- **Pre-commit standard**: `bun run typecheck && bun run lint` before all commits
+- **Reference**: See `context/rules/typescript-standards.md` for coding standards
 
 ## Summary for Memory/Restart
 - **Map Page**: Now uses a sidebar for details, auto-centers, and supports deep linking. Code is modular.

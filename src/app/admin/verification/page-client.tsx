@@ -13,7 +13,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { VerificationSearchBar } from "./components/verification-search-bar";
@@ -80,7 +80,7 @@ export function VerificationPageClient({
   }, [initialResources, filters, archiveMode]);
 
   // Reset page when filters change
-  useMemo(() => {
+  useEffect(() => {
     setPage(1);
   }, [filters, archiveMode]);
 
@@ -101,11 +101,7 @@ export function VerificationPageClient({
       if (!response.ok) throw new Error("Verification failed");
 
       // Show success message
-      alert(
-        `✅ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
-        } verified`
-      );
+      alert(`✅ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"} verified`);
 
       // Clear selection
       setSelectedIds([]);
@@ -142,11 +138,7 @@ export function VerificationPageClient({
       const data = await response.json();
 
       // Show success message
-      alert(
-        `✨ ${data.enhanced} ${
-          data.enhanced === 1 ? "resource" : "resources"
-        } enhanced`
-      );
+      alert(`✨ ${data.enhanced} ${data.enhanced === 1 ? "resource" : "resources"} enhanced`);
 
       // Clear selection
       setSelectedIds([]);
@@ -166,11 +158,7 @@ export function VerificationPageClient({
    */
   const handleReject = async (resourceIds: string[]) => {
     // Confirm rejection
-    const confirmed = confirm(
-      `Are you sure you want to reject ${resourceIds.length} ${
-        resourceIds.length === 1 ? "resource" : "resources"
-      }?`
-    );
+    const confirmed = confirm(`Are you sure you want to reject ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"}?`);
 
     if (!confirmed) return;
 
@@ -185,11 +173,7 @@ export function VerificationPageClient({
       if (!response.ok) throw new Error("Rejection failed");
 
       // Show success message
-      alert(
-        `❌ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
-        } rejected`
-      );
+      alert(`❌ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"} rejected`);
 
       // Clear selection
       setSelectedIds([]);
@@ -220,11 +204,7 @@ export function VerificationPageClient({
       if (!response.ok) throw new Error("Flagging failed");
 
       // Show success message
-      alert(
-        `⚠️ ${resourceIds.length} ${
-          resourceIds.length === 1 ? "resource" : "resources"
-        } flagged for review`
-      );
+      alert(`⚠️ ${resourceIds.length} ${resourceIds.length === 1 ? "resource" : "resources"} flagged for review`);
 
       // Clear selection
       setSelectedIds([]);

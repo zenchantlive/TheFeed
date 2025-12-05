@@ -66,7 +66,7 @@ export function EditResourceForm({ resource, onSuccess }: EditResourceFormProps)
         if (hours.trim()) {
             try {
                 parsedHours = JSON.parse(hours);
-            } catch (e) {
+            } catch {
                 setError("Invalid hours JSON format. Please check your syntax.");
                 setLoading(false);
                 return;

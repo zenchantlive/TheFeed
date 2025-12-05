@@ -13,7 +13,7 @@ export async function logAdminAction(params: {
   action: string;
   resourceId?: string;
   affectedIds?: string[];
-  changes?: Record<string, { old: any; new: any }>;
+  changes?: Record<string, { old: unknown; new: unknown }>;
   reason?: string;
   ipAddress?: string | null;
   userAgent?: string | null;

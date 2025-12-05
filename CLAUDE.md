@@ -38,33 +38,42 @@ You are expected to:
 ## Essential Commands
 
 ```bash
-# Development (user runs, AI should not)
-pnpm dev
+# Development (user runs from Windows PowerShell, not WSL)
+bun dev
 
-# Production build
-pnpm build
-pnpm start
+# Quality Checks (MANDATORY before commits - see context/rules/typescript-standards.md)
+bun run typecheck                    # Fast type checking (2-5s) - use this first!
+bun run lint                         # ESLint checks
+bun run typecheck && bun run lint   # Both together (recommended workflow)
 
-# Quality (ALWAYS run / respect before merge)
-pnpm lint
-pnpm typecheck
+# Production build (slower, final verification only)
+bun run build
+bun start
 
 # Database
-pnpm run db:generate   # Generate migrations when schema changes
-pnpm run db:migrate    # Apply migrations
-pnpm run db:push       # Push schema directly (development)
-pnpm run db:studio     # Open Drizzle Studio UI
-pnpm run db:dev        # Alias for db:push
-pnpm run db:reset      # Drop and recreate schema (DANGEROUS)
+bun run db:generate   # Generate migrations when schema changes
+bun run db:migrate    # Apply migrations
+bun run db:push       # Push schema directly (development)
+bun run db:studio     # Open Drizzle Studio UI
+bun run db:dev        # Alias for db:push
+bun run db:reset      # Drop and recreate schema (DANGEROUS)
 
 # Seeding & Scripts
-pnpm exec tsx --env-file=.env scripts/seed-food-banks.ts        # Seed Bay Area food banks
-pnpm exec tsx --env-file=.env scripts/dev-terminal-chat.ts      # Test chat tools in terminal
-pnpm exec tsx --env-file=.env scripts/test-chat-tools.ts        # Unit test for AI tools
-pnpm exec tsx --env-file=.env scripts/test-copilotkit-backend.ts # Test CopilotKit backend
+bun run scripts/seed-food-banks.ts        # Seed Bay Area food banks
+bun run scripts/dev-terminal-chat.ts      # Test chat tools in terminal
+bun run scripts/test-chat-tools.ts        # Unit test for AI tools
 ```
 
-Use pnpm exclusively.
+**Package Manager**: Use `bun` exclusively (migrated from pnpm). Always run from Windows PowerShell, not WSL.
+
+**Development Workflow**:
+1. Make changes
+2. Run `bun run typecheck` (fast, shows all errors)
+3. Fix errors
+4. Run `bun run lint`
+5. Only then run `bun run build` for final verification
+
+**See Also**: `context/rules/typescript-standards.md` for detailed TypeScript coding standards.
 
 ## Environment Variables
 
@@ -553,27 +562,40 @@ Located in `src/components/ui/`:
 
 Always consult and update relevant context files in `/context/`:
 
+### Core Documentation
 - `context/state.md` - Current sprint, completed work, next steps
 - `context/info.md` - Vision, roadmap, high-level architecture
 - `context/decisions.md` - Architecture decisions and rationales
 - `context/insights.md` - UX/product learnings
 - `context/schema.md` - Database schema overview
+
+### Standards & Guidelines
+- **`context/rules/typescript-standards.md`** - ⭐ TypeScript coding standards (MUST READ)
+  - Type safety rules
+  - Component prop patterns
+  - Drizzle ORM best practices
+  - Pre-commit workflow
+
+### Migration & Troubleshooting
 - `context/events-plan.md` - Event system implementation plan
 - `context/copilotkit-migration-plan.md` - CopilotKit migration details
 - `context/chat-v2-typescript-fixes.md` - TypeScript fixes for chat v2
 - `context/lucide-react-troubleshooting.md` - Icon library troubleshooting
+
+### Phased Plans
 - **`context/plans/`** - Phased improvement plans:
   - `phase-1-critical-fixes.md` - ✅ COMPLETE (Week 1-2)
-  - `phase-2-data-integrity.md` - 🔄 NEXT (Week 3-4)
-  - `phase-3-trust-ux.md` - (Week 5-6)
-  - `phase-4-performance-scale.md` - (Week 7)
-  - `phase-5-community-engagement.md` - (Week 8)
+  - `phase-2-data-integrity.md` - ✅ COMPLETE (Week 3-4)
+  - `phase-3-trust-ux.md` - ✅ COMPLETE (Week 5-6)
+  - `phase-4-performance-scale.md` - 🔄 IN PROGRESS (Week 7)
+  - `phase-5-community-engagement.md` - 🔄 IN PROGRESS (Week 8)
 
 **When to update:**
 - When changing architecture, critical flows, or semantics for posts/events
 - When making significant UI/UX changes
 - When completing major features or phases
 - When making important technical decisions
+- **When adding new coding patterns or standards** → Update `context/rules/typescript-standards.md`
 
 ## Styling & UX Guidelines
 
@@ -595,27 +617,37 @@ Always consult and update relevant context files in `/context/`:
 
 When working in this repo:
 
-1. Read `foodshare/context/state.md` to understand current focus.
-2. For community page work:
-   - Start from `src/app/community/page.tsx` + `page-client.tsx`.
-   - Preserve existing mode/composer/snapshot semantics.
-3. Keep types strict:
-   - No `any`.
-   - Use shared types from schema/data layers.
-4. Run `pnpm lint && pnpm typecheck` before considering work complete.
-5. Update context files when:
-   - Changing routes, major components, or introducing new modes/behaviors.
+1. **Before starting:** Read `context/state.md` to understand current focus
+2. **During development:**
+   - Keep types strict: No `any`, use Drizzle's `$inferSelect`/`$inferInsert`
+   - Run `bun run typecheck` frequently for fast feedback (2-5s)
+   - For community page work: Start from `src/app/community/page.tsx` + `page-client.tsx`
+3. **Before committing:**
+   ```bash
+   bun run typecheck && bun run lint && bun run build
+   ```
+4. **After completing work:**
+   - Update `context/state.md` with progress
+   - Update `context/rules/typescript-standards.md` if adding new patterns
+   - Update this file (CLAUDE.md) for major architectural changes
 
 ## Development Best Practices
 
 ### Code Quality
-- **ALWAYS run before commit:**
-  ```bash
-  pnpm typecheck && pnpm lint
-  ```
-- **No `any` types:** Use strict TypeScript, prefer proper type definitions
+
+**MANDATORY Pre-Commit Workflow:**
+```bash
+bun run typecheck && bun run lint && bun run build
+```
+
+**Core Rules** (see `context/rules/typescript-standards.md` for complete standards):
+- **No `any` types:** Use Drizzle's `$inferSelect`/`$inferInsert`, explicit interfaces, or type assertions as last resort
+- **No unused variables/imports:** Remove immediately when caught by linter
+- **Component props:** Always match type definitions with actual usage
+- **Export types:** If used in multiple files, must be exported
 - **Use shared types:** Import from `src/lib/schema.ts` and component type files
 - **Component modularity:** Keep components under 300 lines; extract to subcomponents
+- **Fast feedback loop:** Use `typecheck` (2-5s) instead of `build` (15-30s) during development
 
 ### Git Workflow
 1. Create feature branches: `git checkout -b feat/your-feature`
@@ -626,31 +658,17 @@ When working in this repo:
 
 ### Common Pitfalls & Solutions
 
-**Problem:** Blank assistant bubble in chat
-- **Solution:** Use `/chat-v2` with CopilotKit instead of legacy `/chat`
+**TypeScript/Build Errors:**
+- See `context/rules/typescript-standards.md` for comprehensive troubleshooting
 
-**Problem:** Icon library breaking after upgrade
-- **Solution:** Pin `lucide-react` version, test dev server immediately, clear `.next`
-- **Reference:** `context/lucide-react-troubleshooting.md`
-
-**Problem:** Next.js/Tailwind native dependencies failing
-- **Solution:** Run `pnpm install` from Windows PowerShell (not WSL) per USER RULES
-
-**Problem:** Type errors in event/post queries
-- **Solution:** Check `src/lib/schema.ts` for latest types, use Drizzle's inferred types
-
-**Problem:** Auth middleware blocking routes
-- **Solution:** Check `src/lib/auth-middleware.ts`, ensure route is in public list
-
-**Problem:** Enhancement API returns 500 error (schema error)
-- **Solution:** See `context/plans/data-quality-and-ux-improvements.md` Phase 1.1 for fix
-- **Issue:** Using `generateText` when OpenRouter expects `generateObject` with Zod schema
-
-**Problem:** Resources with (0,0) coordinates appearing on map
-- **Solution:** See Phase 1.3 - geocoding failures should skip insertion, not insert invalid coords
-
-**Problem:** Duplicate resources being inserted
-- **Solution:** See Phase 2.2 - enhanced duplicate detection with multi-factor scoring
+**Quick Reference:**
+- **Type errors:** Use Drizzle's `$inferSelect`/`$inferInsert`, never `any`
+- **Unused imports:** Remove immediately when linter complains
+- **Build failing:** Run `bun run typecheck` first to see all errors at once
+- **Dependencies issues:** Run `bun install` from Windows PowerShell (not WSL)
+- **Icon library breaking:** Pin `lucide-react` version, see `context/lucide-react-troubleshooting.md`
+- **Chat blank bubbles:** Use `/chat-v2` with CopilotKit instead of legacy `/chat`
+- **Auth blocking routes:** Check `src/lib/auth-middleware.ts` public routes list
 
 ### Performance Considerations
 - Use Server Components by default (`src/app/**/page.tsx`)
@@ -726,6 +744,15 @@ This file is your authoritative onboarding for how to think about and extend The
 
 ### USER RULES (DO NOT DELETE)
 
-- Always run `pnpm install`/`pnpm add`/`pnpm dev` from **Windows PowerShell**, never from WSL, so that optional native dependencies (Next SWC, lightningcss, etc.) are installed for Windows only.
+**Package Management:**
+- Always run `bun install`/`bun add`/`bun dev` from **Windows PowerShell**, never from WSL, so that optional native dependencies (Next SWC, lightningcss, etc.) are installed for Windows only.
+- The project uses **Bun** (migrated from pnpm). Do not use pnpm commands.
+
+**Code Quality:**
+- **MANDATORY before every commit:** Run `bun run typecheck && bun run lint && bun run build`
+- Use `bun run typecheck` frequently during development for fast feedback (2-5s vs 15-30s builds)
+- Never use `any` types - see `context/rules/typescript-standards.md` for proper patterns
+
+**Dependencies:**
 - Pin icon-library versions in `package.json` instead of using wide `^` ranges; that avoids picking up broken builds automatically.
 - When upgrading `lucide-react`, test the dev server immediately and keep `.next` clean so regressions surface quickly.

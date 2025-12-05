@@ -12,14 +12,16 @@ import { randomUUID } from "crypto";
 import { hasPendingClaim } from "@/lib/provider-queries";
 
 type RouteContext = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 interface ClaimSubmissionBody {
   claimReason: string;
   verificationInfo?: {
-    email?: string;
-    phone?: string;
+    jobTitle: string;
+    workEmail?: string;
+    workPhone: string;
+    verificationMethod: string;
   };
 }
 
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = params;
+    const { id: resourceId } = await params;
     const body = (await req.json()) as ClaimSubmissionBody;
     const { claimReason, verificationInfo } = body;
 
@@ -140,7 +142,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = params;
+    const { id: resourceId } = await params;
 
     // Get user's most recent claim for this resource
     const claim = await db.query.providerClaims.findFirst({
@@ -185,7 +187,7 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: resourceId } = params;
+    const { id: resourceId } = await params;
 
     // Find user's pending claim for this resource
     const claim = await db.query.providerClaims.findFirst({

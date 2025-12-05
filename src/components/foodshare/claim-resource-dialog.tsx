@@ -69,7 +69,7 @@ export function ClaimResourceDialog({
                 setError("Please provide a valid US phone number.");
                 return;
             }
-        } catch (e) {
+        } catch {
             setError("Please provide a valid phone number.");
             return;
         }

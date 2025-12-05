@@ -35,7 +35,7 @@ export async function createResourceVersion(
   await db.insert(resourceVersions).values({
     resourceId,
     version: nextVersion,
-    snapshot: resource as any,
+    snapshot: resource as Record<string, unknown>,
     changedFields,
     changedBy,
     changeReason,
@@ -69,7 +69,7 @@ export async function rollbackResourceVersion(
   if (!version) throw new Error("Version not found");
 
   // Restore snapshot
-  const snapshot = version.snapshot as any;
+  const snapshot = version.snapshot as Record<string, unknown>;
   await db
     .update(foodBanks)
     .set({

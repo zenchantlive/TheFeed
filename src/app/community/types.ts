@@ -32,13 +32,7 @@ export type FeedPost = {
   }>;
 };
 
-export type HotItem = {
-  id: string;
-  title: string;
-  host: string;
-  until: string;
-  distance: string;
-};
+
 
 export type GuideMoment = {
   id: string;
@@ -53,6 +47,14 @@ export type VibeStat = {
   label: string;
   value: string;
   description?: string;
+};
+
+export type HotItem = {
+  id: string;
+  title: string;
+  host: string;
+  until: string;
+  distance: string;
 };
 
 export type EventCardData = {
@@ -70,7 +72,6 @@ export type EventCardData = {
 export type CommunityPageClientProps = {
   posts: FeedPost[];
   initialEvents: EventCardData[];
-  hotItems: HotItem[];
   guideMoments: GuideMoment[];
   vibeStats: VibeStat[];
   user?: {

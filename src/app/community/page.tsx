@@ -5,7 +5,6 @@ import { CommunityPageClient } from "./page-client";
 import type {
   FeedPost,
   GuideMoment,
-  HotItem,
   VibeStat,
   EventCardData,
 } from "./types";
@@ -53,22 +52,7 @@ function formatUntil(expiresAt: Date): string {
 
 
 
-const HOT_ITEMS: HotItem[] = [
-  {
-    id: "hot-1",
-    title: "Coconut lentil soup & flatbread",
-    host: "Sarah L.",
-    until: "Ready until 8:30 pm",
-    distance: "0.2 mi away",
-  },
-  {
-    id: "hot-2",
-    title: "Veggie curry leftovers",
-    host: "Imani",
-    until: "Pickup until 9:00 pm",
-    distance: "0.5 mi away",
-  },
-];
+
 
 const GUIDE_MOMENTS: GuideMoment[] = [
   {
@@ -173,7 +157,6 @@ export default async function CommunityPage() {
     <CommunityPageClient
       posts={posts}
       initialEvents={events}
-      hotItems={HOT_ITEMS}
       guideMoments={GUIDE_MOMENTS}
       vibeStats={VIBE_STATS}
       user={{
