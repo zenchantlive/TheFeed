@@ -1,7 +1,7 @@
 "use client";
 
-import { useSession, signOut } from "@/lib/auth-client";
-import { SignInButton } from "./sign-in-button";
+import { useSession, signOut, signIn } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -25,8 +25,30 @@ export function UserProfile() {
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center gap-4 p-6">
-        <SignInButton />
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => {
+            await signIn.social({
+              provider: "google",
+              callbackURL: "/profile",
+            });
+          }}
+        >
+          Sign in
+        </Button>
+        <Button
+          size="sm"
+          onClick={async () => {
+            await signIn.social({
+              provider: "google",
+              callbackURL: "/profile",
+            });
+          }}
+        >
+          Sign up
+        </Button>
       </div>
     );
   }

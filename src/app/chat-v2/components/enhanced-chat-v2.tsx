@@ -13,6 +13,8 @@ import { EmptyState } from "./empty-state";
 import { useChatSuggestions } from "../hooks/use-chat-suggestions";
 import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { signIn } from "@/lib/auth-client";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
 import { formatTimestamp } from "../lib/date-utils";
 
@@ -418,10 +420,30 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
           <p className="text-xs sm:text-xs text-white/70 truncate">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-white/15 bg-background/40 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
-            <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "You"} />
-            <AvatarFallback className="text-xs sm:text-sm">{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
-          </Avatar>
+          {user ? (
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-white/15 bg-background/40 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
+              <AvatarImage src={user.image ?? undefined} alt={user.name ?? "You"} />
+              <AvatarFallback className="text-xs sm:text-sm">{getInitials(user.name || user.email || "You")}</AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signIn.social({ provider: "google", callbackURL: "/chat" })}
+                className="text-white hover:text-white hover:bg-white/10"
+              >
+                Sign in
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => signIn.social({ provider: "google", callbackURL: "/chat" })}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Sign up
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
