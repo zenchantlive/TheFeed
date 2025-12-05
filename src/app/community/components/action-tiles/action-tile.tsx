@@ -31,11 +31,11 @@ export function ActionTile({
       className={`
         group relative flex flex-col items-center gap-3 rounded-xl border-2 p-6
         ${colorClasses}
-        shadow-[3px_4px_8px_rgba(0,0,0,0.08)]
-        dark:shadow-[3px_4px_12px_rgba(0,0,0,0.25)]
+        shadow-[0.1875rem_0.25rem_0.5rem_rgba(0,0,0,0.08)]
+        dark:shadow-[0.1875rem_0.25rem_0.75rem_rgba(0,0,0,0.25)]
         transition-all duration-200
-        hover:shadow-[4px_6px_14px_rgba(0,0,0,0.12)]
-        hover:dark:shadow-[4px_6px_18px_rgba(0,0,0,0.35)]
+        hover:shadow-[0.25rem_0.375rem_0.875rem_rgba(0,0,0,0.12)]
+        hover:dark:shadow-[0.25rem_0.375rem_1.125rem_rgba(0,0,0,0.35)]
         hover:-translate-y-1 hover:scale-[1.02]
         focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2
         active:scale-[0.98]
@@ -46,7 +46,7 @@ export function ActionTile({
         className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rounded-full shadow-md"
         style={{
           backgroundColor: PIN_COLORS[pinColor],
-          boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 2px rgba(0,0,0,0.25)",
+          boxShadow: "0 0.125rem 0.25rem rgba(0,0,0,0.2), inset 0 -0.0625rem 0.125rem rgba(0,0,0,0.25)",
         }}
       >
         {/* Pushpin highlight */}

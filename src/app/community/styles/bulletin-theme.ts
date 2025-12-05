@@ -44,11 +44,11 @@ export const HANDWRITTEN_FONTS = {
 export const bulletinCard = (color: keyof typeof CARD_COLORS = "white"): string => {
   return `
     relative rounded-lg border-2 ${CARD_COLORS[color]}
-    shadow-[2px_4px_8px_rgba(0,0,0,0.08)]
-    dark:shadow-[2px_4px_12px_rgba(0,0,0,0.3)]
+    shadow-[0.125rem_0.25rem_0.5rem_rgba(0,0,0,0.08)]
+    dark:shadow-[0.125rem_0.25rem_0.75rem_rgba(0,0,0,0.3)]
     transition-all duration-200
-    hover:shadow-[3px_6px_12px_rgba(0,0,0,0.12)]
-    hover:dark:shadow-[3px_6px_16px_rgba(0,0,0,0.4)]
+    hover:shadow-[0.1875rem_0.375rem_0.75rem_rgba(0,0,0,0.12)]
+    hover:dark:shadow-[0.1875rem_0.375rem_1rem_rgba(0,0,0,0.4)]
     hover:-translate-y-0.5
   `.trim().replace(/\s+/g, ' ');
 };
@@ -58,14 +58,14 @@ export const bulletinCard = (color: keyof typeof CARD_COLORS = "white"): string 
  */
 export const pushpinStyle = (color: keyof typeof PIN_COLORS = "red"): React.CSSProperties => ({
   position: "absolute",
-  top: "-8px",
+  top: "-0.5rem",
   left: "50%",
   transform: "translateX(-50%)",
-  width: "16px",
-  height: "16px",
+  width: "1rem",
+  height: "1rem",
   borderRadius: "50%",
   backgroundColor: PIN_COLORS[color],
-  boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 2px rgba(0,0,0,0.3)",
+  boxShadow: "0 0.125rem 0.25rem rgba(0,0,0,0.2), inset 0 -0.0625rem 0.125rem rgba(0,0,0,0.3)",
 });
 
 /**

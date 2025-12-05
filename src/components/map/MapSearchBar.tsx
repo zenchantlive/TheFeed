@@ -37,11 +37,12 @@ export function MapSearchBar({
   onUseLocation,
   isLocating,
   locationError,
-}: MapSearchBarProps) {
+  className,
+}: MapSearchBarProps & { className?: string }) {
   const [showFilters, setShowFilters] = useState(false);
 
   return (
-    <div className="rounded-3xl bg-white/95 p-4 shadow-lg shadow-black/10 ring-1 ring-black/5 backdrop-blur-md dark:bg-slate-900/80 dark:ring-white/10">
+    <div className={cn("rounded-3xl bg-white/95 p-4 shadow-lg shadow-black/10 ring-1 ring-black/5 backdrop-blur-md dark:bg-slate-900/80 dark:ring-white/10", className)}>
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <input

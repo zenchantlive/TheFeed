@@ -227,8 +227,26 @@ function CommunityPageView({
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-4">
         {/* Page Header with Mode Toggles */}
-        <div className="mb-4 flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold text-foreground">Community</h2>
+        <div className="relative mb-4 flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">Community</h2>
+            {/* Compact Mobile Banner for Active Modes */}
+            {activeMode === "hungry" && (
+              <div className="flex items-center gap-2 rounded-full bg-hungry-start/10 px-3 py-1 text-xs font-medium text-hungry-end sm:hidden">
+                <span>Need help now?</span>
+                <Button asChild size="sm" variant="link" className="h-auto p-0 text-xs font-bold text-hungry-end underline">
+                  <Link href="/map">Find food</Link>
+                </Button>
+              </div>
+            )}
+            {activeMode === "full" && (
+              <div className="flex items-center gap-2 rounded-full bg-full-start/10 px-3 py-1 text-xs font-medium text-full-end sm:hidden">
+                <span>Ready to help?</span>
+                <HostEventButton onClick={handleHostEventClick} className="h-auto p-0 text-xs font-bold text-full-end underline bg-transparent hover:bg-transparent shadow-none" />
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
@@ -260,7 +278,7 @@ function CommunityPageView({
         </div>
 
         {/* Clean 2-Column: Location + Greeting | Urgency Card */}
-        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_21.25rem]">
           {/* Left: Location Bar + Friendly Greeting */}
           <div className="flex flex-col items-center justify-center space-y-3 text-center">
             {/* Location Badge */}
@@ -302,8 +320,9 @@ function CommunityPageView({
               />
             )}
 
+            {/* Desktop-only Cards for Modes (Hidden on mobile as they are now in header) */}
             {activeMode === "hungry" && (
-              <div className="rounded-xl border border-hungry-end/30 bg-gradient-to-br from-hungry-start/5 to-hungry-end/5 p-4">
+              <div className="hidden rounded-xl border border-hungry-end/30 bg-gradient-to-br from-hungry-start/5 to-hungry-end/5 p-4 sm:block">
                 <h3 className="font-semibold text-hungry-end">Need help now?</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   RSVP to food events below, or check the map for food banks open now.
@@ -315,7 +334,7 @@ function CommunityPageView({
             )}
 
             {activeMode === "full" && (
-              <div className="rounded-xl border border-full-end/30 bg-gradient-to-br from-full-start/5 to-full-end/5 p-4">
+              <div className="hidden rounded-xl border border-full-end/30 bg-gradient-to-br from-full-start/5 to-full-end/5 p-4 sm:block">
                 <h3 className="font-semibold text-full-end">Ready to help?</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   RSVP to volunteer events or host your own potluck to share food.
@@ -349,7 +368,7 @@ function CommunityPageView({
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-4 lg:grid-cols-[1fr_21.25rem]">
           {/* LEFT: Events + Posts */}
           <div className="flex flex-col gap-4">
             {/* Resources Near You - Hide when in "I'm Full" mode */}

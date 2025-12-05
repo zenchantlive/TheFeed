@@ -12,7 +12,7 @@ import { MapPin } from "lucide-react";
  */
 export function MapCTAWidget() {
   return (
-    <div className="rounded-xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50/90 to-teal-50/80 p-4 shadow-[2px_3px_8px_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[2px_3px_12px_rgba(0,0,0,0.25)]">
+    <div className="rounded-xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50/90 to-teal-50/80 p-4 shadow-[0.125rem_0.1875rem_0.5rem_rgba(0,0,0,0.08)] dark:border-slate-700/60 dark:from-slate-800/90 dark:to-slate-800/80 dark:shadow-[0.125rem_0.1875rem_0.75rem_rgba(0,0,0,0.25)]">
       <p className="text-sm text-slate-700 dark:text-slate-300">
         Need a map view of these spots? Jump to the food map or ask the sous-chef.
       </p>

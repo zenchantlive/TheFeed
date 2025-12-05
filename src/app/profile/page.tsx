@@ -61,15 +61,15 @@ export default async function ProfilePage() {
 
   const saved: SavedLocationRecord[] = user
     ? await db
-        .select({
-          id: savedLocations.id,
-          createdAt: savedLocations.createdAt,
-          foodBank: foodBanks,
-        })
-        .from(savedLocations)
-        .leftJoin(foodBanks, eq(savedLocations.foodBankId, foodBanks.id))
-        .where(eq(savedLocations.userId, user.id))
-        .orderBy(desc(savedLocations.createdAt))
+      .select({
+        id: savedLocations.id,
+        createdAt: savedLocations.createdAt,
+        foodBank: foodBanks,
+      })
+      .from(savedLocations)
+      .leftJoin(foodBanks, eq(savedLocations.foodBankId, foodBanks.id))
+      .where(eq(savedLocations.userId, user.id))
+      .orderBy(desc(savedLocations.createdAt))
     : [];
 
   return (
@@ -233,8 +233,14 @@ export default async function ProfilePage() {
               Keep your go-to food banks handy across devices.
             </p>
           </div>
-          <div className="hidden md:block">
-            <Button asChild variant="outline">
+          <div>
+            <Button asChild variant="outline" size="sm" className="md:hidden">
+              <Link href="/map">
+                <BookmarkPlus className="h-4 w-4" />
+                <span className="sr-only">Add new</span>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="hidden md:inline-flex">
               <Link href="/map">
                 <BookmarkPlus className="mr-2 h-4 w-4" />
                 Add new

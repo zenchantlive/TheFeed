@@ -13,6 +13,8 @@ import { EmptyState } from "./empty-state";
 import { useChatSuggestions } from "../hooks/use-chat-suggestions";
 import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { signIn } from "@/lib/auth-client";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
 import { formatTimestamp } from "../lib/date-utils";
 
@@ -245,7 +247,7 @@ export function EnhancedChatV2({
     }
     const selection =
       contextualTypingMessages[
-        Math.floor(Math.random() * contextualTypingMessages.length)
+      Math.floor(Math.random() * contextualTypingMessages.length)
       ];
     setTypingMessage(selection);
   }, [isLoading, messages.length]);
@@ -307,9 +309,9 @@ export function EnhancedChatV2({
       {/* Messages - naturally flowing content with padding for fixed header/composer */}
       <div
         className={cn(
-          "pt-[100px] px-3 sm:px-6 md:px-8",
-          hasChatHistory ? "space-y-3 sm:space-y-4" : "flex min-h-[calc(100vh-100px)] items-center justify-center",
-          "mx-auto w-full max-w-full md:max-w-[800px] lg:max-w-[900px]"
+          "pt-[5.3125rem] sm:pt-[6.25rem] px-3 sm:px-6 md:px-8",
+          hasChatHistory ? "space-y-3 sm:space-y-4" : "flex min-h-[calc(100vh-6.25rem)] items-center justify-center",
+          "mx-auto w-full max-w-full md:max-w-[50rem] lg:max-w-[56.25rem]"
         )}
         style={{ paddingBottom: `${(bottomNavHeight || 0) + 140}px` }}
       >
@@ -409,19 +411,39 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     <div className="shrink-0 border-b border-white/10 px-3 pb-2.5 pt-3 sm:px-4 sm:pb-3 sm:pt-4 md:px-6 landscape:py-2">
       <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-[0.55rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-white/60">
+          <p className="text-[0.65rem] sm:text-[0.65rem] uppercase tracking-[0.3em] sm:tracking-[0.35em] text-white/60">
             Neighborhood resource network
           </p>
           <h1 className="mt-1 sm:mt-1.5 text-lg sm:text-xl font-semibold text-white">
             TheFeed
           </h1>
-          <p className="text-[0.7rem] sm:text-xs text-white/70 truncate">{subtitle}</p>
+          <p className="text-xs sm:text-xs text-white/70 truncate">{subtitle}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-white/15 bg-background/40 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
-            <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "You"} />
-            <AvatarFallback className="text-xs sm:text-sm">{getInitials(user?.name || user?.email || "You")}</AvatarFallback>
-          </Avatar>
+          {user ? (
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border border-white/15 bg-background/40 ring-2 ring-transparent hover:ring-primary/20 transition-all duration-200">
+              <AvatarImage src={user.image ?? undefined} alt={user.name ?? "You"} />
+              <AvatarFallback className="text-xs sm:text-sm">{getInitials(user.name || user.email || "You")}</AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                  size="sm"
+                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
+                  className="text-white hover:text-white hover:bg-white/10"
+              >
+                  Sign in
+              </Button>
+              <Button
+                  size="sm"
+                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Sign up
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

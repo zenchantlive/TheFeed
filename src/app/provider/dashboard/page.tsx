@@ -82,7 +82,7 @@ export default async function ProviderDashboardPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-6">
-                                <div className="grid md:grid-cols-3 gap-6">
+                                <div className="grid gap-6 md:grid-cols-3">
                                     <div className="md:col-span-2 space-y-4">
                                         <div>
                                             <h4 className="text-sm font-medium text-muted-foreground mb-1">Description</h4>
@@ -110,7 +110,7 @@ export default async function ProviderDashboardPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col justify-center items-end border-l pl-6">
+                                    <div className="flex flex-col justify-center items-end border-t pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0">
                                         <Dialog>
                                             <DialogTrigger asChild>
                                                 <Button className="w-full">
@@ -118,7 +118,7 @@ export default async function ProviderDashboardPage() {
                                                     Edit Details
                                                 </Button>
                                             </DialogTrigger>
-                                            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                                                 <DialogHeader>
                                                     <DialogTitle>Edit Resource Details</DialogTitle>
                                                     <DialogDescription>

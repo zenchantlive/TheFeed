@@ -217,7 +217,7 @@ export function VerificationTable({
   return (
     <div className="space-y-4">
       {/* Table */}
-      <div className="border rounded-lg">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
