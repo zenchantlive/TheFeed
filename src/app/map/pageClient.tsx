@@ -24,7 +24,7 @@ import {
 import type { Source } from "@/components/foodshare/sources-section";
 
 // Imported Hooks and Components
-import { useMapEvents, useMapPosts } from "@/hooks/use-map-data";
+import { useMapEvents } from "@/hooks/use-map-data";
 import { EventPopup, PostPopup } from "@/components/map/MapPopups";
 import { MapFilterSection } from "@/components/map/MapFilterSection";
 
@@ -69,7 +69,6 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
   const initialEventId = searchParams.get("eventId");
   const initialPostId = searchParams.get("postId");
   const initialEventType = searchParams.get("eventType") as "all" | "potluck" | "volunteer" | null;
-  const initialPostKind = searchParams.get("postKind") as "all" | "share" | "request" | null;
 
   // 2. Local State Management
   const [searchTerm, setSearchTerm] = useState("");
@@ -83,11 +82,10 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
   // Selection State
   const [selectedId, setSelectedId] = useState<string | null>(initialFoodBankId);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(initialPostId);
+  const [, setSelectedPostId] = useState<string | null>(initialPostId); // selectedPostId unused - posts feature disabled
   const [viewMode, setViewMode] = useState<"list" | "map">("map");
 
   // Filter State
-  const [postKindFilter] = useState<"all" | "share" | "request">(initialPostKind || "all");
   const {
     eventTypeFilter,
     dateRangeFilter,
@@ -223,7 +221,8 @@ function MapPageView({ foodBanks, services, isAdmin }: MapPageClientProps) {
   const selectedFoodBank =
     enrichedFoodBanks.find((bank) => bank.id === selectedId) ?? null;
   const selectedEvent = mapEvents.find((event) => event.id === selectedEventId) ?? null;
-  const selectedPost = mapPosts.find((post) => post.id === selectedPostId) ?? null;
+  // Posts feature temporarily disabled
+  const selectedPost = null; // TODO: Re-enable when useMapPosts is implemented
 
   // Selection Handlers (Mutually Exclusive)
   const handleSelectFoodBank = (id: string | null) => {
