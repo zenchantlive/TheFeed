@@ -35,7 +35,8 @@
       "Bash(pnpm dev:*)",
       "WebFetch(domain:openrouter.ai)",
       "WebFetch(domain:ai-sdk.dev)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(bun run db:push:*)"
     ],
     "additionalDirectories": [
       "C:\\c\\Projects\\nextjs-better-auth-postgresql-starter-kit"

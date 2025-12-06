@@ -30,10 +30,15 @@ export function UserProfile() {
           variant="ghost"
           size="sm"
           onClick={async () => {
-            await signIn.social({
-              provider: "google",
-              callbackURL: "/profile",
-            });
+            try {
+              await signIn.social({
+                provider: "google",
+                callbackURL: "/profile",
+              });
+            } catch (error) {
+              console.error("Sign in error:", error);
+              alert(`Sign in failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
           }}
         >
           Sign in
@@ -41,10 +46,15 @@ export function UserProfile() {
         <Button
           size="sm"
           onClick={async () => {
-            await signIn.social({
-              provider: "google",
-              callbackURL: "/profile",
-            });
+            try {
+              await signIn.social({
+                provider: "google",
+                callbackURL: "/profile",
+              });
+            } catch (error) {
+              console.error("Sign up error:", error);
+              alert(`Sign up failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
           }}
         >
           Sign up
