@@ -9,7 +9,11 @@ export default {
     // Falls back to POSTGRES_URL if DIRECT_URL not set
     url: process.env.DIRECT_URL || process.env.POSTGRES_URL!,
     ssl: {
-      rejectUnauthorized: false, // Required for Supabase SSL certificates
+      // TODO: Security - Replace with Supabase CA certificate for production
+      // Current setting disables SSL verification (required for Windows + Supabase)
+      // For better security, download CA cert from Supabase dashboard and use:
+      // ca: fs.readFileSync(path.join(__dirname, "prod-ca-2021.crt")).toString()
+      rejectUnauthorized: false,
     },
   },
   // Ignore PostGIS system tables

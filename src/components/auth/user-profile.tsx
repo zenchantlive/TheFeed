@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 export function UserProfile() {
   const { data: session, isPending } = useSession();
@@ -37,7 +38,9 @@ export function UserProfile() {
               });
             } catch (error) {
               console.error("Sign in error:", error);
-              alert(`Sign in failed: ${error instanceof Error ? error.message : String(error)}`);
+              toast.error("Sign in failed", {
+                description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+              });
             }
           }}
         >
@@ -53,7 +56,9 @@ export function UserProfile() {
               });
             } catch (error) {
               console.error("Sign up error:", error);
-              alert(`Sign up failed: ${error instanceof Error ? error.message : String(error)}`);
+              toast.error("Sign up failed", {
+                description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+              });
             }
           }}
         >

@@ -6,6 +6,11 @@ import { createAuthClient } from "better-auth/react"
 const getBaseURL = () => {
   // Server-side: use env var or fallback
   if (typeof window === "undefined") {
+    // Vercel deployments: use VERCEL_URL (auto-set by Vercel)
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+    // Fallback to manual env vars or localhost
     return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   }
 
