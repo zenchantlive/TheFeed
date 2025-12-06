@@ -8,5 +8,11 @@ if (!connectionString) {
   throw new Error("POSTGRES_URL environment variable is not set");
 }
 
-const client = postgres(connectionString);
+// CRITICAL: Configure for Supabase transaction pooling (Supavisor)
+// See: https://supabase.com/docs/guides/database/connecting-to-postgres/serverless-drivers
+const client = postgres(connectionString, {
+  prepare: false, // Required for Supabase transaction mode pooling
+  max: 1,         // Optimal for serverless: 1 connection per function invocation
+});
+
 export const db = drizzle(client, { schema });

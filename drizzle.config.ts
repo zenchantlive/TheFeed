@@ -5,7 +5,12 @@ export default {
   schema: "./src/lib/schema.ts",
   out: "./drizzle",
   dbCredentials: {
-    url: process.env.POSTGRES_URL!,
+    // Use DIRECT_URL for migrations (avoids SSL issues with pooler)
+    // Falls back to POSTGRES_URL if DIRECT_URL not set
+    url: process.env.DIRECT_URL || process.env.POSTGRES_URL!,
+    ssl: {
+      rejectUnauthorized: false, // Required for Supabase SSL certificates
+    },
   },
   // Ignore PostGIS system tables
   tablesFilter: ["!spatial_ref_sys", "!geography_columns", "!geometry_columns", "!raster_columns", "!raster_overviews"],
