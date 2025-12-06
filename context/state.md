@@ -1,9 +1,9 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-12-04
+Last updated: 2025-12-06
 
-## Current Focus: Phase 5 - Community Engagement (ACTIVE)
+## Current Focus: Vercel Production Deployment ✅ COMPLETE
 
-**Status**: Provider Claims implementation complete. Build issues resolved.
+**Status**: Production deployment successful. All critical issues resolved.
 
 ### Active Work:
 - **Phase 5.2a-c ✅ Complete**: Provider claims schema, admin UI, query layer, submission API
@@ -16,6 +16,22 @@ Last updated: 2025-12-04
 ---
 
 ## Recent Deliverables (December 2025)
+
+### Vercel Production Deployment (December 6, 2025) ✅
+- **Production URL**: https://thefeed-phi.vercel.app
+- **Status**: Fully operational with Google OAuth authentication
+- **Critical Fixes**:
+  - Database: Configured Supabase connection pooling for serverless (port 6543)
+  - Auth Client: Dynamic `window.location.origin` for all Vercel deployments
+  - Auth Server: Wildcard trusted origins (`*.vercel.app`)
+  - Security: Updated Next.js 15.4.8 and React 19.1.2 (CVE-2025-55182)
+  - Build: Fixed TypeScript errors in map client
+- **Environment Variables**:
+  - Production: `POSTGRES_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET`
+  - Optional: `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, AI/Map tokens
+- **Documentation**: Created comprehensive `DEPLOYMENT.md` guide
+- **Branch**: `feat/vercel-production-deployment`
+- **Result**: Sign-in works, database connected, all features operational
 
 ### Build System & Type Safety (December 4, 2025) ✅
 - **Comprehensive TypeScript Error Resolution**: Fixed 50+ build-blocking errors
