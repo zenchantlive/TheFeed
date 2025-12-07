@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 export function UserProfile() {
   const { data: session, isPending } = useSession();
@@ -30,10 +31,17 @@ export function UserProfile() {
           variant="ghost"
           size="sm"
           onClick={async () => {
-            await signIn.social({
-              provider: "google",
-              callbackURL: "/profile",
-            });
+            try {
+              await signIn.social({
+                provider: "google",
+                callbackURL: "/profile",
+              });
+            } catch (error) {
+              console.error("Sign in error:", error);
+              toast.error("Sign in failed", {
+                description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+              });
+            }
           }}
         >
           Sign in
@@ -41,10 +49,17 @@ export function UserProfile() {
         <Button
           size="sm"
           onClick={async () => {
-            await signIn.social({
-              provider: "google",
-              callbackURL: "/profile",
-            });
+            try {
+              await signIn.social({
+                provider: "google",
+                callbackURL: "/profile",
+              });
+            } catch (error) {
+              console.error("Sign up error:", error);
+              toast.error("Sign up failed", {
+                description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+              });
+            }
           }}
         >
           Sign up

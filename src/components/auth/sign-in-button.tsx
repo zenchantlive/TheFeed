@@ -2,6 +2,7 @@
 
 import { signIn, useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function SignInButton() {
   const { data: session, isPending } = useSession();
@@ -17,10 +18,27 @@ export function SignInButton() {
   return (
     <Button
       onClick={async () => {
-        await signIn.social({
-          provider: "google",
-          callbackURL: "/profile",
-        });
+        try {
+          await signIn.social({
+            provider: "google",
+            callbackURL: "/profile",
+          });
+        } catch (error) {
+          console.error("Sign in error (full):", error);
+          console.error("Error type:", typeof error);
+          console.error("Error constructor:", error?.constructor?.name);
+
+          // Log more details for debugging
+          if (error instanceof Error) {
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+          }
+
+          // User-friendly toast notification
+          toast.error("Sign in failed", {
+            description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+          });
+        }
       }}
     >
       Sign in
