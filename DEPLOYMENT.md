@@ -1,5 +1,13 @@
 # Vercel Production Deployment Guide
 
+> **⚠️ SECURITY WARNING**
+>
+> This document contains placeholder values for demonstration purposes.
+> **ALL sensitive values (passwords, API keys, secrets) have been redacted.**
+>
+> Replace `[YOUR-*]` placeholders with your actual credentials.
+> **NEVER commit real secrets to version control.**
+
 ## Overview
 
 This document describes the complete setup and configuration for deploying TheFeed to Vercel production and preview environments.
@@ -16,7 +24,7 @@ This document describes the complete setup and configuration for deploying TheFe
 
 **Problem:**
 - "Failed query" errors on Vercel
-- `ENOTFOUND db.pguxfaqfsxatponitxli.supabase.co` DNS errors
+- `ENOTFOUND db.YOUR-PROJECT-REF.supabase.co` DNS errors
 - Connection pool exhaustion on serverless
 
 **Root Cause:**
@@ -40,10 +48,10 @@ const client = postgres(connectionString, {
 **Connection String Format:**
 ```bash
 # Pooler (for Vercel - Port 6543)
-postgresql://postgres.pguxfaqfsxatponitxli:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres
+postgresql://postgres.YOUR-PROJECT-REF:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres
 
 # Direct (for local - Port 5432)
-postgresql://postgres:[PASSWORD]@db.pguxfaqfsxatponitxli.supabase.co:5432/postgres
+postgresql://postgres:[PASSWORD]@db.YOUR-PROJECT-REF.supabase.co:5432/postgres
 ```
 
 **References:**
@@ -194,14 +202,14 @@ Warning: 'useMapPosts' is defined but never used.
 
 ```bash
 # Database (Port 6543 - Connection Pooler)
-POSTGRES_URL=postgresql://postgres.pguxfaqfsxatponitxli:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres
+POSTGRES_URL=postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
 
 # Google OAuth
-GOOGLE_CLIENT_ID=886682512201-jmlebpcijh9okioora57fp5hqp715h6h.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=[YOUR-GOOGLE-CLIENT-ID].apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=[YOUR-GOOGLE-CLIENT-SECRET]
 
-# Better Auth
-BETTER_AUTH_SECRET=qtD4Ssa0t5jY7ewALgai97sKhAtn7Ysc
+# Better Auth (Generate with: openssl rand -hex 32)
+BETTER_AUTH_SECRET=[YOUR-32-CHAR-SECRET]
 ```
 
 **Optional (Recommended):**
@@ -232,11 +240,11 @@ ADMIN_USER_ID=73Dcwo3xLECtUVLpKAtHoJAFFNDdAoTz
 
 ```bash
 # Database (Port 6543 - Pooler for app, Port 5432 - Direct for migrations)
-POSTGRES_URL=postgresql://postgres.pguxfaqfsxatponitxli:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres
-DIRECT_URL=postgresql://postgres:[PASSWORD]@db.pguxfaqfsxatponitxli.supabase.co:5432/postgres
+POSTGRES_URL=postgresql://postgres.YOUR-PROJECT-REF:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:6543/postgres
+DIRECT_URL=postgresql://postgres:[PASSWORD]@db.YOUR-PROJECT-REF.supabase.co:5432/postgres
 
 # Better Auth
-BETTER_AUTH_SECRET=qtD4Ssa0t5jY7ewALgai97sKhAtn7Ysc
+BETTER_AUTH_SECRET=YOUR-32-CHAR-SECRET
 BETTER_AUTH_URL=http://localhost:3000
 
 # URLs
