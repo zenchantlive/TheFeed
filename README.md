@@ -8,7 +8,7 @@ FoodShare is a mobile‑first Next.js application that helps people discover nea
 - **Interactive map** – Mapbox GL map that lists seeded Bay Area food banks with hours, services, and directions.
 - **Community stories** – Curated stories and programs to showcase future social features.
 - **Account experience** – Better Auth + Google OAuth with saved locations and onboarding tips.
-- **Modern stack** – Next.js 15, React 19, TypeScript, Tailwind, Drizzle ORM, Vercel AI SDK.
+- **Modern stack** – Next.js 15, React 19, TypeScript, Tailwind 4, Drizzle ORM, Vercel AI SDK.
 
 ## Getting Started
 
@@ -17,17 +17,18 @@ FoodShare is a mobile‑first Next.js application that helps people discover nea
 ```bash
 git clone https://github.com/zenchantlive/TheFeed.git
 cd TheFeed/foodshare
-pnpm install
+bun install
 ```
 
-> **Prereqs**: Node 18+, pnpm 9+, Git.
+> **Prereqs**: Node 20+, Bun 1.1+, Git.
+> **Windows/WSL Users**: Please read [CONTRIBUTING.md](CONTRIBUTING.md) for critical setup instructions.
 
 ### 2. Environment Variables
 
 Copy the template and fill in secrets:
 
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
 
 Required values:
@@ -48,20 +49,20 @@ Required values:
 We use Drizzle ORM. Once `POSTGRES_URL` is set:
 
 ```bash
-pnpm run db:generate   # when schema changes
-pnpm run db:migrate    # applies migrations
-pnpm exec tsx scripts/seed-food-banks.ts   # optional, loads sample Bay Area food banks
+bun run db:generate   # when schema changes
+bun run db:migrate    # applies migrations
+bun run scripts/seed-food-banks.ts   # optional, loads sample Bay Area food banks
 ```
 
 ### 4. Run the App
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 Visit `http://localhost:3000`, sign in with Google, and explore:
 
-- `/chat` – try the intents or type “I’m hungry and in San Jose”.
+- `/chat-v2` – try the intents or type “I’m hungry and in San Jose”.
 - `/map` – inspect seeded food banks, toggle filters, open the popup.
 - `/community` – view Phase 1 story/program cards.
 - `/profile` – review saved locations (seed script adds demo data).
@@ -70,30 +71,36 @@ Visit `http://localhost:3000`, sign in with Google, and explore:
 
 | Script | Description |
 | --- | --- |
-| `pnpm dev` | Start the development server (Turbopack). |
-| `pnpm build` | Production build; runs migrations first. |
-| `pnpm start` | Launch the production server. |
-| `pnpm lint` | Run ESLint. |
-| `pnpm typecheck` | Run TypeScript checks. |
-| `pnpm run db:*` | Drizzle helper scripts (generate / migrate / studio / reset). |
+| `bun dev` | Start the development server (Turbopack). |
+| `bun run build` | Production build; runs migrations first. |
+| `bun start` | Launch the production server. |
+| `bun run lint` | Run ESLint. |
+| `bun run typecheck` | Run TypeScript checks. |
+| `bun run db:*` | Drizzle helper scripts (generate / migrate / studio / reset). |
 
 ## Git Workflow
 
 1. Create a branch for each fix or feature (`git checkout -b feat/map-fixes`).
-2. Run `pnpm typecheck` and `pnpm lint` before committing.
+2. Run `bun run typecheck` and `bun run lint` before committing.
 3. Submit PRs against `main`, referencing the relevant GitHub issue.
 
 ## Current Focus & Known Issues
 
-- Map markers and search need refinement with live Supabase data.
-- AI chat occasionally returns an empty response after zip-code prompts.
-- Community feed is still static; real social features are scoped for later phases.
+- **Provider Dashboard**: Currently investigating an infinite loading loop (Phase 5.2g).
+- **Map Post Layer**: Currently disabled in production pending finalizing the implementation.
+- **AI Chat**: Ensure you are using `/chat-v2` for the stable CopilotKit experience.
 
 Track progress in GitHub issues and update this section as we close items.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for our branching, linting, and PR guidelines. Please respect the [Code of Conduct](CODE_OF_CONDUCT.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for our branching, setup, linting, and PR guidelines. Please respect the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Documentation
+
+- **Deployment**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for Vercel setup.
+- **Architecture**: See `context/info.md` and `context/decisions.md`.
+- **Archive**: Old plans are stored in `docs/archive/` for reference.
 
 ## License
 

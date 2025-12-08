@@ -515,7 +515,7 @@ Located in `src/components/ui/`:
 - **Data Quality & UX Phase 1 & 2 - COMPLETED ✅ (January 2025):**
   - Comprehensive audit of data aggregation, verification, and resource management
   - Baseline grading: **59/100** across 5 dimensions
-  - Created 5-phase improvement plan (see `context/plans/`)
+  - Created 5-phase improvement plan (see `docs/archive/plans/`)
   - **Phase 1 (Critical Fixes) - ALL COMPLETE:**
     1. ✅ Enhancement API schema error fixed (`generateObject` with Zod)
     2. ✅ Resource feed pagination bug fixed (proper `inArray`/`notInArray`)
@@ -576,19 +576,20 @@ Always consult and update relevant context files in `/context/`:
   - Drizzle ORM best practices
   - Pre-commit workflow
 
-### Migration & Troubleshooting
-- `context/events-plan.md` - Event system implementation plan
-- `context/copilotkit-migration-plan.md` - CopilotKit migration details
-- `context/chat-v2-typescript-fixes.md` - TypeScript fixes for chat v2
-- `context/lucide-react-troubleshooting.md` - Icon library troubleshooting
+### Archive & Reference (Read Only)
+- **`docs/archive/misc-plans/`**:
+  - `events-plan.md` - Event system implementation history
+  - `copilotkit-migration-plan.md` - CopilotKit migration details
+  - `chat-v2-typescript-fixes.md` - TypeScript fixes for chat v2
+  - `lucide-react-troubleshooting.md` - Icon library troubleshooting
 
-### Phased Plans
-- **`context/plans/`** - Phased improvement plans:
-  - `phase-1-critical-fixes.md` - ✅ COMPLETE (Week 1-2)
-  - `phase-2-data-integrity.md` - ✅ COMPLETE (Week 3-4)
-  - `phase-3-trust-ux.md` - ✅ COMPLETE (Week 5-6)
-  - `phase-4-performance-scale.md` - 🔄 IN PROGRESS (Week 7)
-  - `phase-5-community-engagement.md` - 🔄 IN PROGRESS (Week 8)
+### Phased Plans (Archived)
+- **`docs/archive/plans/`**:
+  - `phase-1-critical-fixes.md` - ✅ COMPLETE
+  - `phase-2-data-integrity.md` - ✅ COMPLETE
+  - `phase-3-trust-ux.md` - ✅ COMPLETE
+  - `phase-4-performance-scale.md` - 🔄 IN PROGRESS
+  - `phase-5-community-engagement.md` - 🔄 IN PROGRESS
 
 **When to update:**
 - When changing architecture, critical flows, or semantics for posts/events
