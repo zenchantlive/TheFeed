@@ -32,20 +32,20 @@ export function HelpContent() {
                             <p className="text-muted-foreground mb-6">If you are in immediate need of emergency shelter or help, please contact these resources directly.</p>
 
                             <div className="grid gap-4 md:grid-cols-2">
-                                <div className="bg-background rounded-lg p-4 border flex items-center gap-4">
+                                <a href="tel:211" className="bg-background rounded-lg p-4 border flex items-center gap-4 no-underline hover:bg-muted/50 transition-colors">
                                     <Phone className="h-5 w-5 text-primary" />
                                     <div>
-                                        <div className="font-bold">Call 2-1-1</div>
+                                        <div className="font-bold text-foreground">Call 2-1-1</div>
                                         <div className="text-sm text-muted-foreground">Essential Community Services</div>
                                     </div>
-                                </div>
-                                <div className="bg-background rounded-lg p-4 border flex items-center gap-4">
+                                </a>
+                                <a href="tel:988" className="bg-background rounded-lg p-4 border flex items-center gap-4 no-underline hover:bg-muted/50 transition-colors">
                                     <Phone className="h-5 w-5 text-primary" />
                                     <div>
-                                        <div className="font-bold">Call 9-8-8</div>
+                                        <div className="font-bold text-foreground">Call 9-8-8</div>
                                         <div className="text-sm text-muted-foreground">Suicide & Crisis Lifeline</div>
                                     </div>
-                                </div>
+                                </a>
                             </div>
                         </div>
                     </div>
