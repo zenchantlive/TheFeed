@@ -18,6 +18,17 @@ Last updated: 2025-12-06
 
 ## Recent Deliverables (December 2025)
 
+### Auth & Navigation UX Overhaul (December 8, 2025) ✅
+- **Glassmorphic Auth Modal**: Implemented global `AuthModalContext` and `AuthModal`.
+  - Replaced jarring page redirects with seamless popup for: Comments, RSVPs, Hosting, Claims.
+  - Consistent "Sign In" experience across Chat, Header, and interactive cards.
+- **Navigation Hardening**:
+  - Replaced unsafe `window.open` with `router.push` for internal navigation.
+  - Implemented `middleware.ts` to prevent redirect loops and sanitize `returnUrl`.
+  - Enhanced `openLogin` to capture URL hashes.
+- **Branch**: `feat/sign-in-glassmorphic`
+- **Result**: Frictionless auth flow; unauthenticated users stay in context.
+
 ### UX Refactor & Community Flow (December 7, 2025) ✅
 - **Map & Crisis Flow**:
   - **Mobile-First Layout**: Implemented `ResourceBottomSheet` replacing the binary toggle.

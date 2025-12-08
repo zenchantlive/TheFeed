@@ -20,7 +20,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
         if (url) {
             setReturnUrl(url);
         } else if (typeof window !== "undefined") {
-            setReturnUrl(window.location.pathname + window.location.search);
+            setReturnUrl(window.location.pathname + window.location.search + window.location.hash);
         }
         setIsOpen(true);
     };
