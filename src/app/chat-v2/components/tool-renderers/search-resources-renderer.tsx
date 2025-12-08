@@ -73,7 +73,8 @@ function ResourceGrid({
     return a.name.localeCompare(b.name);
   });
 
-  const limitedResources = prioritizedResources.slice(0, 8);
+  const maxToShow = Math.min(8, Math.max(5, prioritizedResources.length));
+  const limitedResources = prioritizedResources.slice(0, maxToShow);
   const primaryResources = limitedResources.slice(0, Math.min(2, limitedResources.length));
   const hiddenResources = limitedResources.slice(primaryResources.length);
 

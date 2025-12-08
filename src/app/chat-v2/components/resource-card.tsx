@@ -97,7 +97,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
           {resource.distanceMiles !== null && (
             <div className="flex-shrink-0 text-right">
               <div className="text-sm font-medium text-primary">
-                {resource.distanceMiles} mi
+                {resource.distanceMiles.toFixed(1)} mi
               </div>
             </div>
           )}
@@ -174,6 +174,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
             onClick={handleCall}
             className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors"
             title="Call"
+            aria-label={`Call ${resource.name}`}
           >
             <Phone className="w-4 h-4 text-foreground" />
           </button>
@@ -183,6 +184,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
             onClick={handleVisitWebsite}
             className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors"
             title="Visit website"
+            aria-label={`Visit ${resource.name} website`}
           >
             <Globe className="w-4 h-4 text-foreground" />
           </button>
