@@ -46,8 +46,8 @@ export default async function MapPage({
   ).sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 pb-10 md:py-8">
-      <header className="space-y-2">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 md:px-4 md:py-8 h-[calc(100vh-3.5rem)] md:h-auto">
+      <header className="space-y-2 hidden md:block">
         <p className="text-xs font-semibold uppercase tracking-wide text-primary">
           Map
         </p>

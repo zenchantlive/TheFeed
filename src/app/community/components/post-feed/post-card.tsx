@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ import { ROLE_BADGE, STATUS_BADGE } from "../../types";
 
 type PostCardProps = {
   post: FeedPost;
+  isLoggedIn: boolean;
 };
 
 /**
@@ -18,10 +20,20 @@ type PostCardProps = {
  * Clean, simple card for individual posts.
  * Original styling restored (no bulletin board aesthetic).
  */
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, isLoggedIn }: PostCardProps) {
+  const router = useRouter();
   const askSousChefHref = `/chat?prefill=${encodeURIComponent(
     `Help me respond to ${post.author}'s post in the community potluck.`
   )}`;
+
+  const handleInteraction = (e: React.MouseEvent, action: () => void) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      router.push(`/login?returnUrl=/community`);
+      return;
+    }
+    action();
+  };
 
   return (
     <article
@@ -98,11 +110,21 @@ export function PostCard({ post }: PostCardProps) {
 
       {/* Actions */}
       <footer className="mt-4 flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="sm" className="rounded-full">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="rounded-full"
+          onClick={(e) => handleInteraction(e, () => { console.log('I am on it clicked'); })}
+        >
           <HeartHandshake className="mr-1.5 h-4 w-4" />
           I&apos;m on it
         </Button>
-        <Button variant="ghost" size="sm" className="rounded-full">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full"
+          onClick={(e) => handleInteraction(e, () => { console.log('Comment clicked'); })}
+        >
           <MessageCircle className="mr-1.5 h-4 w-4" />
           Add a comment
         </Button>
@@ -114,8 +136,13 @@ export function PostCard({ post }: PostCardProps) {
             </Link>
           </Button>
         )}
-        <Button asChild variant="ghost" size="sm" className="rounded-full">
-          <Link href={askSousChefHref}>Ask sous-chef</Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-full"
+          onClick={(e) => handleInteraction(e, () => router.push(askSousChefHref))}
+        >
+          <span className="flex items-center">Ask sous-chef</span>
         </Button>
       </footer>
 

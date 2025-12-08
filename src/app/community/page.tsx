@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { CommunityPageClient } from "./page-client";
 import type {
   FeedPost,
@@ -93,11 +92,8 @@ const VIBE_STATS: VibeStat[] = [
 ];
 
 export default async function CommunityPage() {
-  // Check authentication
+  // Check authentication (optional for reading)
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    redirect("/");
-  }
 
   // Fetch real posts from database
   const { items: dbPosts } = await getPosts({ limit: 20 });
@@ -159,12 +155,16 @@ export default async function CommunityPage() {
       initialEvents={events}
       guideMoments={GUIDE_MOMENTS}
       vibeStats={VIBE_STATS}
-      user={{
-        id: session.user.id,
-        name: session.user.name,
-        image: session.user.image ?? null,
-        email: session.user.email,
-      }}
+      user={
+        session?.user
+          ? {
+            id: session.user.id,
+            name: session.user.name,
+            image: session.user.image ?? null,
+            email: session.user.email,
+          }
+          : undefined
+      }
     />
   );
 }

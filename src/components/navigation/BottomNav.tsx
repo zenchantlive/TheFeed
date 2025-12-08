@@ -1,20 +1,9 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { MessageCircle, MapPin, Users, UserRound, Calendar, Plus, PenSquare, Sparkles } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { MessageCircle, MapPin, Users, UserRound, Calendar, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-  DrawerClose,
-  DrawerFooter,
-} from "@/components/ui/drawer";
-import { useState } from "react";
+import { CreatePostDrawer } from "@/components/layout/create-post-drawer";
 
 type NavItem = {
   label: string;
@@ -52,8 +41,6 @@ const navItems: NavItem[] = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -70,67 +57,15 @@ export function BottomNav() {
 
           {/* Plus Button (Center) */}
           <div className="relative -top-5">
-            <Drawer open={isOpen} onOpenChange={setIsOpen}>
-              <DrawerTrigger asChild>
-                <Button
-                  size="icon"
-                  className="h-14 w-14 rounded-full bg-gradient-to-tr from-primary-start to-primary-end shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95"
-                >
-                  <Plus className="h-8 w-8 text-primary-foreground" />
-                  <span className="sr-only">Create</span>
-                </Button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <DrawerHeader>
-                  <DrawerTitle>Create & Share</DrawerTitle>
-                </DrawerHeader>
-                <div className="grid gap-4 p-4 pb-8">
-                  <Button
-                    variant="outline"
-                    className="flex h-auto flex-col items-center gap-2 py-6"
-                    onClick={() => {
-                      setIsOpen(false);
-                      // Trigger post composer (navigate to community with intent?)
-                      // For now, just go to community
-                      router.push("/community?action=post");
-                    }}
-                  >
-                    <PenSquare className="h-8 w-8 text-primary" />
-                    <span className="font-medium">Create Post</span>
-                    <span className="text-xs text-muted-foreground">Share food or ask for help</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex h-auto flex-col items-center gap-2 py-6"
-                    onClick={() => {
-                      setIsOpen(false);
-                      router.push("/community?action=event");
-                    }}
-                  >
-                    <Calendar className="h-8 w-8 text-full-end" />
-                    <span className="font-medium">Host Event</span>
-                    <span className="text-xs text-muted-foreground">Organize a potluck or drive</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex h-auto flex-col items-center gap-2 py-6"
-                    onClick={() => {
-                      setIsOpen(false);
-                      router.push("/chat");
-                    }}
-                  >
-                    <Sparkles className="h-8 w-8 text-hungry-end" />
-                    <span className="font-medium">Ask Sous-chef</span>
-                    <span className="text-xs text-muted-foreground">Get AI assistance</span>
-                  </Button>
-                </div>
-                <DrawerFooter>
-                  <DrawerClose asChild>
-                    <Button variant="ghost">Cancel</Button>
-                  </DrawerClose>
-                </DrawerFooter>
-              </DrawerContent>
-            </Drawer>
+            <CreatePostDrawer>
+              <Button
+                size="icon"
+                className="h-14 w-14 rounded-full bg-gradient-to-tr from-primary-start to-primary-end shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95"
+              >
+                <Plus className="h-8 w-8 text-primary-foreground" />
+                <span className="sr-only">Create</span>
+              </Button>
+            </CreatePostDrawer>
           </div>
 
           {/* Remaining items (skip Potluck if we want 4+1 layout, but user wants all. Let's try to fit Potluck) */}
@@ -151,6 +86,9 @@ export function BottomNav() {
 
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon;
+  // Handle root vs nested paths for active state
+  // If item.href is '/', exact match only. Otherwise startsWith.
+  // Actually, chat is '/chat', map is '/map'. Root '/' redirects.
   const isActive =
     pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
 

@@ -11,6 +11,7 @@ import { filterPostsByType } from "./utils/filtering";
 type PostFeedProps = {
   posts: FeedPost[];
   mode: CommunityMode;
+  isLoggedIn: boolean;
 };
 
 /**
@@ -19,7 +20,7 @@ type PostFeedProps = {
  * Main feed container with filtering and sorting.
  * Displays posts as bulletin board notes.
  */
-export function PostFeed({ posts, mode }: PostFeedProps) {
+export function PostFeed({ posts, mode, isLoggedIn }: PostFeedProps) {
   const [postFilter, setPostFilter] = useState<FeedFilter>("all");
 
   const displayPosts = useMemo(() => {
@@ -46,7 +47,7 @@ export function PostFeed({ posts, mode }: PostFeedProps) {
             </p>
           </div>
         ) : (
-          displayPosts.map((post) => <PostCard key={post.id} post={post} />)
+          displayPosts.map((post) => <PostCard key={post.id} post={post} isLoggedIn={isLoggedIn} />)
         )}
       </div>
     </section>

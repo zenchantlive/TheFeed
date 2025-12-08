@@ -64,7 +64,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
 
   const handleRsvp = async () => {
     if (!currentUserId) {
-      router.push("/");
+      router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
 
@@ -311,9 +311,16 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
               </Alert>
             ) : null}
 
-            <Button onClick={() => setShowRsvpForm(true)} size="lg" className="w-full">
-              {isFull ? "Join Waitlist" : "RSVP to this event"}
-            </Button>
+            {/* RSVP Button / Sign In Button */}
+            {!currentUserId ? (
+              <Button onClick={() => router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`)} size="lg" className="w-full">
+                Sign in to RSVP
+              </Button>
+            ) : (
+              <Button onClick={() => setShowRsvpForm(true)} size="lg" className="w-full">
+                {isFull ? "Join Waitlist" : "RSVP to this event"}
+              </Button>
+            )}
           </div>
         )}
 
