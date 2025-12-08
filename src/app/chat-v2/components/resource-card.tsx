@@ -132,7 +132,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
 
       {/* Services */}
       {resource.services && resource.services.length > 0 && (
-        <div className="px-4 py-3 border-b border-border/30 pointer-events-none">
+        <div className="px-4 py-3 border-b border-border/30">
           <div className="flex flex-wrap gap-1.5">
             {resource.services.slice(0, 4).map((service, index) => (
               <span
