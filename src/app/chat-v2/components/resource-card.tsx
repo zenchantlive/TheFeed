@@ -47,7 +47,10 @@ interface ResourceCardProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
+import { useRouter } from "next/navigation";
+
 export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
+  const router = useRouter();
   const handleGetDirections = () => {
     if (userLocation) {
       const origin = `${userLocation.lat},${userLocation.lng}`;
@@ -104,8 +107,8 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
         <div className="mt-2 flex items-center gap-2">
           <div
             className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${resource.isOpen
-                ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                : "bg-red-500/10 text-red-700 dark:text-red-400"
+              ? "bg-green-500/10 text-green-700 dark:text-green-400"
+              : "bg-red-500/10 text-red-700 dark:text-red-400"
               }`}
           >
             <div
@@ -153,7 +156,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
           Directions
         </button>
         <button
-          onClick={() => window.open(`/map?resource=${resource.id}`, "_blank")}
+          onClick={() => router.push(`/map?resource=${resource.id}`)}
           className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors text-sm font-medium"
         >
           View Details
