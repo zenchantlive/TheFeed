@@ -14,9 +14,9 @@ import { useChatSuggestions } from "../hooks/use-chat-suggestions";
 import { buildSousChefSystemPrompt } from "@/lib/prompts/chat-system";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { signIn } from "@/lib/auth-client";
 import { EnhancedSmartPrompts } from "./actions/smart-prompts";
 import { formatTimestamp } from "../lib/date-utils";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 function useBottomNavHeight() {
   const [height, setHeight] = React.useState(0);
@@ -407,6 +407,8 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
     ? `Serving neighbors near ${locationLabel}`
     : "Share your location for hyper-local help";
 
+  const { openLogin } = useAuthModal();
+
   return (
     <div className="shrink-0 border-b border-white/10 px-3 pb-2.5 pt-3 sm:px-4 sm:pb-3 sm:pt-4 md:px-6 landscape:py-2">
       <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
@@ -429,16 +431,16 @@ function ChatHeroHeader({ user, locationLabel }: ChatHeroHeaderProps) {
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                  size="sm"
-                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
-                  className="text-white hover:text-white hover:bg-white/10"
+                size="sm"
+                onClick={() => openLogin()}
+                className="text-white hover:text-white hover:bg-white/10"
               >
-                  Sign in
+                Sign in
               </Button>
               <Button
-                  size="sm"
-                  onClick={async () => await signIn.social({ provider: "google", callbackURL: "/chat" })}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                size="sm"
+                onClick={() => openLogin()}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 Sign up
               </Button>

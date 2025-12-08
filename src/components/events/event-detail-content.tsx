@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { EventDetails } from "@/lib/event-queries";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 interface EventDetailContentProps {
   event: EventDetails;
@@ -41,6 +42,7 @@ interface EventDetailContentProps {
 
 export function EventDetailContent({ event, currentUserId }: EventDetailContentProps) {
   const router = useRouter();
+  const { openLogin } = useAuthModal();
   const [isRsvping, setIsRsvping] = useState(false);
   const [showRsvpForm, setShowRsvpForm] = useState(false);
   const [guestCount, setGuestCount] = useState(1);
@@ -64,7 +66,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
 
   const handleRsvp = async () => {
     if (!currentUserId) {
-      router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
+      openLogin();
       return;
     }
 
@@ -313,7 +315,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
 
             {/* RSVP Button / Sign In Button */}
             {!currentUserId ? (
-              <Button onClick={() => router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`)} size="lg" className="w-full">
+              <Button onClick={() => openLogin()} size="lg" className="w-full">
                 Sign in to RSVP
               </Button>
             ) : (

@@ -107,19 +107,18 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 - Partner sponsorships (grocery stores, restaurants)
 - Consider premium features for power users
 
-## Current Focus (Data Unification Phase 1)
-**Branch**: `claude/unify-data-architecture-01N5CjFPSLTcdm8TkVgCxvpv`
+## Current Focus (UX Redesign Execution)
+**Branch**: `refactor/UX-v2`
 
 ### Delivered This Week
-- ✅ **Map + Community deep links** — `/map` now reads `foodBankId`, `eventId`, `postId`, `eventType`, and `postKind` so links from Community/Event cards land in the right context.
-- ✅ **Community posts as a map layer** — `/api/posts` + `post-queries.ts` gained an `onlyWithCoords` filter so posts with coordinates render as color-coded pins with popups that link back to `/community`.
-- ✅ **Quick RSVP on the map** — Event popups now include guest count selection and inline RSVP via `/api/events/[id]/rsvp`, keeping users on the discovery surface.
+- ✅ **UX Redesign (Map)** — Mobile-first bottom sheet, compact cards, resolved layout issues.
+- ✅ **Community Flow** — Public read-only access, interaction gating, desktop creation flow.
+- ✅ **Code Hardening** — Full lint pass, removal of `any` types, type safety improvements.
 
 ### Up Next
-- 🔄 Wire CopilotKit chat into the main nav and keep stabilizing streaming (blank bubble bug persists).
-- 🔄 Expand discovery filters so feed, map, and calendar respect the same shared state.
-- ⏳ Map overlays for global discovery + real-time updates once sign-up sheet UI work resumes.
-- 🔄 **Admin Verification Workspace** — Admin-only `/admin` layout, RBAC middleware, paginated resource queue with missing-address filters, and inline AI “Sous-Chef” auto-fill buttons that research gaps (address/phone/hours). Next steps: fix OpenRouter schema issues (see Known Issues) and add batch apply of AI proposals.
+- 🔄 **Landing Page Redesign** — Implementing the "Glass Card" premium aesthetic.
+- 🔄 **Auxiliary Pages** — About, Help, Legal pages finalization.
+- ⏳ **Provider Dashboard Fix** — Investigation of infinite loading bug (Phase 5.2g).
 
 ### Previous Milestones
 - `/chat-v2` CopilotKit migration shipped in PR #22 (voice input, smart prompts, tool renderers).

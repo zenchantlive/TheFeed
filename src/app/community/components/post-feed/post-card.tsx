@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { HeartHandshake, MessageCircle, MapPin, Clock, Sparkles } from "lucide-react";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 import type { FeedPost } from "../../types";
 import { ROLE_BADGE, STATUS_BADGE } from "../../types";
 
@@ -21,6 +22,7 @@ type PostCardProps = {
  * Original styling restored (no bulletin board aesthetic).
  */
 export function PostCard({ post, isLoggedIn }: PostCardProps) {
+  const { openLogin } = useAuthModal();
   const router = useRouter();
   const askSousChefHref = `/chat?prefill=${encodeURIComponent(
     `Help me respond to ${post.author}'s post in the community potluck.`
@@ -29,7 +31,7 @@ export function PostCard({ post, isLoggedIn }: PostCardProps) {
   const handleInteraction = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
     if (!isLoggedIn) {
-      router.push(`/login?returnUrl=/community`);
+      openLogin();
       return;
     }
     action();

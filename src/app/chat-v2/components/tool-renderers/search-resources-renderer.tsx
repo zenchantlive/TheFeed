@@ -58,8 +58,18 @@ function ResourceGrid({
     );
   }
 
-  const primaryResources = resources.slice(0, 2);
-  const hiddenResources = resources.slice(2);
+  // Sort: Open Now first, then by distance
+  const sortedResources = [...resources].sort((a, b) => {
+    if (a.isOpen === b.isOpen) {
+      // If both open or both closed, sort by distance
+      return (a.distanceMiles || 999) - (b.distanceMiles || 999);
+    }
+    // Open comes first
+    return a.isOpen ? -1 : 1;
+  });
+
+  const primaryResources = sortedResources.slice(0, 2);
+  const hiddenResources = sortedResources.slice(2);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">

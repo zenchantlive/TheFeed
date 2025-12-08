@@ -19,7 +19,8 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { EventCreationWizard } from "@/components/events/event-creation-wizard";
 import { HostEventButton } from "./components/host-event-button";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 /**
  * Community Page Client Component
@@ -40,7 +41,6 @@ function CommunityPageView({
   user,
 }: CommunityPageClientProps) {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   // Initialize state from URL params if available (from onboarding)
   const paramIntent = searchParams.get("intent");
@@ -58,14 +58,12 @@ function CommunityPageView({
     paramLat && paramLng ? { lat: parseFloat(paramLat), lng: parseFloat(paramLng) } : null
   );
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const { openLogin } = useAuthModal();
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const handleHostEventClick = () => {
     if (!user) {
-      // If not logged in, redirect to login (or show login modal if available)
-      // For now, we'll redirect to a login page or let the middleware handle it if we tried to visit a protected route.
-      // Since we are on a client page, let's just push to login with a return url.
-      router.push("/login?returnUrl=/community");
+      openLogin();
       return;
     }
     setIsEventModalOpen(true);
@@ -445,7 +443,7 @@ function CommunityPageView({
                     <p className="mb-3 text-sm text-muted-foreground">
                       Sign in to {activeMode === "hungry" ? "ask for help" : "offer help"} and connect with your neighbors.
                     </p>
-                    <Button onClick={() => router.push("/login?returnUrl=/community")}>
+                    <Button onClick={() => openLogin()}>
                       Sign in to Post
                     </Button>
                   </div>

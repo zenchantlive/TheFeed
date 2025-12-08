@@ -701,6 +701,14 @@ bun run typecheck && bun run lint && bun run build
   - Sidebar resource details
   - Community "Resources Near You" widget
 - **Phase 4.1 (PostGIS):** Native spatial queries & duplicate detection
+- **UX Redesign (December 2025):**
+  - Mobile-first Map Bottom Sheet.
+  - Public Community Access (Read-Only) & Auth Gating.
+  - Unified Creation Drawer (Desktop & Mobile).
+  - Lint & Type Safety Hardening.
+  - **Auth & Navigation (December 8, 2025):**
+    - Seamless Glassmorphic Auth Modal (no more page redirects).
+    - Global `AuthModalContext` & Middleware hardening.
 
 **🚧 In Progress:**
 - **Phase 5 (Community Engagement):** ACTIVE - 4/12 subphases complete
