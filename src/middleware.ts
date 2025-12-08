@@ -6,9 +6,13 @@ export async function middleware(request: NextRequest) {
         request.cookies.get("better-auth.session_token") ||
         request.cookies.get("__Secure-better-auth.session_token");
 
-    if (!sessionCookie) {
+    const isLoginPage = request.nextUrl.pathname.startsWith("/login");
+    const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+
+    if (!sessionCookie && !isLoginPage && !isApiRoute) {
         const returnUrl = request.nextUrl.pathname + request.nextUrl.search;
         const url = new URL("/login", request.url);
+        // searchParams.set automatically encodes the value
         url.searchParams.set("returnUrl", returnUrl);
         return NextResponse.redirect(url);
     }
