@@ -8,7 +8,11 @@ import { Lock } from "lucide-react";
 
 function LoginContent() {
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl") || searchParams.get("callbackUrl") || "/profile";
+  const rawReturnUrl = searchParams.get("returnUrl") || searchParams.get("callbackUrl");
+
+  // Validate returnUrl to prevent open redirects
+  // Only allow relative URLs (starting with /)
+  const returnUrl = rawReturnUrl && rawReturnUrl.startsWith("/") ? rawReturnUrl : "/profile";
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
