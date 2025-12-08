@@ -24,6 +24,7 @@ function LoginContent() {
         } catch (error) {
             console.error("Login error:", error);
             toast.error("Failed to sign in. Please try again.");
+        } finally {
             setIsLoading(false);
         }
     };
