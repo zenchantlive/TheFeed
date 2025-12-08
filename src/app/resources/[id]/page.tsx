@@ -7,6 +7,7 @@ import Link from "next/link";
 import { isCurrentlyOpen } from "@/lib/geolocation";
 import { Badge } from "@/components/ui/badge";
 import { ClaimResourceDialog } from "@/components/foodshare/claim-resource-dialog";
+import { ClaimListingButton } from "@/components/foodshare/claim-listing-button";
 import { auth } from "@/lib/auth";
 
 interface PageProps {
@@ -126,12 +127,7 @@ export default async function ResourcePage({ params }: PageProps) {
                                             resourceName={resource.name}
                                         />
                                     ) : (
-                                        <Button variant="outline" className="w-full justify-start" size="sm" asChild>
-                                            <Link href={`/login?callbackUrl=/resources/${resource.id}`}>
-                                                <ShieldCheck className="mr-2 h-4 w-4" />
-                                                Claim this Listing
-                                            </Link>
-                                        </Button>
+                                        <ClaimListingButton className="w-full justify-start" />
                                     )
                                 )}
 

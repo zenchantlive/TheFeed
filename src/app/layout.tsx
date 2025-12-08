@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
+import { AuthModalProvider } from "@/components/auth/auth-modal-context";
+import { AuthModal } from "@/components/auth/auth-modal";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -35,9 +37,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="h-full">
-            <AppShell>{children}</AppShell>
-          </div>
+          <AuthModalProvider>
+            <div className="h-full">
+              <AppShell>{children}</AppShell>
+            </div>
+            <AuthModal />
+          </AuthModalProvider>
         </ThemeProvider>
       </body>
     </html>

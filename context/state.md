@@ -1,9 +1,10 @@
 # Project State — TheFeed (formerly FoodShare)
 Last updated: 2025-12-06
 
-## Current Focus: Vercel Production Deployment ✅ COMPLETE
+## Current Focus: UX Redesign & Refinement (Phase 3/4)
 
-**Status**: Production deployment successful. All critical issues resolved.
+**Status**: Executing UX redesign based on "TheFeed UX Analysis". Map & Community flows completed.
+
 
 ### Active Work:
 - **Phase 5.2a-c ✅ Complete**: Provider claims schema, admin UI, query layer, submission API
@@ -16,6 +17,20 @@ Last updated: 2025-12-06
 ---
 
 ## Recent Deliverables (December 2025)
+
+### UX Refactor & Community Flow (December 7, 2025) ✅
+- **Map & Crisis Flow**:
+  - **Mobile-First Layout**: Implemented `ResourceBottomSheet` replacing the binary toggle.
+  - **Compact Views**: Optimized resource cards for mobile map view.
+  - **Detail View**: Integrated expandable detail view within the bottom sheet.
+- **Community Flow**:
+  - **Public Access**: Opened `/community` to unauthenticated users (read-only).
+  - **Interaction Gating**: Redirects to login for RSVP, "I'm on it", and replies.
+  - **Unified Creation**: Added `CreatePostDrawer` to Desktop Header and Mobile BottomNav.
+- **Code Quality**:
+  - **Lint & Type Fixes**: Resolved all `bun lint` errors and removed `any` types in critical paths.
+  - **Navigation**: Cleaned up `BottomNav` and verified active state highlighting.
+- **Branch**: `refactor/UX-v2` (via `fix/lint-and-types`)
 
 ### Vercel Production Deployment (December 6, 2025) ✅
 - **Production URL**: https://thefeed-phi.vercel.app

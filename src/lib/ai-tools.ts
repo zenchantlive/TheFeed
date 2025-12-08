@@ -120,8 +120,8 @@ export const searchResourcesTool = tool({
       .int()
       .min(1)
       .max(50)
-      .optional()
-      .describe("Maximum number of results to return."),
+      .default(8)
+      .describe("Maximum number of results to return. Default 8."),
   }),
   execute: async ({ lat, lng, radiusMiles, openNow, services, limit }) => {
     const results = await searchFoodBanks({
@@ -233,9 +233,9 @@ export const searchPostsTool = tool({
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos((lat * Math.PI) / 180) *
-          Math.cos((coords.lat * Math.PI) / 180) *
-          Math.sin(dLng / 2) *
-          Math.sin(dLng / 2);
+        Math.cos((coords.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distanceMiles = 3958.8 * c;
       if (distanceMiles <= radiusMiles) {
@@ -328,9 +328,9 @@ export const searchEventsTool = tool({
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos((lat * Math.PI) / 180) *
-          Math.cos((coords.lat * Math.PI) / 180) *
-          Math.sin(dLng / 2) *
-          Math.sin(dLng / 2);
+        Math.cos((coords.lat * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distanceMiles = 3958.8 * c;
       if (distanceMiles <= radiusMiles) {

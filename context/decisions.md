@@ -88,6 +88,14 @@ Last updated: 2025-11-07
   - Rationale: Community posts/events should deep-link into the same context on the map (pins selected + filters applied) to unify discovery surfaces.
   - Implementation: Community cards link to `/map?eventId=...` or `/map?postId=...`; MapPage reads `foodBankId`, `eventId`, `postId`, `eventType`, `postKind` search params and seeds local filter state.
 
+- **2025-12-07** — **Public Read-Only Community Access**
+  - Rationale: Reduces onboarding friction; allows organic discovery/sharing even for non-users; improves SEO (eventually).
+  - Implementation: Removed mandatory auth gate on `/community`; Client component checks `user` prop; Interactions (RSVP, Reply) redirect to `/login?returnUrl=...`.
+
+- **2025-12-07** — **Mobile-First Map Interaction (Bottom Sheet)**
+  - Rationale: Binary "List vs Map" toggle was disjointed. Bottom sheet pattern (like Google Maps) keeps context while allowing list exploration.
+  - Implementation: `ResourceBottomSheet` handles "peek", "half", and "full" states. Desktop retains Sidebar layout.
+
 ## Product Strategy
 
 - **2025-11-07** — **Target Sacramento (Midtown) as beachhead**
