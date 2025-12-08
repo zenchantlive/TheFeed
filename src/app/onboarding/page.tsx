@@ -120,7 +120,11 @@ export default function OnboardingPage() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" onClick={handleFinish}>
+                            <Button
+                                className="w-full"
+                                onClick={handleFinish}
+                                disabled={!location && !zipCode}
+                            >
                                 Finish Setup
                             </Button>
                         </CardFooter>
