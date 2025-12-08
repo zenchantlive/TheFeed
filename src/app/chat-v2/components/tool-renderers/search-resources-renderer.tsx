@@ -58,13 +58,30 @@ function ResourceGrid({
     );
   }
 
-  const primaryResources = resources.slice(0, 2);
-  const hiddenResources = resources.slice(2);
+  const prioritizedResources = [...resources].sort((a, b) => {
+    const openDifference = Number(b.isOpen) - Number(a.isOpen);
+
+    if (openDifference !== 0) return openDifference;
+
+    const aDistance = typeof a.distanceMiles === "number" ? a.distanceMiles : Infinity;
+    const bDistance = typeof b.distanceMiles === "number" ? b.distanceMiles : Infinity;
+
+    return aDistance - bDistance;
+  });
+
+  const maxVisible = prioritizedResources.length >= 5
+    ? Math.min(prioritizedResources.length, 8)
+    : prioritizedResources.length;
+
+  const visibleResources = prioritizedResources.slice(0, maxVisible);
+  const primaryResources = visibleResources.slice(0, 2);
+  const hiddenResources = visibleResources.slice(2);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <p className="text-sm font-medium text-foreground">
-        Found {resources.length} resource{resources.length !== 1 ? "s" : ""} near you:
+        Showing {visibleResources.length} nearby resource{visibleResources.length !== 1 ? "s" : ""}
+        {resources.length > visibleResources.length && ` (of ${resources.length} total, prioritizing open now)`}:
       </p>
 
       <div className="space-y-3">

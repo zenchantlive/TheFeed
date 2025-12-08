@@ -1,6 +1,8 @@
 "use client";
 
-import { MapPin, Phone, Globe, Clock, Navigation } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { MapPin, Phone, Globe, Clock, Navigation, Info } from "lucide-react";
 
 type HoursType = Record<
   string,
@@ -77,20 +79,23 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
     }
   };
 
+  const mapHref = `/map?resource=${resource.id}`;
+  const detailsHref = `/resources/${resource.id}`;
+
   return (
     <div className="my-0 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden w-full">
       {/* Header */}
       <div className="p-4 border-b border-border/30">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base text-foreground mb-1 truncate">
+          <Link href={mapHref} className="flex-1 min-w-0 group" prefetch={false}>
+            <h3 className="font-semibold text-base text-foreground mb-1 truncate group-hover:text-primary transition-colors">
               {resource.name}
             </h3>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="truncate">{resource.address}</span>
             </div>
-          </div>
+          </Link>
           {resource.distanceMiles !== null && (
             <div className="flex-shrink-0 text-right">
               <div className="text-sm font-medium text-primary">
@@ -145,31 +150,47 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
       )}
 
       {/* Actions */}
-      <div className="p-3 bg-muted/20 flex gap-2">
-        <button
+      <div className="p-3 bg-muted/20 flex flex-wrap gap-2">
+        <Button asChild variant="outline" className="flex-1 min-w-[160px] justify-center gap-2">
+          <Link href={mapHref} prefetch={false}>
+            <MapPin className="w-4 h-4" />
+            View on map
+          </Link>
+        </Button>
+        <Button asChild variant="secondary" className="flex-1 min-w-[160px] justify-center gap-2">
+          <Link href={detailsHref} prefetch={false}>
+            <Info className="w-4 h-4" />
+            View details
+          </Link>
+        </Button>
+        <Button
           onClick={handleGetDirections}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          className="flex-1 min-w-[160px] justify-center gap-2"
         >
           <Navigation className="w-4 h-4" />
           Directions
-        </button>
+        </Button>
         {resource.phone && (
-          <button
+          <Button
             onClick={handleCall}
-            className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors"
+            variant="outline"
+            size="icon"
             title="Call"
+            aria-label={`Call ${resource.name}`}
           >
             <Phone className="w-4 h-4 text-foreground" />
-          </button>
+          </Button>
         )}
         {resource.website && (
-          <button
+          <Button
             onClick={handleVisitWebsite}
-            className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors"
+            variant="outline"
+            size="icon"
             title="Visit website"
+            aria-label={`Visit ${resource.name} website`}
           >
             <Globe className="w-4 h-4 text-foreground" />
-          </button>
+          </Button>
         )}
       </div>
     </div>
