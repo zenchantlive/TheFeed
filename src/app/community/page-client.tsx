@@ -19,7 +19,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { EventCreationWizard } from "@/components/events/event-creation-wizard";
 import { HostEventButton } from "./components/host-event-button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 /**
  * Community Page Client Component
@@ -39,13 +39,26 @@ function CommunityPageView({
   initialEvents,
   user,
 }: CommunityPageClientProps) {
-  const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(null);
-  const [userLocation, setUserLocation] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Initialize state from URL params if available (from onboarding)
+  const paramIntent = searchParams.get("intent");
+  const paramLat = searchParams.get("lat");
+  const paramLng = searchParams.get("lng");
+  const paramZip = searchParams.get("zip");
+
+  const initialMode = paramIntent === "need" ? "hungry" :
+    (paramIntent === "share" || paramIntent === "volunteer") ? "full" : null;
+
+  const [activeMode, setActiveMode] = useState<"hungry" | "full" | null>(initialMode);
+  const [userLocation, setUserLocation] = useState<string | null>(paramZip ? `Zip ${paramZip}` : null);
   const [userState, setUserState] = useState<string | null>(null);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(
+    paramLat && paramLng ? { lat: parseFloat(paramLat), lng: parseFloat(paramLng) } : null
+  );
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const router = useRouter();
 
   const handleHostEventClick = () => {
     if (!user) {
@@ -77,6 +90,25 @@ function CommunityPageView({
     const controller = new AbortController();
 
     const detectLocation = async () => {
+      // If we already have coordinates (e.g. from Onboarding redirect), prioritize those
+      if (userCoords) {
+        // Optionally verify city name from coords if missing
+        if (!userLocation || userLocation.startsWith("Zip")) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userCoords.lat}&lon=${userCoords.lng}&zoom=14`,
+              { headers: { "User-Agent": "TheFeed Community App" }, signal: controller.signal }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              const locName = data.address?.neighbourhood || data.address?.city || data.address?.town || "Your area";
+              setUserLocation(locName);
+            }
+          } catch { /* ignore */ }
+        }
+        return;
+      }
+
       // Try IP-based geolocation first (works on localhost)
       try {
         const ipResponse = await fetch("https://ipapi.co/json/", {
@@ -181,13 +213,16 @@ function CommunityPageView({
       );
     };
 
+
+
     detectLocation();
 
     // Cleanup: abort fetch requests if component unmounts
     return () => {
       controller.abort();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentional: run once on mount.
 
   // Calculate distances for posts when user coordinates are available
   const postsWithDistances = useMemo(() => {
@@ -296,7 +331,7 @@ function CommunityPageView({
             {/* Friendly Greeting */}
             <div>
               <h3 className="font-serif text-2xl font-light text-foreground">
-                Hey {user?.name?.split(" ")[0] || "there"}
+                Hey {user ? (user.name.split(" ")[0]) : "neighbor"}
                 {activeMode === "hungry" && ", let's find you some food"}
                 {activeMode === "full" && ", ready to make a difference"}
                 {!activeMode && ", welcome back"}
@@ -400,17 +435,29 @@ function CommunityPageView({
                 <h3 className="text-sm font-semibold text-muted-foreground">
                   {activeMode === "hungry" ? "Ask neighbors for help" : "Offer to help neighbors"}
                 </h3>
-                <PostComposer
-                  defaultIntent={activeMode === "hungry" ? "need" : "share"}
-                  hideIntentToggle
-                />
+                {user ? (
+                  <PostComposer
+                    defaultIntent={activeMode === "hungry" ? "need" : "share"}
+                    hideIntentToggle
+                  />
+                ) : (
+                  <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                    <p className="mb-3 text-sm text-muted-foreground">
+                      Sign in to {activeMode === "hungry" ? "ask for help" : "offer help"} and connect with your neighbors.
+                    </p>
+                    <Button onClick={() => router.push("/login?returnUrl=/community")}>
+                      Sign in to Post
+                    </Button>
+                  </div>
+                )}
+
               </div>
             )}
 
             {/* Community Posts */}
             <div className="space-y-2">
               <h2 className="text-lg font-bold text-foreground">Community chat</h2>
-              <PostFeed posts={postsWithDistances} mode={postMode} />
+              <PostFeed posts={postsWithDistances} mode={postMode} isLoggedIn={!!user} />
             </div>
           </div>
 
