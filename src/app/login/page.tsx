@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ function LoginContent() {
         } catch (error) {
             console.error("Login error:", error);
             toast.error("Failed to sign in. Please try again.");
+        } finally {
             setIsLoading(false);
         }
     };

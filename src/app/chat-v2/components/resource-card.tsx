@@ -156,7 +156,7 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
           Directions
         </button>
         <button
-          onClick={() => router.push(`/map?resource=${resource.id}`)}
+          onClick={() => window.open(`/resources/${resource.id}`, "_blank")}
           className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors text-sm font-medium"
         >
           View Details
