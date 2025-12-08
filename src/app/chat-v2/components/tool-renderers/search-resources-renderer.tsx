@@ -58,13 +58,29 @@ function ResourceGrid({
     );
   }
 
-  const primaryResources = resources.slice(0, 2);
-  const hiddenResources = resources.slice(2);
+  const prioritizedResources = [...resources].sort((a, b) => {
+    if (a.isOpen !== b.isOpen) {
+      return a.isOpen ? -1 : 1;
+    }
+
+    const aDistance = a.distanceMiles ?? Number.POSITIVE_INFINITY;
+    const bDistance = b.distanceMiles ?? Number.POSITIVE_INFINITY;
+
+    if (aDistance !== bDistance) {
+      return aDistance - bDistance;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
+
+  const limitedResources = prioritizedResources.slice(0, 8);
+  const primaryResources = limitedResources.slice(0, Math.min(2, limitedResources.length));
+  const hiddenResources = limitedResources.slice(primaryResources.length);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <p className="text-sm font-medium text-foreground">
-        Found {resources.length} resource{resources.length !== 1 ? "s" : ""} near you:
+        {`Showing the closest ${limitedResources.length} of ${resources.length} resource${resources.length !== 1 ? "s" : ""} near you (open locations first):`}
       </p>
 
       <div className="space-y-3">

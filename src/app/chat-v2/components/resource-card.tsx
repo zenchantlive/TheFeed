@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { MapPin, Phone, Globe, Clock, Navigation } from "lucide-react";
 
 type HoursType = Record<
@@ -84,7 +85,9 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-base text-foreground mb-1 truncate">
-              {resource.name}
+              <Link href={`/map?resource=${resource.id}`} className="hover:underline">
+                {resource.name}
+              </Link>
             </h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -145,10 +148,23 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
       )}
 
       {/* Actions */}
-      <div className="p-3 bg-muted/20 flex gap-2">
+      <div className="p-3 bg-muted/20 flex flex-wrap gap-2">
+        <Link
+          href={`/map?resource=${resource.id}`}
+          className="flex-1 min-w-[180px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors text-sm font-medium"
+        >
+          <MapPin className="w-4 h-4" />
+          View on map
+        </Link>
+        <Link
+          href={`/resources/${resource.id}`}
+          className="flex-1 min-w-[180px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors text-sm font-medium"
+        >
+          View full details
+        </Link>
         <button
           onClick={handleGetDirections}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          className="flex-1 min-w-[180px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           <Navigation className="w-4 h-4" />
           Directions
