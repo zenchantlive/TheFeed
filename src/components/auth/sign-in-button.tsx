@@ -4,7 +4,11 @@ import { signIn, useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export function SignInButton() {
+interface SignInButtonProps {
+  callbackURL?: string;
+}
+
+export function SignInButton({ callbackURL = "/profile" }: SignInButtonProps) {
   const { data: session, isPending } = useSession();
 
   if (isPending) {
@@ -21,7 +25,7 @@ export function SignInButton() {
         try {
           await signIn.social({
             provider: "google",
-            callbackURL: "/profile",
+            callbackURL,
           });
         } catch (error) {
           console.error("Sign in error (full):", error);

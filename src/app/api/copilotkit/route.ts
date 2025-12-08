@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
             maxDistance: radiusMiles,
             openNow,
             services,
-            limit,
+            limit: limit || 8, // Default to 8 results if not specified, per requirements
           });
 
           return results.map((bank) => ({

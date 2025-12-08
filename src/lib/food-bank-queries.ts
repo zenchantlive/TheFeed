@@ -102,6 +102,13 @@ export async function searchFoodBanks({
       }
       return true;
     })
+    .sort((a, b) => {
+      // Sort by isOpen (true first), then by distance (ascending)
+      if (a.isOpen === b.isOpen) {
+        return a.distance - b.distance;
+      }
+      return a.isOpen ? -1 : 1;
+    })
     .slice(0, limit);
 }
 

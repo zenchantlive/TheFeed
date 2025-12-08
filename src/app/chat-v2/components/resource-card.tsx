@@ -1,6 +1,7 @@
 "use client";
 
-import { MapPin, Phone, Globe, Clock, Navigation } from "lucide-react";
+import { MapPin, Phone, Globe, Clock, Navigation, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 type HoursType = Record<
   string,
@@ -48,7 +49,8 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
-  const handleGetDirections = () => {
+  const handleGetDirections = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (userLocation) {
       const origin = `${userLocation.lat},${userLocation.lng}`;
       const destination = `${resource.latitude},${resource.longitude}`;
@@ -65,67 +67,72 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
     }
   };
 
-  const handleCall = () => {
+  const handleCall = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (resource.phone) {
       window.location.href = `tel:${resource.phone}`;
     }
   };
 
-  const handleVisitWebsite = () => {
+  const handleVisitWebsite = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (resource.website) {
       window.open(resource.website, "_blank");
     }
   };
 
   return (
-    <div className="my-0 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden w-full">
-      {/* Header */}
-      <div className="p-4 border-b border-border/30">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base text-foreground mb-1 truncate">
-              {resource.name}
-            </h3>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="truncate">{resource.address}</span>
-            </div>
-          </div>
-          {resource.distanceMiles !== null && (
-            <div className="flex-shrink-0 text-right">
-              <div className="text-sm font-medium text-primary">
-                {resource.distanceMiles} mi
+    <div className="my-0 rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden w-full transition-all duration-200 hover:border-primary/40 hover:shadow-md">
+      {/* Header - Clickable Link to Map */}
+      <Link href={`/map?foodBankId=${resource.id}`} className="block">
+        <div className="p-4 border-b border-border/30 hover:bg-muted/5 transition-colors">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base text-foreground mb-1 truncate flex items-center gap-2 group">
+                {resource.name}
+                <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0 text-primary" />
+              </h3>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{resource.address}</span>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Open/Closed Status */}
-        <div className="mt-2 flex items-center gap-2">
-          <div
-            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${
-              resource.isOpen
-                ? "bg-green-500/10 text-green-700 dark:text-green-400"
-                : "bg-red-500/10 text-red-700 dark:text-red-400"
-            }`}
-          >
-            <div
-              className={`w-1.5 h-1.5 rounded-full ${resource.isOpen ? "bg-green-500" : "bg-red-500"}`}
-            />
-            {resource.isOpen ? "Open now" : "Closed"}
+            {resource.distanceMiles !== null && (
+              <div className="flex-shrink-0 text-right">
+                <div className="text-sm font-medium text-primary">
+                  {resource.distanceMiles} mi
+                </div>
+              </div>
+            )}
           </div>
-          {resource.hours && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="w-3 h-3" />
-              <span className="truncate">{formatHours(resource.hours)}</span>
+
+          {/* Open/Closed Status */}
+          <div className="mt-2 flex items-center gap-2">
+            <div
+              className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium ${
+                resource.isOpen
+                  ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                  : "bg-red-500/10 text-red-700 dark:text-red-400"
+              }`}
+            >
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${resource.isOpen ? "bg-green-500" : "bg-red-500"}`}
+              />
+              {resource.isOpen ? "Open now" : "Closed"}
             </div>
-          )}
+            {resource.hours && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                <span className="truncate">{formatHours(resource.hours)}</span>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </Link>
 
       {/* Services */}
       {resource.services && resource.services.length > 0 && (
-        <div className="px-4 py-3 border-b border-border/30">
+        <div className="px-4 py-3 border-b border-border/30 pointer-events-none">
           <div className="flex flex-wrap gap-1.5">
             {resource.services.slice(0, 4).map((service, index) => (
               <span
@@ -145,13 +152,19 @@ export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
       )}
 
       {/* Actions */}
-      <div className="p-3 bg-muted/20 flex gap-2">
-        <button
-          onClick={handleGetDirections}
+      <div className="p-3 bg-muted/20 flex flex-wrap gap-2">
+        <Link
+          href={`/resources/${resource.id}`}
           className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
-          <Navigation className="w-4 h-4" />
-          Directions
+          View Full Details
+        </Link>
+        <button
+          onClick={handleGetDirections}
+          className="px-3 py-2 rounded-lg border border-border/40 bg-card hover:bg-muted/50 transition-colors"
+          title="Directions"
+        >
+          <Navigation className="w-4 h-4 text-foreground" />
         </button>
         {resource.phone && (
           <button
