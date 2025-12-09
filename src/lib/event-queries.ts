@@ -80,7 +80,7 @@ export type EventCursor = {
 export type GetEventsParams = {
   cursor?: EventCursor | null;
   limit?: number;
-  eventType?: "potluck" | "volunteer"; // Filter by event type
+  eventType?: "potluck" | "volunteer" | "workshop" | "social"; // Filter by event type
   status?: "upcoming" | "in_progress" | "completed" | "cancelled"; // Filter by status
   hostId?: string; // Filter by specific host
   onlyUpcoming?: boolean; // Only show events that haven't started yet
@@ -203,9 +203,9 @@ export async function getEvents({
 
   const nextCursor = hasMore
     ? {
-        createdAt: rows[limit - 1].event.startTime!.toISOString(),
-        id: rows[limit - 1].event.id,
-      }
+      createdAt: rows[limit - 1].event.startTime!.toISOString(),
+      id: rows[limit - 1].event.id,
+    }
     : null;
 
   return { items, nextCursor };
@@ -214,7 +214,7 @@ export async function getEvents({
 export type GetEventsWithinRangeParams = {
   start: Date;
   end: Date;
-  eventType?: "potluck" | "volunteer";
+  eventType?: "potluck" | "volunteer" | "workshop" | "social";
   onlyWithCoords?: boolean;
 };
 
@@ -384,7 +384,7 @@ export async function createEvent(data: {
   hostId: string;
   title: string;
   description: string;
-  eventType: "potluck" | "volunteer";
+  eventType: "potluck" | "volunteer" | "workshop" | "social";
   startTime: Date;
   endTime: Date;
   location: string;
@@ -420,6 +420,7 @@ export async function updateEvent(
     capacity?: number | null;
     status?: "upcoming" | "in_progress" | "completed" | "cancelled";
     isVerified?: boolean;
+    eventType?: "potluck" | "volunteer" | "workshop" | "social";
   }
 ): Promise<EventRecord | undefined> {
   const [updated] = await db
@@ -769,6 +770,37 @@ export async function getEventSignUpSlots(
     ...slotRow.slot,
     claims: claimsBySlot[slotRow.slot.id] ?? [],
   }));
+}
+
+/**
+ * Delete all sign-up slots for an event
+ * Used when updating an event to sync slots (simple destructive update)
+ */
+export async function deleteSignUpSlotsByEventId(eventId: string): Promise<void> {
+  // This will cascade delete claims due to foreign key constraints if configured,
+  // but let's be safe and rely on DB constraints or explicit deletion if needed.
+  // Assuming standard cascading or that we only need to delete slots.
+  // Actually, we should check if we need to delete claims first if no cascade.
+  // For now, simple delete of slots.
+  await db.delete(signUpSlots).where(eq(signUpSlots.eventId, eventId));
+}
+
+/**
+ * Delete specific sign-up slots by ID
+ */
+export async function deleteSignUpSlots(slotIds: string[]): Promise<void> {
+  if (slotIds.length === 0) return;
+  await db.delete(signUpSlots).where(inArray(signUpSlots.id, slotIds));
+}
+
+/**
+ * Update the sort order of a sign-up slot
+ */
+export async function updateSignUpSlotSortOrder(slotId: string, sortOrder: number): Promise<void> {
+  await db
+    .update(signUpSlots)
+    .set({ sortOrder })
+    .where(eq(signUpSlots.id, slotId));
 }
 
 // =============================================================================

@@ -393,16 +393,18 @@
         <div class="timeline">
             <!-- Q1 -->
             <div class="timeline-item">
-                <div class="quarter-label">Q1</div>
+                <div class="quarter-label" style="background: rgba(78, 205, 196, 0.2); border-color: var(--secondary);">
+                    ✅</div>
                 <div class="card-wrapper">
-                    <div class="card" onclick="openModal('q1')">
-                        <span class="card-theme" style="color: var(--primary);">Fluidity & Creation</span>
+                    <div class="card" onclick="openModal('q1')"
+                        style="border-color: var(--secondary); box-shadow: 0 0 20px rgba(78, 205, 196, 0.1);">
+                        <span class="card-theme" style="color: var(--secondary);">✅ Completed</span>
                         <h2>🚀 Generative Actions</h2>
                         <p style="margin-bottom: 20px; color: var(--text-muted);">
                             Transforming the AI from a reader into a co-creator.
                         </p>
                         <ul>
-                            <li>Event Creation Overhaul</li>
+                            <li style="color: #fff;">Event Creation Overhaul</li>
                             <li>Generative AI Tools</li>
                             <li>Seamless Forms</li>
                         </ul>
@@ -411,16 +413,17 @@
                         <!-- Hidden Details Data -->
                         <div id="details-q1" class="hidden-details">
                             <div class="detail-block">
-                                <h3>⚡ Event Creation Overhaul</h3>
-                                <p>Refactoring the multi-step wizard into a <strong>Single-Page "Sheet"</strong>. Goal:
+                                <h3>⚡ Event Creation Overhaul (Done)</h3>
+                                <p>Refactored the multi-step wizard into a <strong>Single-Page Glassmorphic
+                                        Modal</strong>. Goal:
                                     < 45s time-to-publish.</p>
-                                        <p>AI will auto-fill Title, Date, Time, and Location from chat history.</p>
+                                        <p>AI auto-fills Title, Date, Time, and Location from chat history.</p>
                             </div>
                             <div class="detail-block">
                                 <h3>🤖 Generative AI Tools</h3>
                                 <p>Implementing "Drafting" capabilities. The AI solves the Blank Page problem.</p>
                                 <ul>
-                                    <li><code>create_draft_event</code>: Populates the Event Drawer for Potlucks/Shifts.
+                                    <li><code>create_draft_event</code>: Populates the Event Modal for Potlucks/Shifts.
                                     </li>
                                     <li><code>create_draft_post</code>: Drafts "Offers" or "Requests" with tags/urgency.
                                     </li>

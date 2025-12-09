@@ -18,6 +18,16 @@ Last updated: 2025-12-06
 
 ## Recent Deliverables (December 2025)
 
+### Event Creation Refactor & AI Enhancements (December 8, 2025) ✅
+- **Glassmorphic Event Modal**: Refactored `CreateEventDrawer` and wizards into a unified `CreateEventModal`.
+  - Consistent "Host Event" experience from Header, Calendar, and Mobile.
+  - **Edit Mode**: Hosts can now edit existing events with the same UI.
+- **AI-Assisted Creation**:
+  - **Location Awareness**: Generative AI now uses user location to infer specific addresses (e.g., "The Park").
+  - **Clickable Maps**: Event locations in detail view link directly to Google Maps.
+- **Cleanup**: Removed deprecated wizard/drawer components.
+- **Branch**: `refactor/event-creation-ui` (PR #53)
+
 ### Auth & Navigation UX Overhaul (December 8, 2025) ✅
 - **Glassmorphic Auth Modal**: Implemented global `AuthModalContext` and `AuthModal`.
   - Replaced jarring page redirects with seamless popup for: Comments, RSVPs, Hosting, Claims.
@@ -153,6 +163,9 @@ Last updated: 2025-12-06
 
 ## Roadmap
 
+> **Visual Roadmap**: See [`public/strategic-roadmap.html`](/public/strategic-roadmap.html) for the interactive 2025 vision.
+> **Implementation Prompts**: See [`public/roadmap-prompts.html`](/public/roadmap-prompts.html) for AI-ready implementation guides.
+
 ### Phase 4: Performance & Scale (Next)
 - **PostGIS**: Spatial queries for efficient "nearby" lookups.
 - **Redis Caching**: Cache resource feed and API responses.
@@ -199,3 +212,5 @@ Last updated: 2025-12-06
 - **Resource Page**: Includes map integration and trust indicators.
 - **Community Page**: Includes "Resources Near You" widget.
 - **Data**: Schema includes `adminVerifiedAt`, `sources`, `verificationStatus`.
+- **Event Creation**: Unified Glassmorphic Modal with AI & Edit Mode.
+

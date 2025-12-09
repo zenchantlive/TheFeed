@@ -47,10 +47,7 @@ interface ResourceCardProps {
   userLocation?: { lat: number; lng: number } | null;
 }
 
-import { useRouter } from "next/navigation";
-
 export function ResourceCard({ resource, userLocation }: ResourceCardProps) {
-  const router = useRouter();
   const handleGetDirections = () => {
     if (userLocation) {
       const origin = `${userLocation.lat},${userLocation.lng}`;

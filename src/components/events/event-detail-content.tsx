@@ -34,6 +34,8 @@ import {
 import { format } from "date-fns";
 import type { EventDetails } from "@/lib/event-queries";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
+import { CreateEventModal } from "@/components/events/create-event-modal";
+import { Pencil } from "lucide-react";
 
 interface EventDetailContentProps {
   event: EventDetails;
@@ -54,8 +56,7 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
   const [slotActionError, setSlotActionError] = useState<string | null>(null);
   const [isSubmittingSlot, setIsSubmittingSlot] = useState(false);
   const [unclaimingSlotId, setUnclaimingSlotId] = useState<string | null>(null);
-
-  // Check if current user has RSVP'd
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const userRsvp = event.rsvps.find((a) => a.userId === currentUserId);
   const isAttending = userRsvp?.status === "attending";
   const isWaitlisted = userRsvp?.status === "waitlisted";
@@ -227,7 +228,15 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
           {event.isPublicLocation && <Badge variant="outline">Public Location</Badge>}
         </div>
 
-        <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+          {currentUserId && event.hostId === currentUserId && (
+            <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Event
+            </Button>
+          )}
+        </div>
 
         <div className="flex items-center gap-4 text-muted-foreground mb-6">
           <div className="flex items-center gap-2">
@@ -265,7 +274,14 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
             <MapPin className="h-5 w-5 mt-0.5 text-muted-foreground" />
             <div>
               <p className="font-medium">Location</p>
-              <p className="text-sm text-muted-foreground">{event.location}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                {event.location}
+              </a>
             </div>
           </div>
 
@@ -537,6 +553,24 @@ export function EventDetailContent({ event, currentUserId }: EventDetailContentP
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateEventModal
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        eventId={event.id}
+        initialData={{
+          title: event.title,
+          description: event.description || "",
+          eventType: event.eventType as "potluck" | "volunteer" | "workshop" | "social",
+          startTime: new Date(event.startTime).toISOString().slice(0, 16),
+          endTime: new Date(event.endTime).toISOString().slice(0, 16),
+          location: event.location,
+          isPublicLocation: event.isPublicLocation,
+          capacity: event.capacity ?? null,
+          locationCoords: event.locationCoords ?? undefined,
+          slots: event.signUpSlots.map(s => s.slotName),
+        }}
+      />
     </div>
   );
 }
