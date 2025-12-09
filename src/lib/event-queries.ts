@@ -80,7 +80,7 @@ export type EventCursor = {
 export type GetEventsParams = {
   cursor?: EventCursor | null;
   limit?: number;
-  eventType?: "potluck" | "volunteer"; // Filter by event type
+  eventType?: "potluck" | "volunteer" | "workshop" | "social"; // Filter by event type
   status?: "upcoming" | "in_progress" | "completed" | "cancelled"; // Filter by status
   hostId?: string; // Filter by specific host
   onlyUpcoming?: boolean; // Only show events that haven't started yet
@@ -203,9 +203,9 @@ export async function getEvents({
 
   const nextCursor = hasMore
     ? {
-        createdAt: rows[limit - 1].event.startTime!.toISOString(),
-        id: rows[limit - 1].event.id,
-      }
+      createdAt: rows[limit - 1].event.startTime!.toISOString(),
+      id: rows[limit - 1].event.id,
+    }
     : null;
 
   return { items, nextCursor };
@@ -214,7 +214,7 @@ export async function getEvents({
 export type GetEventsWithinRangeParams = {
   start: Date;
   end: Date;
-  eventType?: "potluck" | "volunteer";
+  eventType?: "potluck" | "volunteer" | "workshop" | "social";
   onlyWithCoords?: boolean;
 };
 
@@ -384,7 +384,7 @@ export async function createEvent(data: {
   hostId: string;
   title: string;
   description: string;
-  eventType: "potluck" | "volunteer";
+  eventType: "potluck" | "volunteer" | "workshop" | "social";
   startTime: Date;
   endTime: Date;
   location: string;

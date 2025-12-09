@@ -13,12 +13,13 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { parseMonthParam } from "./utils";
 import type { Event } from "@/lib/schema";
+import { CalendarHostButton, CalendarHostLink } from "./calendar-actions";
 
 type EventTypeFilter = "all" | "potluck" | "volunteer";
 
@@ -93,9 +94,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/community/events/new">Host an event</Link>
-          </Button>
+          <CalendarHostButton />
           <Button asChild>
             <Link href="/community">Back to community</Link>
           </Button>
@@ -141,8 +140,8 @@ export default async function CalendarPage({ searchParams }: PageProps) {
                   {type === "all"
                     ? "All events"
                     : type === "potluck"
-                    ? "Potlucks"
-                    : "Volunteer"}
+                      ? "Potlucks"
+                      : "Volunteer"}
                 </Link>
               </Button>
             )
@@ -223,9 +222,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
         {events.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No events scheduled this month.{" "}
-            <Link href="/community/events/new" className="text-primary underline">
-              Host one?
-            </Link>
+            <CalendarHostLink />
           </p>
         ) : (
           <div className="space-y-3">
@@ -236,7 +233,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
                 className="block rounded-2xl border border-border/60 bg-card/95 p-4 shadow-sm"
               >
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
                   {format(event.startTime, "EEEE, MMM d")}
                 </div>
                 <h3 className="mt-1 text-base font-semibold">{event.title}</h3>

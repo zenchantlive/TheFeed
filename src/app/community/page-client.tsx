@@ -14,10 +14,7 @@ import { ScannerNotification } from "@/components/discovery/scanner-notification
 import { UtensilsCrossed, HandHeart, MapPin } from "lucide-react";
 import { MiniMap } from "./components/mini-map";
 import { cn, calculateDistance, formatDistance } from "@/lib/utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { EventCreationWizard } from "@/components/events/event-creation-wizard";
+import { CreateEventModal } from "@/components/events/create-event-modal";
 import { HostEventButton } from "./components/host-event-button";
 import { useSearchParams } from "next/navigation";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
@@ -47,6 +44,7 @@ function CommunityPageView({
   const paramLat = searchParams.get("lat");
   const paramLng = searchParams.get("lng");
   const paramZip = searchParams.get("zip");
+  const paramAction = searchParams.get("action");
 
   const initialMode = paramIntent === "need" ? "hungry" :
     (paramIntent === "share" || paramIntent === "volunteer") ? "full" : null;
@@ -59,7 +57,6 @@ function CommunityPageView({
   );
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const { openLogin } = useAuthModal();
-  const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const handleHostEventClick = () => {
     if (!user) {
@@ -68,8 +65,6 @@ function CommunityPageView({
     }
     setIsEventModalOpen(true);
   };
-
-  const closeEventModal = () => setIsEventModalOpen(false);
 
   const handleModeToggle = (mode: "hungry" | "full") => {
     setActiveMode(activeMode === mode ? null : mode);
@@ -221,6 +216,17 @@ function CommunityPageView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intentional: run once on mount.
+
+  // Handle URL actions (e.g. /community?action=create-event)
+  useEffect(() => {
+    if (paramAction === "create-event") {
+      if (user) {
+        setIsEventModalOpen(true);
+      } else {
+        openLogin();
+      }
+    }
+  }, [paramAction, user, openLogin]);
 
   // Calculate distances for posts when user coordinates are available
   const postsWithDistances = useMemo(() => {
@@ -497,27 +503,11 @@ function CommunityPageView({
       </div>
 
       {/* Event Creation Modal */}
-      {isDesktop ? (
-        <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Host an Event</DialogTitle>
-            </DialogHeader>
-            <EventCreationWizard onClose={closeEventModal} />
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
-          <DrawerContent className="max-h-[90vh]">
-            <DrawerHeader className="text-left">
-              <DrawerTitle>Host an Event</DrawerTitle>
-            </DrawerHeader>
-            <div className="px-4 pb-8 overflow-y-auto">
-              <EventCreationWizard onClose={closeEventModal} />
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
+      <CreateEventModal
+        open={isEventModalOpen}
+        onOpenChange={setIsEventModalOpen}
+        userLocation={userLocation ?? undefined}
+      />
     </div>
   );
 }
