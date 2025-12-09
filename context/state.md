@@ -141,6 +141,14 @@ Last updated: 2025-12-06
 - **Validation**: Phone & website validation.
 - **Audit Trail**: Full version history and audit logs.
 
+### Documentation Cleanup (December 8, 2025) ✅
+- **Root Directory Reorganization**:
+  - Moved `DATA_UNIFICATION_*` and outdated plans to `docs/archive/`.
+  - Moved `DEPLOYMENT.md` to `docs/`.
+  - Consolidated `DEVELOPMENT.md` into `CONTRIBUTING.md`.
+  - Standardized on `bun` commands in `README.md` and `CONTRIBUTING.md`.
+- **Result**: Cleaner root directory, single source of truth for setup.
+
 ---
 
 ## Roadmap

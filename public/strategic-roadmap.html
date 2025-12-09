@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheFeed | Strategic Vision 2025</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f1115;
+            --bg-card: rgba(30, 32, 38, 0.7);
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(255, 107, 107, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(78, 205, 196, 0.05) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 120px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 700;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 40px 0;
+        }
+
+        /* Center Line */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom,
+                    transparent,
+                    var(--primary),
+                    var(--secondary),
+                    var(--accent),
+                    transparent);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: flex;
+            justify-content: center;
+            padding-bottom: 100px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Alternate Layout */
+        .timeline-item:nth-child(odd) .card-wrapper {
+            margin-right: auto;
+            padding-right: 50px;
+            text-align: right;
+            align-items: flex-end;
+        }
+
+        .timeline-item:nth-child(even) .card-wrapper {
+            margin-left: auto;
+            padding-left: 50px;
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .card-wrapper {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            overflow: hidden;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card .click-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            color: var(--secondary);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card:hover .click-hint {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Quarter Label - Fixed to Center Line */
+        .quarter-label {
+            position: absolute;
+            top: 0;
+            /* Align with top of content */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background: var(--bg-dark);
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            z-index: 10;
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text-main);
+            box-shadow: 0 0 0 10px var(--bg-dark);
+            /* Mask the line behind it */
+        }
+
+        .timeline-item:nth-child(1) .quarter-label {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .timeline-item:nth-child(2) .quarter-label {
+            border-color: var(--secondary);
+            color: var(--secondary);
+        }
+
+        .timeline-item:nth-child(3) .quarter-label {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .timeline-item:nth-child(4) .quarter-label {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        /* Typography */
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .card-theme {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        ul {
+            list-style: none;
+            display: inline-block;
+            text-align: left;
+        }
+
+        li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+            color: #d0d0d0;
+        }
+
+        li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #1a1d24;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 700px;
+            padding: 40px;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .detail-block {
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 20px;
+        }
+
+        .detail-block:last-child {
+            border-bottom: none;
+        }
+
+        .detail-block h3 {
+            color: var(--secondary);
+            margin-bottom: 10px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .hidden-details {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 20px;
+            }
+
+            .timeline-item {
+                flex-direction: column !important;
+                padding-left: 0;
+            }
+
+            .card-wrapper {
+                width: 100%;
+                margin: 0 !important;
+                padding: 0 0 0 50px !important;
+                /* Make room for the line */
+                text-align: left !important;
+                align-items: flex-start !important;
+            }
+
+            .quarter-label {
+                left: 20px;
+                width: 36px;
+                height: 36px;
+                font-size: 12px;
+                box-shadow: 0 0 0 5px var(--bg-dark);
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+
+            ul {
+                display: block;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <span class="card-theme">Project Roadmap 2025-2026</span>
+            <h1>TheFeed Vision</h1>
+            <p class="subtitle">Building a Dignified, Mobile-Native, and AI-Powered Food Security Network.</p>
+            <div style="margin-top: 30px;">
+                <a href="/roadmap-prompts.html" target="_blank" style="
+                    display: inline-block; 
+                    padding: 12px 24px; 
+                    background: rgba(255,255,255,0.1); 
+                    border: 1px solid var(--glass-border); 
+                    border-radius: 30px; 
+                    color: var(--text-main); 
+                    text-decoration: none; 
+                    font-family: 'Space Grotesk', sans-serif; 
+                    font-weight: 700;
+                    backdrop-filter: blur(10px);
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(-2px)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='translateY(0)'">
+                    View AI Implementation Prompts &rarr;
+                </a>
+            </div>
+        </header>
+
+        <div class="timeline">
+            <!-- Q1 -->
+            <div class="timeline-item">
+                <div class="quarter-label">Q1</div>
+                <div class="card-wrapper">
+                    <div class="card" onclick="openModal('q1')">
+                        <span class="card-theme" style="color: var(--primary);">Fluidity & Creation</span>
+                        <h2>🚀 Generative Actions</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">
+                            Transforming the AI from a reader into a co-creator.
+                        </p>
+                        <ul>
+                            <li>Event Creation Overhaul</li>
+                            <li>Generative AI Tools</li>
+                            <li>Seamless Forms</li>
+                        </ul>
+                        <div class="click-hint">View Technical Details &rarr;</div>
+
+                        <!-- Hidden Details Data -->
+                        <div id="details-q1" class="hidden-details">
+                            <div class="detail-block">
+                                <h3>⚡ Event Creation Overhaul</h3>
+                                <p>Refactoring the multi-step wizard into a <strong>Single-Page "Sheet"</strong>. Goal:
+                                    < 45s time-to-publish.</p>
+                                        <p>AI will auto-fill Title, Date, Time, and Location from chat history.</p>
+                            </div>
+                            <div class="detail-block">
+                                <h3>🤖 Generative AI Tools</h3>
+                                <p>Implementing "Drafting" capabilities. The AI solves the Blank Page problem.</p>
+                                <ul>
+                                    <li><code>create_draft_event</code>: Populates the Event Drawer for Potlucks/Shifts.
+                                    </li>
+                                    <li><code>create_draft_post</code>: Drafts "Offers" or "Requests" with tags/urgency.
+                                    </li>
+                                    <li><code>create_draft_resource</code>: Pre-fills submission for new pantries.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q2 -->
+            <div class="timeline-item">
+                <div class="quarter-label">Q2</div>
+                <div class="card-wrapper">
+                    <div class="card" onclick="openModal('q2')">
+                        <span class="card-theme" style="color: var(--secondary);">Native Experience</span>
+                        <h2>📱 The Native Leap</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">
+                            Delivering a superior, offline-capable mobile app.
+                        </p>
+                        <ul>
+                            <li>Turborepo Monorepo</li>
+                            <li>Expo (React Native)</li>
+                            <li>One-Tap Verification</li>
+                            <li>Offline Caching</li>
+                        </ul>
+                        <div class="click-hint">View Architecture &rarr;</div>
+
+                        <!-- Hidden Details Data -->
+                        <div id="details-q2" class="hidden-details">
+                            <div class="detail-block">
+                                <h3>🏗️ Monorepo Architecture</h3>
+                                <p>Moving to <strong>Turborepo</strong> to share `packages/core` (Schema, Zod, Utils)
+                                    between Web and Mobile.</p>
+                            </div>
+                            <div class="detail-block">
+                                <h3>⚡ Why Native?</h3>
+                                <ul>
+                                    <li><strong>120fps Animations:</strong> Using Native Driver for buttery smooth feel.
+                                    </li>
+                                    <li><strong>Instant Navigation:</strong> Stack-based routing (no full page reloads).
+                                    </li>
+                                    <li><strong>Offline Mode:</strong> SQLite caching for users with limited data.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q3 -->
+            <div class="timeline-item">
+                <div class="quarter-label">Q3</div>
+                <div class="card-wrapper">
+                    <div class="card" onclick="openModal('q3')">
+                        <span class="card-theme" style="color: var(--accent);">Sustainability</span>
+                        <h2>🛡️ Built to Last</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">
+                            Automated safety and fiscal maturity.
+                        </p>
+                        <ul>
+                            <li>Automated Trust Pipeline</li>
+                            <li>501c3 & Grants</li>
+                            <li>Impact Analytics</li>
+                        </ul>
+                        <div class="click-hint">View Strategy &rarr;</div>
+
+                        <div id="details-q3" class="hidden-details">
+                            <div class="detail-block">
+                                <h3>🛡️ Auto-Moderation</h3>
+                                <p>Middleware pipeline checking all posts against toxicity APIs. Posts > 0.8 Score
+                                    auto-hidden.</p>
+                            </div>
+                            <div class="detail-block">
+                                <h3>💰 Grant Engine</h3>
+                                <p>Automated generation of "Impact PDFs" (Meals Facilitated, Connections Made) to secure
+                                    funding.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Q4 -->
+            <div class="timeline-item">
+                <div class="quarter-label">Q4</div>
+                <div class="card-wrapper">
+                    <div class="card" onclick="openModal('q4')">
+                        <span class="card-theme">Expansion</span>
+                        <h2>🌍 Open Ecosystem</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">
+                            Replicating the model in new neighborhoods.
+                        </p>
+                        <ul>
+                            <li>Predictive Intelligence</li>
+                            <li>Public API (v1)</li>
+                            <li>Neighborhood Playbook</li>
+                        </ul>
+                        <div class="click-hint">View Future Tech &rarr;</div>
+
+                        <div id="details-q4" class="hidden-details">
+                            <div class="detail-block">
+                                <h3>🔌 Public API</h3>
+                                <p>Endpoint: <code>api.thefeed.org/v1/resources</code> for City/County embedding.</p>
+                            </div>
+                            <div class="detail-block">
+                                <h3>🧠 Predictive Needs</h3>
+                                <p>AI model analyzing search patterns to suggest resources <em>before</em> users type.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Container -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal(event)">×</button>
+            <div id="modalBody">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.timeline-item').forEach((item) => {
+            observer.observe(item);
+        });
+
+        // Modal Logic
+        function openModal(id) {
+            const content = document.getElementById('details-' + id).innerHTML;
+            const title = document.querySelector(`[onclick="openModal('${id}')"] h2`).innerText;
+            const theme = document.querySelector(`[onclick="openModal('${id}')"] .card-theme`).cloneNode(true);
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = '';
+            modalBody.appendChild(theme);
+
+            const titleEl = document.createElement('h2');
+            titleEl.innerText = title;
+            titleEl.style.marginTop = '0';
+            modalBody.appendChild(titleEl);
+
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = content;
+            modalBody.appendChild(contentDiv);
+
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(e) {
+            if (e.target === document.getElementById('modalOverlay') || e.target.classList.contains('close-btn') || e.target.innerText === '×') {
+                document.getElementById('modalOverlay').classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === "Escape") {
+                document.getElementById('modalOverlay').classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+    </script>
+</body>
+
+</html>

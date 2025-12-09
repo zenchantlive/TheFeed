@@ -36,6 +36,9 @@ export function SiteHeader() {
           <Link href="/onboarding" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             Onboarding
           </Link>
+          <Link href="/strategic-roadmap.html" target="_blank" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            Roadmap
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
