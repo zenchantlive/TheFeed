@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { CreateEventModal } from "@/components/events/create-event-modal";
-import { HostEventButton } from "@/app/community/components/host-event-button";
 import { Button } from "@/components/ui/button";
 
 export function CalendarHostButton() {
