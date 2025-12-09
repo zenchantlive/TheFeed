@@ -11,6 +11,28 @@ import { userProfiles, events } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
+const DEFAULT_SLOT_MAX_CLAIMS = 5;
+
+async function validateAndAuthenticate(data: z.infer<typeof createEventSchema>) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session?.user) {
+        return { error: "Unauthorized" };
+    }
+
+    const validated = createEventSchema.safeParse(data);
+    if (!validated.success) {
+        return {
+            error: "Invalid input",
+            fieldErrors: validated.error.flatten().fieldErrors,
+        };
+    }
+
+    return { session, validated };
+}
+
 export type CreateEventResult =
     | { success: true; eventId: string; postId: string }
     | { success: false; error: string; fieldErrors?: Record<string, string[]> };
@@ -19,24 +41,18 @@ export async function createEventAction(
     data: z.infer<typeof createEventSchema>
 ): Promise<CreateEventResult> {
     try {
-        // 1. Authentication
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return { success: false, error: "Unauthorized" };
-        }
-
-        // 2. Validation
-        const validated = createEventSchema.safeParse(data);
-        if (!validated.success) {
+        // 1. Authentication & Validation
+        const authResult = await validateAndAuthenticate(data);
+        if (authResult.error) {
             return {
                 success: false,
-                error: "Invalid input",
-                fieldErrors: validated.error.flatten().fieldErrors,
-            };
+                error: authResult.error,
+                fieldErrors: authResult.fieldErrors,
+            } as CreateEventResult;
         }
+
+        const { session, validated } = authResult;
+        if (!session || !validated) return { success: false, error: "Unknown error" };
 
         const {
             title,
@@ -92,28 +108,27 @@ export async function createEventAction(
             capacity: capacity ?? null,
         });
 
-        // 6. Create Slots (from input or defaults for Potlucks)
-        if (eventType === "potluck" || (validated.data.slots && validated.data.slots.length > 0)) {
-            const slotsToCreate = validated.data.slots?.length
-                ? validated.data.slots
-                : eventType === "potluck" && validated.data.slots === undefined
-                    ? ["Main Dish", "Side Dish", "Dessert", "Drinks", "Utensils/Plates"]
-                    : [];
+        // 6. Create Slots (simplified logic)
+        let slotsToCreate: string[] = [];
+        if (validated.data.slots && validated.data.slots.length > 0) {
+            slotsToCreate = validated.data.slots;
+        } else if (eventType === "potluck") {
+            slotsToCreate = ["Main Dish", "Side Dish", "Dessert", "Drinks", "Utensils/Plates"];
+        }
 
-            if (slotsToCreate.length > 0) {
-                await Promise.all(
-                    slotsToCreate
-                        .filter(slot => slot.trim()) // Filter out empty slots
-                        .map((slotName, index) =>
-                            createSignUpSlot({
-                                eventId: event.id,
-                                slotName,
-                                maxClaims: 5, // Default logical limit
-                                sortOrder: index,
-                            })
-                        )
-                );
-            }
+        if (slotsToCreate.length > 0) {
+            await Promise.all(
+                slotsToCreate
+                    .filter(slot => slot.trim())
+                    .map((slotName, index) =>
+                        createSignUpSlot({
+                            eventId: event.id,
+                            slotName,
+                            maxClaims: DEFAULT_SLOT_MAX_CLAIMS,
+                            sortOrder: index,
+                        })
+                    )
+            );
         }
 
         // 7. Revalidate
@@ -132,22 +147,17 @@ export async function updateEventAction(
     data: z.infer<typeof createEventSchema>
 ): Promise<CreateEventResult> {
     try {
-        const session = await auth.api.getSession({
-            headers: await headers(),
-        });
-
-        if (!session?.user) {
-            return { success: false, error: "Unauthorized" };
-        }
-
-        const validated = createEventSchema.safeParse(data);
-        if (!validated.success) {
+        const authResult = await validateAndAuthenticate(data);
+        if (authResult.error) {
             return {
                 success: false,
-                error: "Invalid input",
-                fieldErrors: validated.error.flatten().fieldErrors,
-            };
+                error: authResult.error,
+                fieldErrors: authResult.fieldErrors,
+            } as CreateEventResult;
         }
+
+        const { session, validated } = authResult;
+        if (!session || !validated) return { success: false, error: "Unknown error" };
 
         const {
             title,

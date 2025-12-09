@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Sparkles, Loader2, Plus, X, Calendar as CalendarIcon, Clock } from "lucide-react";
@@ -88,6 +88,8 @@ export function CreateEventModal({
         control: form.control,
         name: "slots",
     });
+
+    const aiPromptRef = useRef<HTMLInputElement>(null);
 
     // Reset form when initialData changes or modal opens/closes
     useEffect(() => {
@@ -231,7 +233,7 @@ export function CreateEventModal({
                                         <Input
                                             placeholder="e.g. 'Thanksgiving Potluck at Central Park'"
                                             className="h-9 bg-white/50 dark:bg-black/20 border-indigo-200/50"
-                                            id="ai-prompt-modal"
+                                            ref={aiPromptRef}
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter") {
                                                     e.preventDefault();
@@ -245,8 +247,9 @@ export function CreateEventModal({
                                             variant="secondary"
                                             disabled={isGenerating}
                                             onClick={() => {
-                                                const el = document.getElementById("ai-prompt-modal") as HTMLInputElement;
-                                                onGenerate(el.value);
+                                                if (aiPromptRef.current) {
+                                                    onGenerate(aiPromptRef.current.value);
+                                                }
                                             }}
                                             className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300"
                                         >
