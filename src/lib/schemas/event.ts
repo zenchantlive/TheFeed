@@ -1,7 +1,7 @@
 
 import { z } from "zod";
 
-export const createEventSchema = z.object({
+export const baseEventSchema = z.object({
     title: z
         .string()
         .min(5, "Title must be at least 5 characters")
@@ -25,7 +25,9 @@ export const createEventSchema = z.object({
     isPublicLocation: z.boolean().default(true),
     capacity: z.number().int().positive().nullable().optional(),
     slots: z.array(z.string()).optional(),
-}).refine(
+});
+
+export const createEventSchema = baseEventSchema.refine(
     (data) => {
         const start = new Date(data.startTime);
         const end = new Date(data.endTime);

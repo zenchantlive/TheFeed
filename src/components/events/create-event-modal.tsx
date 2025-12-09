@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Sparkles, Loader2, Plus, X, Calendar as CalendarIcon, Clock } from "lucide-react";
 
@@ -34,10 +34,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
-import { createEventSchema, type CreateEventInput } from "@/lib/schemas/event";
+import { baseEventSchema, type CreateEventInput } from "@/lib/schemas/event";
 import { createEventAction, updateEventAction } from "@/app/actions/event";
 import { generateEventDetails } from "@/app/actions/generate-event";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
 
 interface CreateEventModalProps {
     open: boolean;
@@ -58,10 +59,16 @@ export function CreateEventModal({
     const [isPending, startTransition] = useTransition();
     const [isGenerating, setIsGenerating] = useState(false);
 
-    // Schema with slots included (optional)
-    const form = useForm<CreateEventInput>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(createEventSchema) as any,
+    // Adapter schema for form (handling flat array for useFieldArray as objects)
+    const formSchema = baseEventSchema.extend({
+        slots: z.array(z.object({ value: z.string() })).optional(),
+        isPublicLocation: z.boolean(),
+    });
+
+    type FormInput = z.infer<typeof formSchema>;
+
+    const form = useForm<FormInput>({
+        resolver: zodResolver(formSchema),
         defaultValues: {
             title: initialData?.title || "",
             description: initialData?.description || "",
@@ -72,8 +79,14 @@ export function CreateEventModal({
             isPublicLocation: initialData?.isPublicLocation ?? true,
             capacity: initialData?.capacity || null,
             locationCoords: initialData?.locationCoords || undefined,
-            slots: initialData?.slots || [],
+            slots: initialData?.slots?.map(s => ({ value: s })) || [],
         },
+    });
+
+    // Use useFieldArray for slots
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "slots",
     });
 
     // Reset form when initialData changes or modal opens/closes
@@ -89,30 +102,10 @@ export function CreateEventModal({
                 isPublicLocation: initialData?.isPublicLocation ?? true,
                 capacity: initialData?.capacity || null,
                 locationCoords: initialData?.locationCoords || undefined,
-                slots: initialData?.slots || [],
+                slots: initialData?.slots?.map(s => ({ value: s })) || [],
             });
         }
     }, [open, initialData, form]);
-
-    // Manual slot management using form.watch
-    const slots = form.watch("slots") || [];
-
-    const addSlot = () => {
-        const current = form.getValues("slots") || [];
-        form.setValue("slots", [...current, ""]); // Add empty string
-    };
-
-    const removeSlotByIndex = (index: number) => {
-        const current = form.getValues("slots") || [];
-        form.setValue("slots", current.filter((_, i) => i !== index));
-    };
-
-    const updateSlot = (index: number, val: string) => {
-        const current = form.getValues("slots") || [];
-        const next = [...current];
-        next[index] = val;
-        form.setValue("slots", next);
-    };
 
     async function onGenerate(prompt: string) {
         if (!prompt.trim() || prompt.length < 5) {
@@ -130,7 +123,7 @@ export function CreateEventModal({
 
                 form.setValue("title", title);
                 form.setValue("description", description);
-                if (eventType) form.setValue("eventType", eventType as any);
+                if (eventType) form.setValue("eventType", eventType as CreateEventInput["eventType"]);
                 if (location) form.setValue("location", location);
                 if (capacity) form.setValue("capacity", capacity);
 
@@ -142,7 +135,7 @@ export function CreateEventModal({
                 }
 
                 if (suggestedSlots && suggestedSlots.length > 0) {
-                    form.setValue("slots", suggestedSlots);
+                    form.setValue("slots", suggestedSlots.map(s => ({ value: s })));
                 }
 
                 toast.success("✨ Magic!", {
@@ -158,13 +151,19 @@ export function CreateEventModal({
         }
     }
 
-    function onSubmit(data: CreateEventInput) {
+    function onSubmit(data: FormInput) {
         startTransition(async () => {
+            // Transform back to API format (string[])
+            const apiData: CreateEventInput = {
+                ...data,
+                slots: data.slots?.map(s => s.value) || [],
+            };
+
             let result;
             if (eventId) {
-                result = await updateEventAction(eventId, data);
+                result = await updateEventAction(eventId, apiData);
             } else {
-                result = await createEventAction(data);
+                result = await createEventAction(apiData);
             }
 
             if (result.success) {
@@ -388,31 +387,36 @@ export function CreateEventModal({
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={addSlot}
+                                        onClick={() => append({ value: "" })}
                                         className="h-8 text-xs"
                                     >
                                         <Plus className="h-3 w-3 mr-1" /> Add Item
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-2">
-                                    {slots.length === 0 && (
+                                    {fields.length === 0 && (
                                         <div className="text-sm text-muted-foreground italic p-2 border border-dashed rounded-md text-center bg-background/20">
                                             No items needed yet. Add things guests should bring!
                                         </div>
                                     )}
-                                    {slots.map((slot, index) => (
-                                        <div key={index} className="flex gap-2">
-                                            <Input
-                                                value={slot}
-                                                onChange={(e) => updateSlot(index, e.target.value)}
-                                                placeholder={`Item ${index + 1}`}
-                                                className="bg-background/40 h-9"
+                                    {fields.map((field, index) => (
+                                        <div key={field.id} className="flex gap-2">
+                                            <FormField
+                                                control={form.control}
+                                                name={`slots.${index}.value`}
+                                                render={({ field }) => (
+                                                    <Input
+                                                        {...field}
+                                                        placeholder={`Item ${index + 1}`}
+                                                        className="bg-background/40 h-9"
+                                                    />
+                                                )}
                                             />
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => removeSlotByIndex(index)}
+                                                onClick={() => remove(index)}
                                                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
                                             >
                                                 <X className="h-4 w-4" />

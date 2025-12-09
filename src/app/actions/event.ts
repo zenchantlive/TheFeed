@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createEventSchema } from "@/lib/schemas/event";
 import { createPost } from "@/lib/post-queries";
-import { createEvent, createSignUpSlot, updateEvent } from "@/lib/event-queries";
+import { createEvent, createSignUpSlot, updateEvent, deleteSignUpSlotsByEventId } from "@/lib/event-queries";
 import { db } from "@/lib/db";
 import { userProfiles, events } from "@/lib/schema";
 import { eq } from "drizzle-orm";
@@ -102,14 +102,16 @@ export async function createEventAction(
 
             if (slotsToCreate.length > 0) {
                 await Promise.all(
-                    slotsToCreate.map((slotName, index) =>
-                        createSignUpSlot({
-                            eventId: event.id,
-                            slotName,
-                            maxClaims: 5, // Default logical limit
-                            sortOrder: index,
-                        })
-                    )
+                    slotsToCreate
+                        .filter(slot => slot.trim()) // Filter out empty slots
+                        .map((slotName, index) =>
+                            createSignUpSlot({
+                                eventId: event.id,
+                                slotName,
+                                maxClaims: 5, // Default logical limit
+                                sortOrder: index,
+                            })
+                        )
                 );
             }
         }
@@ -176,9 +178,11 @@ export async function updateEventAction(
         const end = new Date(endTime);
 
         // Update Event
+        // Update Event
         await updateEvent(eventId, {
             title: title.trim(),
             description: description.trim(),
+            eventType,
             startTime: start,
             endTime: end,
             location: location.trim(),
@@ -186,6 +190,26 @@ export async function updateEventAction(
             isPublicLocation,
             capacity: capacity ?? null,
         });
+
+        // Sync Slots (Destructive update for simplicity/correctness)
+        // 1. Delete existing slots
+        await deleteSignUpSlotsByEventId(eventId);
+
+        // 2. Create new slots if any
+        if (validated.data.slots && validated.data.slots.length > 0) {
+            await Promise.all(
+                validated.data.slots
+                    .filter(slot => slot.trim())
+                    .map((slotName, index) =>
+                        createSignUpSlot({
+                            eventId: eventId,
+                            slotName,
+                            maxClaims: 5,
+                            sortOrder: index,
+                        })
+                    )
+            );
+        }
 
         revalidatePath(`/community`);
         revalidatePath(`/map`);
