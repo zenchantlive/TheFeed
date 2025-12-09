@@ -710,6 +710,9 @@ bun run typecheck && bun run lint && bun run build
   - **Auth & Navigation (December 8, 2025):**
     - Seamless Glassmorphic Auth Modal (no more page redirects).
     - Global `AuthModalContext` & Middleware hardening.
+  - **Event Creation Refactor (December 8, 2025):**
+    - Unified `CreateEventModal` with AI location awareness & Edit Mode.
+    - Clickable location links & Glassmorphic UI.
 
 **🚧 In Progress:**
 - **Phase 5 (Community Engagement):** ACTIVE - 4/12 subphases complete
