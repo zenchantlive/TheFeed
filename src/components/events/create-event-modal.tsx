@@ -107,7 +107,7 @@ export function CreateEventModal({
                 slots: initialData?.slots?.map(s => ({ value: s })) || [],
             });
         }
-    }, [open, initialData, form]);
+    }, [open, initialData]);
 
     async function onGenerate(prompt: string) {
         if (!prompt.trim() || prompt.length < 5) {
