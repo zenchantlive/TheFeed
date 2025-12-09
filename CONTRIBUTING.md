@@ -6,7 +6,7 @@ Thanks for helping build FoodShare! This project extends the Agentic Coding Star
 
 This project uses a **Windows + WSL hybrid setup**:
 - **PowerShell (Windows)**: Run dev server (`bun dev`), package management (`bun add/install`), and database operations.
-- **WSL (Linux)**: Claude Code runs here for file operations and git commands. This is onyl relevant is you are on windows, and using CC with WSL.
+- **WSL (Linux)**: Claude Code runs here for file operations and git commands. This is only relevant if you are on windows, and using CC with WSL.
 
 ### Package Management Rules
 
