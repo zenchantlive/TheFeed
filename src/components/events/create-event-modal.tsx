@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin, Sparkles, Loader2, Plus, X, Calendar as CalendarIcon, Clock } from "lucide-react";
@@ -67,9 +67,8 @@ export function CreateEventModal({
 
     type FormInput = z.infer<typeof formSchema>;
 
-    const form = useForm<FormInput>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
+    const defaultValues = useMemo(
+        () => ({
             title: initialData?.title || "",
             description: initialData?.description || "",
             eventType: initialData?.eventType || "potluck",
@@ -80,7 +79,13 @@ export function CreateEventModal({
             capacity: initialData?.capacity || null,
             locationCoords: initialData?.locationCoords || undefined,
             slots: initialData?.slots?.map(s => ({ value: s })) || [],
-        },
+        }),
+        [initialData],
+    );
+
+    const form = useForm<FormInput>({
+        resolver: zodResolver(formSchema),
+        defaultValues,
     });
 
     // Use useFieldArray for slots
@@ -94,20 +99,9 @@ export function CreateEventModal({
     // Reset form when initialData changes or modal opens/closes
     useEffect(() => {
         if (open) {
-            form.reset({
-                title: initialData?.title || "",
-                description: initialData?.description || "",
-                eventType: initialData?.eventType || "potluck",
-                startTime: initialData?.startTime || "",
-                endTime: initialData?.endTime || "",
-                location: initialData?.location || "",
-                isPublicLocation: initialData?.isPublicLocation ?? true,
-                capacity: initialData?.capacity || null,
-                locationCoords: initialData?.locationCoords || undefined,
-                slots: initialData?.slots?.map(s => ({ value: s })) || [],
-            });
+            form.reset(defaultValues);
         }
-    }, [open, initialData]);
+    }, [open, form, defaultValues]);
 
     async function onGenerate(prompt: string) {
         if (!prompt.trim() || prompt.length < 5) {

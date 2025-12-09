@@ -13,45 +13,45 @@ export function LandingPage() {
                 <div className="absolute top-[40%] -right-[10%] h-[70vh] w-[70vh] rounded-full bg-emerald-500/10 blur-[100px] animate-pulse-slow delay-1000" />
             </div>
 
-            <div className="relative z-10 flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center p-4 md:p-8">
+            <div className="relative z-10 flex min-h-[calc(100vh-4rem)] w-full flex-col items-center justify-center px-4 py-4 sm:py-5 md:p-8">
 
                 {/* Main Glass Card Container (Desktop) */}
-                <div className="w-full max-w-5xl rounded-3xl border border-white/20 bg-background/60 backdrop-blur-xl shadow-2xl p-6 md:p-12 lg:p-16 ring-1 ring-white/10 dark:ring-white/5">
+                <div className="w-full max-w-5xl rounded-3xl border border-white/20 bg-background/60 backdrop-blur-xl shadow-2xl p-4 sm:p-5 md:p-9 lg:p-12 ring-1 ring-white/10 dark:ring-white/5">
 
-                    <div className="flex flex-col items-center text-center mb-12 space-y-4">
-                        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    <div className="flex flex-col items-center text-center mb-6 sm:mb-8 space-y-2 sm:space-y-3">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-transparent">
                             Nourishing Neighborhoods.
                         </h1>
-                        <p className="max-w-[600px] text-lg text-muted-foreground md:text-xl">
+                        <p className="max-w-[640px] text-sm sm:text-base text-muted-foreground md:text-lg">
                             Connecting neighbors with food resources and community support.
                             <br className="hidden md:inline" /> Trustworthy, anonymous, and free.
                         </p>
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2 md:gap-10 lg:gap-16">
+                    <div className="grid gap-3 sm:gap-5 md:grid-cols-2 md:gap-7 lg:gap-10">
 
                         {/* Crisis Path Card */}
                         <Link
                             href="/map"
                             className={cn(
-                                "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border p-8 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-amber-500/50",
+                                "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border p-5 sm:p-6 md:p-7 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-amber-500/50",
                                 "bg-gradient-to-br from-amber-50/50 to-amber-100/30 dark:from-amber-950/20 dark:to-amber-900/10",
                                 "border-amber-200/50 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-600"
                             )}
                         >
-                            <div className="relative z-10 space-y-4">
+                            <div className="relative z-10 space-y-3">
                                 <div className="inline-flex items-center justify-center rounded-xl bg-amber-500/10 p-3 text-amber-600 dark:text-amber-400">
-                                    <Utensils className="h-8 w-8" />
+                                    <Utensils className="h-7 w-7 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight text-foreground group-hover:text-amber-700 dark:group-hover:text-amber-400">
                                         I Need Food
                                     </h2>
-                                    <p className="mt-2 text-muted-foreground">
+                                    <p className="mt-2 text-sm sm:text-base text-muted-foreground">
                                         Find local pantries, food banks, and free meals available right now.
                                     </p>
                                 </div>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                <ul className="space-y-1.5 text-xs sm:text-sm text-muted-foreground">
                                     <li className="flex items-center gap-2">
                                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> No sign-in required
                                     </li>
@@ -60,7 +60,7 @@ export function LandingPage() {
                                     </li>
                                 </ul>
                             </div>
-                            <div className="relative z-10 mt-8 flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                            <div className="relative z-10 mt-4 sm:mt-6 flex items-center gap-2 text-sm font-medium text-amber-600 dark:text-amber-400">
                                 Find Food <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                             </div>
 
@@ -72,24 +72,24 @@ export function LandingPage() {
                         <Link
                             href="/community"
                             className={cn(
-                                "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border p-8 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
+                                "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border p-5 sm:p-6 md:p-7 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
                                 "bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 dark:from-emerald-950/20 dark:to-emerald-900/10",
                                 "border-emerald-200/50 dark:border-emerald-800/50 hover:border-emerald-400 dark:hover:border-emerald-600"
                             )}
                         >
-                            <div className="relative z-10 space-y-4">
+                            <div className="relative z-10 space-y-3">
                                 <div className="inline-flex items-center justify-center rounded-xl bg-emerald-500/10 p-3 text-emerald-600 dark:text-emerald-400">
-                                    <HeartHandshake className="h-8 w-8" />
+                                    <HeartHandshake className="h-7 w-7 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
                                     <h2 className="text-2xl font-bold tracking-tight text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-400">
                                         Share & Connect
                                     </h2>
-                                    <p className="mt-2 text-muted-foreground">
+                                    <p className="mt-2 text-sm sm:text-base text-muted-foreground">
                                         Share surplus food, organize potlucks, and build community connections.
                                     </p>
                                 </div>
-                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                <ul className="space-y-1.5 text-xs sm:text-sm text-muted-foreground">
                                     <li className="flex items-center gap-2">
                                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Share excess food
                                     </li>
@@ -98,7 +98,7 @@ export function LandingPage() {
                                     </li>
                                 </ul>
                             </div>
-                            <div className="relative z-10 mt-8 flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                            <div className="relative z-10 mt-4 sm:mt-6 flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
                                 Join Community <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                             </div>
 
