@@ -785,6 +785,24 @@ export async function deleteSignUpSlotsByEventId(eventId: string): Promise<void>
   await db.delete(signUpSlots).where(eq(signUpSlots.eventId, eventId));
 }
 
+/**
+ * Delete specific sign-up slots by ID
+ */
+export async function deleteSignUpSlots(slotIds: string[]): Promise<void> {
+  if (slotIds.length === 0) return;
+  await db.delete(signUpSlots).where(inArray(signUpSlots.id, slotIds));
+}
+
+/**
+ * Update the sort order of a sign-up slot
+ */
+export async function updateSignUpSlotSortOrder(slotId: string, sortOrder: number): Promise<void> {
+  await db
+    .update(signUpSlots)
+    .set({ sortOrder })
+    .where(eq(signUpSlots.id, slotId));
+}
+
 // =============================================================================
 // Helper Functions
 // =============================================================================

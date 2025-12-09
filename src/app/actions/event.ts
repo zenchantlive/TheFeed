@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { createEventSchema } from "@/lib/schemas/event";
 import { createPost } from "@/lib/post-queries";
-import { createEvent, createSignUpSlot, updateEvent, deleteSignUpSlotsByEventId } from "@/lib/event-queries";
+import { createEvent, createSignUpSlot, updateEvent, getEventSignUpSlots, deleteSignUpSlots, updateSignUpSlotSortOrder } from "@/lib/event-queries";
 import { db } from "@/lib/db";
 import { userProfiles, events } from "@/lib/schema";
 import { eq } from "drizzle-orm";
@@ -191,23 +191,68 @@ export async function updateEventAction(
             capacity: capacity ?? null,
         });
 
-        // Sync Slots (Destructive update for simplicity/correctness)
-        // 1. Delete existing slots
-        await deleteSignUpSlotsByEventId(eventId);
+        // Sync Slots (Smart update to preserve claims)
+        // 1. Get existing slots
+        const existingSlots = await getEventSignUpSlots(eventId);
+        const newSlotNames = (validated.data.slots || []).filter(s => s.trim());
 
-        // 2. Create new slots if any
-        if (validated.data.slots && validated.data.slots.length > 0) {
+        // 2. Identify slots to delete, keep, and create
+        // We match by name (case-insensitive? strict for now)
+        const slotsToDelete: string[] = [];
+        const slotsToKeep: { id: string; name: string; sortOrder: number }[] = [];
+
+        // Map existing slots by name for easy lookup
+        const existingMap = new Map(existingSlots.map(s => [s.slotName, s]));
+        const processedNames = new Set<string>();
+
+        // Identify slots to keep or create
+        const slotsToCreate: { name: string; sortOrder: number }[] = [];
+
+        newSlotNames.forEach((name, index) => {
+            if (existingMap.has(name) && !processedNames.has(name)) {
+                // Determine if we need to update sort order? 
+                // For now just mark as kept. 
+                // We could update sort order here if we want list visual consistency.
+                const existing = existingMap.get(name)!;
+                slotsToKeep.push({ id: existing.id, name, sortOrder: index });
+                processedNames.add(name);
+            } else {
+                slotsToCreate.push({ name, sortOrder: index });
+            }
+        });
+
+        // Identify slots to delete (existing but not in new list)
+        existingSlots.forEach(s => {
+            // If the name wasn't processed (meaning it wasn't in the new list as a kept item)
+            if (!processedNames.has(s.slotName)) {
+                slotsToDelete.push(s.id);
+            }
+        });
+
+        // 3. Execute Updates
+        if (slotsToDelete.length > 0) {
+            await deleteSignUpSlots(slotsToDelete);
+        }
+
+        // Update Sort Orders for kept slots if changed (optimization)
+        await Promise.all(slotsToKeep.map(async (s) => {
+            // Only update DB if sort order is different? current logic in getEventSignUpSlots has order.
+            // But we don't have the original sort order readily available in a map without looking up.
+            // Let's just update. It's cheap.
+            await updateSignUpSlotSortOrder(s.id, s.sortOrder);
+        }));
+
+        // Create new slots
+        if (slotsToCreate.length > 0) {
             await Promise.all(
-                validated.data.slots
-                    .filter(slot => slot.trim())
-                    .map((slotName, index) =>
-                        createSignUpSlot({
-                            eventId: eventId,
-                            slotName,
-                            maxClaims: 5,
-                            sortOrder: index,
-                        })
-                    )
+                slotsToCreate.map(s =>
+                    createSignUpSlot({
+                        eventId: eventId,
+                        slotName: s.name,
+                        maxClaims: 5,
+                        sortOrder: s.sortOrder,
+                    })
+                )
             );
         }
 

@@ -127,11 +127,25 @@ export function CreateEventModal({
                 if (location) form.setValue("location", location);
                 if (capacity) form.setValue("capacity", capacity);
 
-                if (startTime && !isNaN(Date.parse(startTime))) {
-                    form.setValue("startTime", new Date(startTime).toISOString().slice(0, 16));
+                // Helper to convert date string (AI ISO) to local datetime-local string
+                // AI returns ISO (e.g. 2023-12-09T12:00:00Z).
+                // We want to show this moment in the user's local time.
+                const toLocalISOString = (dateStr: string) => {
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return "";
+
+                    // Get offset in minutes (e.g. -480 for PST) and convert to ms
+                    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+                    // Subtract offset to get "local" time value in UTC reference
+                    const localDate = new Date(date.getTime() - offsetMs);
+                    return localDate.toISOString().slice(0, 16);
+                };
+
+                if (startTime) {
+                    form.setValue("startTime", toLocalISOString(startTime));
                 }
-                if (endTime && !isNaN(Date.parse(endTime))) {
-                    form.setValue("endTime", new Date(endTime).toISOString().slice(0, 16));
+                if (endTime) {
+                    form.setValue("endTime", toLocalISOString(endTime));
                 }
 
                 if (suggestedSlots && suggestedSlots.length > 0) {
@@ -154,8 +168,11 @@ export function CreateEventModal({
     function onSubmit(data: FormInput) {
         startTransition(async () => {
             // Transform back to API format (string[])
+            // Ensure dates are sent as ISO strings (UTC) for server consistency
             const apiData: CreateEventInput = {
                 ...data,
+                startTime: new Date(data.startTime).toISOString(),
+                endTime: new Date(data.endTime).toISOString(),
                 slots: data.slots?.map(s => s.value) || [],
             };
 
