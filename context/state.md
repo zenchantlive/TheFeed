@@ -18,6 +18,10 @@ Last updated: 2025-12-06
 
 ## Recent Deliverables (December 2025)
 
+### Mobile Landing Hero Reframe (December 9, 2025) ✅
+- Compressed hero spacing and condensed copy so both primary CTA cards fit within the first mobile viewport without scrolling.
+- Hid secondary links and the stats pill on extra-small screens to prioritize the two core actions.
+
 ### Event Creation Refactor & AI Enhancements (December 8, 2025) ✅
 - **Glassmorphic Event Modal**: Refactored `CreateEventDrawer` and wizards into a unified `CreateEventModal`.
   - Consistent "Host Event" experience from Header, Calendar, and Mobile.
