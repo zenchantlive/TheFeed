@@ -94,9 +94,9 @@ export async function createEventAction(
 
         // 6. Create Slots (from input or defaults for Potlucks)
         if (eventType === "potluck" || (validated.data.slots && validated.data.slots.length > 0)) {
-            const slotsToCreate = (validated.data.slots && validated.data.slots.length > 0)
+            const slotsToCreate = validated.data.slots?.length
                 ? validated.data.slots
-                : eventType === "potluck"
+                : eventType === "potluck" && validated.data.slots === undefined
                     ? ["Main Dish", "Side Dish", "Dessert", "Drinks", "Utensils/Plates"]
                     : [];
 
