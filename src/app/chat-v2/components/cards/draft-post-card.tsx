@@ -41,7 +41,7 @@ export function DraftPostCard({ draft }: DraftPostCardProps) {
                         <span className={`text-xs font-bold uppercase tracking-wider ${themeColor}`}>
                             {isNeed ? "Requesting Help" : "Sharing Food"}
                         </span>
-                        {draft.urgency && (
+                        {draft.urgency && ["asap", "today", "this_week"].includes(draft.urgency) && (
                             <span className="text-[10px] bg-red-500/20 text-red-200 px-1.5 py-0.5 rounded uppercase">
                                 {draft.urgency.replace("_", " ")}
                             </span>
