@@ -9,9 +9,9 @@ import type { PostIntent, FeedPost } from "../../types";
  *
  * Handles post composition state and submission logic.
  */
-export function useComposer(defaultIntent: PostIntent = "need") {
+export function useComposer(defaultIntent: PostIntent = "need", initialContent: string = "") {
   const router = useRouter();
-  const [composerValue, setComposerValue] = useState("");
+  const [composerValue, setComposerValue] = useState(initialContent);
   const [postIntent, setPostIntent] = useState<PostIntent>(defaultIntent);
   const [isPosting, setIsPosting] = useState(false);
 

@@ -207,7 +207,7 @@ export function CreateEventModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-auto overflow-hidden flex flex-col p-0 gap-0 bg-background/60 backdrop-blur-xl border-white/20 shadow-2xl">
+            <DialogContent className="sm:max-w-[600px] h-[90vh] sm:h-auto sm:max-h-[85vh] overflow-hidden flex flex-col p-0 gap-0 bg-background/60 backdrop-blur-xl border-white/20 shadow-2xl">
                 <DialogHeader className="px-6 py-4 border-b border-white/10 shrink-0">
                     <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                         {isEditMode ? "Edit Event" : "Host an Event"}

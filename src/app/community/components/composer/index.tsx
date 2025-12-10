@@ -8,6 +8,7 @@ import { useComposer } from "./use-composer";
 
 type PostComposerProps = {
   defaultIntent?: PostIntent;
+  initialContent?: string;
   onIntentChange?: (intent: PostIntent) => void;
   hideIntentToggle?: boolean;
 };
@@ -20,6 +21,7 @@ type PostComposerProps = {
  */
 export function PostComposer({
   defaultIntent = "need",
+  initialContent = "",
   onIntentChange,
   hideIntentToggle = false
 }: PostComposerProps) {
@@ -30,7 +32,7 @@ export function PostComposer({
     setPostIntent,
     isPosting,
     handlePost,
-  } = useComposer(defaultIntent);
+  } = useComposer(defaultIntent, initialContent);
 
   const handleIntentChange = (newIntent: PostIntent) => {
     setPostIntent(newIntent);

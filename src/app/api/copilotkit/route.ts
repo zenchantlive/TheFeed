@@ -307,9 +307,9 @@ export async function POST(req: NextRequest) {
             const a =
               Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos((lat * Math.PI) / 180) *
-                Math.cos((coords.lat * Math.PI) / 180) *
-                Math.sin(dLng / 2) *
-                Math.sin(dLng / 2);
+              Math.cos((coords.lat * Math.PI) / 180) *
+              Math.sin(dLng / 2) *
+              Math.sin(dLng / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             const distanceMiles = 3958.8 * c;
             if (distanceMiles <= radiusMiles) {
@@ -439,9 +439,9 @@ export async function POST(req: NextRequest) {
             const a =
               Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.cos((lat * Math.PI) / 180) *
-                Math.cos((coords.lat * Math.PI) / 180) *
-                Math.sin(dLng / 2) *
-                Math.sin(dLng / 2);
+              Math.cos((coords.lat * Math.PI) / 180) *
+              Math.sin(dLng / 2) *
+              Math.sin(dLng / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             const distanceMiles = 3958.8 * c;
             if (distanceMiles <= radiusMiles) {
@@ -554,6 +554,112 @@ export async function POST(req: NextRequest) {
             usedTools,
           });
           return { ok: true };
+        },
+      },
+
+      // CREATE_DRAFT_EVENT
+      {
+        name: "create_draft_event",
+        description:
+          "Draft a new community event (potluck, volunteer, etc). Use this when the user wants to host or organize something. Returns a structured draft for review.",
+        parameters: [
+          {
+            name: "title",
+            type: "string",
+            description: "A catchy title for the event",
+            required: true,
+          },
+          {
+            name: "description",
+            type: "string",
+            description: "Short description of what's happening",
+            required: true,
+          },
+          {
+            name: "eventType",
+            type: "string",
+            description: "The category of event: 'potluck', 'volunteer', 'social', 'workshop'",
+            required: true,
+          },
+          {
+            name: "startTime",
+            type: "string",
+            description: "ISO start time if mentioned",
+            required: false,
+          },
+          {
+            name: "endTime",
+            type: "string",
+            description: "ISO end time if mentioned",
+            required: false,
+          },
+          {
+            name: "location",
+            type: "string",
+            description: "Name of place or address",
+            required: false,
+          },
+          {
+            name: "itemsNeeded",
+            type: "string[]",
+            description: "List of items for people to bring (for potlucks)",
+            required: false,
+          },
+        ],
+        handler: async (input: {
+          title: string;
+          description: string;
+          eventType: string;
+          startTime?: string;
+          endTime?: string;
+          location?: string;
+          itemsNeeded?: string[]; // Arrays passed as json strings or actual arrays depending on adapter, CopilotKit usually handles this.
+          // Note: CopilotKit string[] param might come as array.
+        }) => {
+          // Echo pattern: Return the draft so the UI can render it.
+          // We default isPublicLocation to true for safety/ease.
+          return {
+            draft: {
+              ...input,
+              isPublicLocation: true,
+            }
+          };
+        },
+      },
+
+      // CREATE_DRAFT_POST
+      {
+        name: "create_draft_post",
+        description:
+          "Draft a new community post. Use this when user wants to 'ask for help' or 'share something' or generally post to the feed. Returns structured draft.",
+        parameters: [
+          {
+            name: "intent",
+            type: "string",
+            description: "Is the user asking for help ('need') or offering help ('share')?",
+            required: true,
+          },
+          {
+            name: "content",
+            type: "string",
+            description: "The main text content of the post",
+            required: true,
+          },
+          {
+            name: "urgency",
+            type: "string",
+            description: "How urgent is this request? 'asap', 'today', 'this_week'",
+            required: false,
+          },
+        ],
+        handler: async (input: {
+          intent: string;
+          content: string;
+          urgency?: string;
+        }) => {
+          return {
+            draft: input
+          };
         },
       },
     ],

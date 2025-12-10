@@ -7,6 +7,9 @@ import { DirectionsRenderer } from "./directions-renderer";
 import { ResourceDetailsRenderer } from "./resource-details-renderer";
 import { UserContextRenderer } from "./user-context-renderer";
 
+import { DraftEventRenderer } from "./draft-event-renderer";
+import { DraftPostRenderer } from "./draft-post-renderer";
+
 /**
  * All Tool Renderers Component
  *
@@ -22,6 +25,8 @@ import { UserContextRenderer } from "./user-context-renderer";
  * 5. get_resource_by_id - Detailed resource card
  * 6. get_user_context - Saved locations list
  * 7. log_chat - No rendering (silent)
+ * 8. create_draft_event - Event creation preview
+ * 9. create_draft_post - Post creation preview
  */
 
 interface ToolRenderersProps {
@@ -37,6 +42,8 @@ export function ToolRenderers({ userLocation }: ToolRenderersProps) {
       <DirectionsRenderer />
       <ResourceDetailsRenderer userLocation={userLocation} />
       <UserContextRenderer />
+      <DraftEventRenderer />
+      <DraftPostRenderer />
       {/* log_chat has no UI rendering */}
     </>
   );
