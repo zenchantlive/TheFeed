@@ -401,6 +401,79 @@ export const logChatTool = tool({
   },
 });
 
+// ------------------------------------------------------------------
+// GENERATIVE CONTENT TOOLS (ECHO PATTERN)
+// ------------------------------------------------------------------
+// These tools do NOT write to the DB. They purely validate/normalize
+// user intent into a structured object that the UI can render
+// as a "Draft Preview" card. The user then clicks "Create" in the UI.
+
+/**
+ * Draft Event Tool
+ * 
+ * Takes sloppy natural language about an event and returns a 
+ * structured "DraftEvent" object for the UI to display.
+ */
+export const createDraftEventTool = tool({
+  description:
+    "Draft a new community event (potluck, volunteer, etc). " +
+    "Use this when the user wants to host or organize something. " +
+    "Returns a structured draft for review.",
+  inputSchema: z.object({
+    title: z.string().describe("A catchy title for the event"),
+    description: z.string().describe("Short description of what's happening"),
+    eventType: z
+      .enum(["potluck", "volunteer", "social", "workshop"])
+      .default("potluck")
+      .describe("The category of event"),
+    startTime: z.string().datetime().optional()
+      .describe("ISO start time if mentioned"),
+    endTime: z.string().datetime().optional()
+      .describe("ISO end time if mentioned"),
+    location: z.string().optional()
+      .describe("Name of place or address"),
+    itemsNeeded: z.array(z.string()).optional()
+      .describe("List of items for people to bring (for potlucks)"),
+  }),
+  execute: async (input) => {
+    // "Echo" the input back as the result. 
+    // The UI (SearchEventsRenderer or new DraftEventRenderer) 
+    // will pick this up and show the Draft Card.
+    return {
+      success: true,
+      draft: {
+        ...input,
+        // Ensure defaults if logic requires, otherwise pass through
+        isPublicLocation: true, // Defaulting to true for safety prompt
+      }
+    };
+  },
+});
+
+/**
+ * Draft Post Tool
+ * 
+ * Takes user intent for a post and structures it for the feed.
+ */
+export const createDraftPostTool = tool({
+  description:
+    "Draft a new community post. Use this when user wants to 'ask for help' " +
+    "or 'share something' or generally post to the feed. " +
+    "Returns structured draft.",
+  inputSchema: z.object({
+    intent: z.enum(["need", "share"]).describe("Is the user asking for help (need) or offering help (share)?"),
+    content: z.string().describe("The main text content of the post"),
+    urgency: z.enum(["asap", "today", "this_week"]).optional()
+      .describe("How urgent is this request?"),
+  }),
+  execute: async (input) => {
+    return {
+      success: true,
+      draft: input
+    };
+  },
+});
+
 /**
  * Export a ToolSet compatible object for use in /api/chat or agents.
  * This allows:
@@ -415,4 +488,6 @@ export const sousChefTools: Record<string, Tool> = {
   search_events: searchEventsTool,
   get_directions: getDirectionsTool,
   log_chat: logChatTool,
+  create_draft_event: createDraftEventTool,
+  create_draft_post: createDraftPostTool,
 };

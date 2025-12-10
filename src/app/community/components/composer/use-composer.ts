@@ -9,9 +9,14 @@ import type { PostIntent, FeedPost } from "../../types";
  *
  * Handles post composition state and submission logic.
  */
-export function useComposer(defaultIntent: PostIntent = "need") {
+interface UseComposerProps {
+  initialContent?: string;
+  onSuccess?: () => void;
+}
+
+export function useComposer({ initialContent = "", onSuccess }: UseComposerProps = {}, defaultIntent: PostIntent = "need") {
   const router = useRouter();
-  const [composerValue, setComposerValue] = useState("");
+  const [composerValue, setComposerValue] = useState(initialContent);
   const [postIntent, setPostIntent] = useState<PostIntent>(defaultIntent);
   const [isPosting, setIsPosting] = useState(false);
 
@@ -41,6 +46,7 @@ export function useComposer(defaultIntent: PostIntent = "need") {
       }
 
       setComposerValue("");
+      onSuccess?.();
       router.refresh();
     } catch (error) {
       console.error("Error creating post:", error);

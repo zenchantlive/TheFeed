@@ -8,8 +8,10 @@ import { useComposer } from "./use-composer";
 
 type PostComposerProps = {
   defaultIntent?: PostIntent;
+  initialContent?: string;
   onIntentChange?: (intent: PostIntent) => void;
   hideIntentToggle?: boolean;
+  onSuccess?: () => void;
 };
 
 /**
@@ -20,8 +22,10 @@ type PostComposerProps = {
  */
 export function PostComposer({
   defaultIntent = "need",
+  initialContent = "",
   onIntentChange,
-  hideIntentToggle = false
+  hideIntentToggle = false,
+  onSuccess
 }: PostComposerProps) {
   const {
     composerValue,
@@ -30,7 +34,7 @@ export function PostComposer({
     setPostIntent,
     isPosting,
     handlePost,
-  } = useComposer(defaultIntent);
+  } = useComposer({ initialContent, onSuccess }, defaultIntent);
 
   const handleIntentChange = (newIntent: PostIntent) => {
     setPostIntent(newIntent);
