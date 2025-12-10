@@ -43,9 +43,7 @@ export function PostComposerDialog({
                     <PostComposer
                         defaultIntent={defaultIntent}
                         initialContent={initialContent}
-                    // Close dialog after successful publish (handled by hook/parent state mostly,
-                    // but here we rely on the user to close or the page refresh within composer)
-                    // A future enhancement would be to pass an onSuccess callback to Composer.
+                        onSuccess={() => onOpenChange(false)}
                     />
                 </div>
             </DialogContent>
