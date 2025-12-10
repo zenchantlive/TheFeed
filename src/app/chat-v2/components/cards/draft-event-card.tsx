@@ -34,8 +34,9 @@ export function DraftEventCard({ draft }: DraftEventCardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Format date for display if present
-    const displayDate = draft.startTime
-        ? format(new Date(draft.startTime), "EEE, MMM d @ h:mm a")
+    const date = draft.startTime ? new Date(draft.startTime) : null;
+    const displayDate = date && !isNaN(date.getTime())
+        ? format(date, "EEE, MMM d @ h:mm a")
         : "Date TBD";
 
     return (
