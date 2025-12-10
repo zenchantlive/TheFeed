@@ -98,8 +98,9 @@ export function DraftEventCard({ draft }: DraftEventCardProps) {
                     title: draft.title,
                     description: draft.description,
                     eventType: draft.eventType,
-                    startTime: draft.startTime,
-                    endTime: draft.endTime,
+                    // Modal expects datetime-local strings; normalize ISO strings from the draft
+                    startTime: draft.startTime ? toLocalInput(draft.startTime) : "",
+                    endTime: draft.endTime ? toLocalInput(draft.endTime) : "",
                     location: draft.location,
                     isPublicLocation: draft.isPublicLocation ?? true,
                     // Map itemsNeeded to slots
@@ -108,4 +109,13 @@ export function DraftEventCard({ draft }: DraftEventCardProps) {
             />
         </>
     );
+}
+
+// Convert an ISO string into the value expected by <input type="datetime-local">
+function toLocalInput(dateStr: string): string {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+    const localDate = new Date(date.getTime() - offsetMs);
+    return localDate.toISOString().slice(0, 16);
 }

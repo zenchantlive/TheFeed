@@ -42,6 +42,98 @@ export function convertVercelToolsToCopilotActions(
     tools: Record<string, Tool>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any[] {
+    // Generic coercion to normalize common CopilotKit/LLM quirks before validation
+    const coerceValue = (value: JSONValue): JSONValue => {
+        if (typeof value === "string") {
+            const trimmed = value.trim();
+
+            // Boolean-like strings
+            if (trimmed.toLowerCase() === "true") return true;
+            if (trimmed.toLowerCase() === "false") return false;
+
+            // Numeric-like strings
+            if (!Number.isNaN(Number(trimmed)) && trimmed !== "") {
+                return Number(trimmed);
+            }
+
+            // JSON-like strings (objects/arrays/quoted primitives)
+            if ((trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+                (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+                (trimmed.startsWith("\"") && trimmed.endsWith("\""))) {
+                try {
+                    return JSON.parse(trimmed);
+                } catch {
+                    // fall through if JSON.parse fails
+                }
+            }
+
+            return trimmed;
+        }
+
+        if (Array.isArray(value)) {
+            return value.map(coerceValue);
+        }
+
+        if (value && typeof value === "object") {
+            return Object.fromEntries(
+                Object.entries(value).map(([k, v]) => [k, coerceValue(v as JSONValue)])
+            );
+        }
+
+        return value;
+    };
+
+    const unwrapZodType = (zodType: z.ZodTypeAny): { base: z.ZodTypeAny; optional: boolean } => {
+        let current = zodType;
+        let optional = false;
+
+        while (
+            current instanceof z.ZodOptional ||
+            current instanceof z.ZodNullable ||
+            current instanceof z.ZodDefault ||
+            current instanceof z.ZodEffects
+        ) {
+            if (current instanceof z.ZodOptional || current instanceof z.ZodNullable) {
+                optional = true;
+            }
+
+            // ZodEffects keeps _def.schema
+            // ZodDefault keeps innerType
+            // ZodOptional/ZodNullable keeps _def.innerType
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const inner: any = (current as { _def: { innerType?: z.ZodTypeAny; schema?: z.ZodTypeAny; type?: z.ZodTypeAny } })._def;
+            current = inner.innerType || inner.schema || inner.type || current;
+            if (current === zodType) break; // safety against infinite loop
+        }
+
+        return { base: current, optional };
+    };
+
+    const mapZodToTypeString = (zodType: z.ZodTypeAny): { type: string; required: boolean } => {
+        const { base, optional } = unwrapZodType(zodType);
+        let typeString = "string";
+
+        if (base instanceof z.ZodString) typeString = "string";
+        else if (base instanceof z.ZodNumber) typeString = "number";
+        else if (base instanceof z.ZodBoolean) typeString = "boolean";
+        else if (base instanceof z.ZodArray) {
+            const inner = (base as z.ZodArray<z.ZodTypeAny>)._def.type;
+            const innerType = unwrapZodType(inner).base;
+            const innerString = innerType instanceof z.ZodNumber
+                ? "number"
+                : innerType instanceof z.ZodBoolean
+                    ? "boolean"
+                    : "string";
+            typeString = `${innerString}[]`;
+        } else if (base instanceof z.ZodEnum || base instanceof z.ZodNativeEnum) {
+            typeString = "string";
+        } else if (base instanceof z.ZodObject) {
+            typeString = "object";
+        }
+
+        return { type: typeString, required: !optional };
+    };
+
     return Object.entries(tools).map(([name, tool]) => {
         const parameters: CopilotActionParameter[] = [];
 
@@ -53,21 +145,12 @@ export function convertVercelToolsToCopilotActions(
             const shape = schema.shape;
             for (const [key, value] of Object.entries(shape)) {
                 const zodType = value as z.ZodTypeAny;
-                let typeString = "string"; // default
-
-                if (zodType instanceof z.ZodString) typeString = "string";
-                else if (zodType instanceof z.ZodNumber) typeString = "number";
-                else if (zodType instanceof z.ZodBoolean) typeString = "boolean";
-                else if (zodType instanceof z.ZodArray) typeString = "string[]"; // simplified
-                else if (zodType instanceof z.ZodEnum) typeString = "string";
-
-                const isOptional = zodType.isOptional();
-
+                const { type, required } = mapZodToTypeString(zodType);
                 parameters.push({
                     name: key,
-                    type: typeString,
+                    type,
                     description: zodType.description,
-                    required: !isOptional,
+                    required,
                 });
             }
         }
@@ -77,18 +160,23 @@ export function convertVercelToolsToCopilotActions(
             description: actualTool.description,
             parameters,
             handler: async (args: JSONObject) => {
-                // ROBUSTNESS PATCHES
-                // 1. Safe parsing of itemsNeeded if it comes as a string (CopilotKit/LLM quirk)
-                if (name === "create_draft_event" && "itemsNeeded" in args) {
-                    const items = args.itemsNeeded;
-                    if (typeof items === "string") {
-                        try {
-                            args.itemsNeeded = JSON.parse(items);
-                        } catch (e) {
-                            console.error("Failed to parse itemsNeeded string to array:", e);
-                            args.itemsNeeded = []; // Fallback
-                        }
+                // Normalize common mis-typed inputs then validate against schema if present.
+                const coercedArgs = coerceValue(args) as JSONObject;
+
+                if (schema && schema instanceof z.ZodObject) {
+                    const parsed = schema.safeParse(coercedArgs);
+                    if (!parsed.success) {
+                        return {
+                            error: "Invalid input",
+                            issues: parsed.error.issues.map(issue => ({
+                                path: issue.path.join("."),
+                                message: issue.message,
+                            })),
+                        };
                     }
+
+                    // Use validated/coerced data
+                    Object.assign(coercedArgs, parsed.data);
                 }
 
                 if (!actualTool.execute) {
@@ -96,7 +184,7 @@ export function convertVercelToolsToCopilotActions(
                 }
 
                 // Execute the Vercel tool
-                return await actualTool.execute(args, {
+                return await actualTool.execute(coercedArgs, {
                     toolCallId: "copilot-adapter",
                     messages: []
                 });
