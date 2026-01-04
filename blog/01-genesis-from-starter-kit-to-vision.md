@@ -13,7 +13,7 @@ commits_covered: "2af182a..557bbcc"
 
 Every project begins somewhere. For TheFeed, it started on August 11, 2025, with a single command: `npx create-next-app`.
 
-But this wasn't just another "Hello World" moment. This was the beginning of an **Agentic Coding Starter Kit** - a foundation designed to accelerate AI-assisted development with all the modern web stack essentials built in.
+But this wasn't just another "Hello World" moment. This was the beginning of an (**Agentic Coding Starter Kit**)[https://github.com/leonvanzyl/agentic-coding-starter-kit} - a foundation designed to accelerate AI-assisted development with all the modern web stack essentials built in.
 
 Looking back at that first day (23 commits!), I was setting up the infrastructure that would eventually support a hyperlocal food-sharing network serving people experiencing food insecurity. But I didn't know that yet.
 
@@ -205,3 +205,4 @@ In Part 2, I'll share the pivotal moment that turned this starter kit into FoodS
 - `src/lib/auth.ts` - Authentication configuration
 - `src/lib/db.ts` - Database client
 - `CLAUDE.md` - AI assistant documentation
+
