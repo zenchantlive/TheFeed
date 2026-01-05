@@ -102,7 +102,7 @@ export function CompactResourceCard({
                     </p>
                     <p className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 shrink-0" />
-                        <span>
+                        <span suppressHydrationWarning>
                             {formatHoursForDisplay(resource.hours?.[
                                 new Date().toLocaleDateString("en-US", { weekday: "long" })
                             ])}
