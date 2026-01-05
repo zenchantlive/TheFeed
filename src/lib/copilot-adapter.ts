@@ -83,27 +83,37 @@ export function convertVercelToolsToCopilotActions(
         return value;
     };
 
+    // Helper to get Zod type name from the _def structure
+    // Zod v4 changed exports so instanceof checks don't work reliably
+    const getZodTypeName = (zodType: z.ZodTypeAny): string => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (zodType as any)?._def?.typeName || "";
+    };
+
     const unwrapZodType = (zodType: z.ZodTypeAny): { base: z.ZodTypeAny; optional: boolean } => {
         let current = zodType;
         let optional = false;
 
-        while (
-            current instanceof z.ZodOptional ||
-            current instanceof z.ZodNullable ||
-            current instanceof z.ZodDefault ||
-            current instanceof z.ZodEffects
-        ) {
-            if (current instanceof z.ZodOptional || current instanceof z.ZodNullable) {
+        const unwrapTypes = ["ZodOptional", "ZodNullable", "ZodDefault", "ZodEffects"];
+        let iterations = 0;
+        const maxIterations = 10; // Safety limit
+
+        while (iterations < maxIterations) {
+            const typeName = getZodTypeName(current);
+            if (!unwrapTypes.includes(typeName)) break;
+
+            if (typeName === "ZodOptional" || typeName === "ZodNullable") {
                 optional = true;
             }
 
             // ZodEffects keeps _def.schema
             // ZodDefault keeps innerType
             // ZodOptional/ZodNullable keeps _def.innerType
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const inner: any = (current as { _def: { innerType?: z.ZodTypeAny; schema?: z.ZodTypeAny; type?: z.ZodTypeAny } })._def;
-            current = inner.innerType || inner.schema || inner.type || current;
-            if (current === zodType) break; // safety against infinite loop
+            const inner = (current as unknown as { _def: { innerType?: z.ZodTypeAny; schema?: z.ZodTypeAny; type?: z.ZodTypeAny } })._def;
+            const nextType = inner.innerType || inner.schema || inner.type;
+            if (!nextType || nextType === current) break;
+            current = nextType;
+            iterations++;
         }
 
         return { base: current, optional };
@@ -111,23 +121,29 @@ export function convertVercelToolsToCopilotActions(
 
     const mapZodToTypeString = (zodType: z.ZodTypeAny): { type: string; required: boolean } => {
         const { base, optional } = unwrapZodType(zodType);
+        const typeName = getZodTypeName(base);
         let typeString = "string";
 
-        if (base instanceof z.ZodString) typeString = "string";
-        else if (base instanceof z.ZodNumber) typeString = "number";
-        else if (base instanceof z.ZodBoolean) typeString = "boolean";
-        else if (base instanceof z.ZodArray) {
-            const inner = (base as z.ZodArray<z.ZodTypeAny>)._def.type;
-            const innerType = unwrapZodType(inner).base;
-            const innerString = innerType instanceof z.ZodNumber
-                ? "number"
-                : innerType instanceof z.ZodBoolean
-                    ? "boolean"
-                    : "string";
-            typeString = `${innerString}[]`;
-        } else if (base instanceof z.ZodEnum || base instanceof z.ZodNativeEnum) {
+        if (typeName === "ZodString") typeString = "string";
+        else if (typeName === "ZodNumber") typeString = "number";
+        else if (typeName === "ZodBoolean") typeString = "boolean";
+        else if (typeName === "ZodArray") {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const inner = (base as any)._def.type;
+            if (inner) {
+                const innerTypeName = getZodTypeName(unwrapZodType(inner).base);
+                const innerString = innerTypeName === "ZodNumber"
+                    ? "number"
+                    : innerTypeName === "ZodBoolean"
+                        ? "boolean"
+                        : "string";
+                typeString = `${innerString}[]`;
+            } else {
+                typeString = "string[]";
+            }
+        } else if (typeName === "ZodEnum" || typeName === "ZodNativeEnum") {
             typeString = "string";
-        } else if (base instanceof z.ZodObject) {
+        } else if (typeName === "ZodObject") {
             typeString = "object";
         }
 
