@@ -39,7 +39,7 @@ export function LandingPage() {
 
                     <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
                         {/* Crisis path card */}
-                        <Link
+                        <a
                             href="/map"
                             className={cn(
                                 "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-amber-500/50",
@@ -74,10 +74,10 @@ export function LandingPage() {
 
                             {/* Decorative background glow */}
                             <div className="absolute -right-12 -bottom-12 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl group-hover:bg-amber-500/20 transition-all duration-500" />
-                        </Link>
+                        </a>
 
                         {/* Community path card */}
-                        <Link
+                        <a
                             href="/community"
                             className={cn(
                                 "group relative flex flex-col items-start justify-between overflow-hidden rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 transition-all hover:shadow-2xl hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-emerald-500/50",
@@ -112,7 +112,7 @@ export function LandingPage() {
 
                             {/* Decorative background glow */}
                             <div className="absolute -right-12 -bottom-12 h-32 w-32 rounded-full bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500" />
-                        </Link>
+                        </a>
                     </div>
                 </div>
 
