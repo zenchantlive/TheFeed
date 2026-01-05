@@ -8,6 +8,8 @@ TheFeed is a hyperlocal food-sharing network that connects people experiencing f
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 
+<img width="1051" height="1061" alt="image" src="https://github.com/user-attachments/assets/7dfe0f21-23cd-4b08-9e58-bb848be70aec" />
+
 ## ✨ Features
 
 ### Crisis Path (No Sign-in Required)
