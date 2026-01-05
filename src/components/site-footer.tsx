@@ -1,3 +1,5 @@
+"use client";
+
 import { GitHubStars } from "./ui/github-stars";
 
 export function SiteFooter() {
@@ -10,8 +12,9 @@ export function SiteFooter() {
         <div className="flex flex-col items-center space-y-3">
           <GitHubStars repo="zenchantlive/TheFeed" />
           <p>
-            TheFeed &copy; {new Date().getFullYear()} &middot; Powered by hungry
-            neighbors and the{" "}
+            TheFeed &copy;{" "}
+            <span suppressHydrationWarning>{new Date().getFullYear()}</span>{" "}
+            &middot; Powered by hungry neighbors and the{" "}
             <a
               href="https://github.com/leonvanzyl/agentic-coding-starter-kit"
               target="_blank"

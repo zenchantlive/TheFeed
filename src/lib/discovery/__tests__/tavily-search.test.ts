@@ -10,10 +10,13 @@ jest.mock("ai", () => ({
 const ORIGINAL_ENV = process.env;
 
 describe("tavily-search", () => {
+  let mockFetch: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...ORIGINAL_ENV, TAVILY_API_KEY: "test-key" };
-    global.fetch = jest.fn();
+    mockFetch = jest.fn();
+    global.fetch = mockFetch as unknown as typeof fetch; // Necessary to satisfy global assignment, but usage below is safe
     global.console.error = jest.fn(); // Silence errors during tests
   });
 
@@ -30,7 +33,7 @@ describe("tavily-search", () => {
 
   it("should return cleaned results on successful API and LLM call", async () => {
     // Mock Tavily API response
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         results: [
@@ -70,7 +73,7 @@ describe("tavily-search", () => {
   });
 
   it("should return empty array if Tavily fails", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: false,
       status: 500,
       text: async () => "Internal Server Error",
@@ -82,7 +85,7 @@ describe("tavily-search", () => {
   });
 
   it("should return empty array if LLM fails", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ results: [{ title: "Test" }] }),
     });

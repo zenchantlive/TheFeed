@@ -138,7 +138,7 @@ export function LocationCard({
           </p>
           <p className="flex items-center gap-2">
             <Navigation2 className="h-4 w-4 text-primary" />
-            <span>{formatHoursForDisplay(location.hours?.[
+            <span suppressHydrationWarning>{formatHoursForDisplay(location.hours?.[
               new Date().toLocaleDateString("en-US", { weekday: "long" })
             ])}</span>
           </p>

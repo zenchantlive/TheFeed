@@ -1,18 +1,16 @@
 # Project State — TheFeed (formerly FoodShare)
-Last updated: 2025-12-06
+Last updated: 2026-01-04
 
-## Current Focus: UX Redesign & Refinement (Phase 3/4)
+## Current Focus: Open-Source Preparation
 
-**Status**: Executing UX redesign based on "TheFeed UX Analysis". Map & Community flows completed.
-
+**Status**: Preparing repository for public open-source release.
 
 ### Active Work:
-- **Phase 5.2a-c ✅ Complete**: Provider claims schema, admin UI, query layer, submission API
-- **Phase 5.2d In Progress**: Admin review UI (approve/reject endpoints + dialog)
+- **Open-Source Prep ✅ In Progress**: Documentation, hydration fixes, branding updates
+- **Phase 5.2a-f ✅ Complete**: Provider claims system fully implemented
 - **Phase 5.1a ✅ Complete**: Database indices for gamification (points_history, user_profiles)
-- **Phase 5.1b Deferred**: Gamification integration (deferred for Phase 5.2 priority)
-- **Phase 4.1 Complete**: PostGIS integration finished and verified.
-- **Phase 4.2 Paused**: Redis caching layer (deferred for Phase 5 priority)
+- **Phase 4.1 ✅ Complete**: PostGIS integration finished and verified.
+- **Phase 4.2 Paused**: Redis caching layer (deferred)
 
 ---
 
@@ -194,20 +192,20 @@ Last updated: 2025-12-06
 - ✅ 5.2d: Admin review UI (approve/reject endpoints + dialog)
 - ✅ 5.2e: Claim button UI component (Enhanced Dialog)
 - ✅ 5.2f: Enhanced Verification System (Job Title, Phone, etc.)
-- ⚠️ 5.2g: Provider dashboard (implemented but has infinite loading bug) - DEBUGGING NEXT
+- ✅ 5.2g: Provider dashboard - RESOLVED
 
 **Plan**: `/home/zenchant/.claude/plans/purrfect-forging-avalanche.md`
 
 ---
 
 ## Known Issues / Alerts
-- **CRITICAL**: `/provider/dashboard` is experiencing an infinite loading loop. Needs immediate investigation.
 - **Phase 3 Pending**: User suggestion flow (`suggest-update` API) and Mobile-first card optimization are pending.
 - **CopilotKit**: Blank assistant bubbles still appear occasionally.
 - **Supabase Warning**: `supautils.disable_program` warning is harmless.
 
 ## TypeScript / Build Quality
-- ✅ **All TypeScript errors resolved** (December 4, 2025)
+- ✅ **All TypeScript errors resolved** (January 4, 2026)
+- ✅ **React hydration errors fixed** - Added `suppressHydrationWarning` to date-dependent components
 - **Pre-commit standard**: `bun run typecheck && bun run lint` before all commits
 - **Reference**: See `context/rules/typescript-standards.md` for coding standards
 
